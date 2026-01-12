@@ -7,12 +7,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '../../ui/dialog';
-import { Input } from '../../ui/input';
-import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
-import { Calendar } from '../../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+  Input,
+  Button,
+  Label,
+  Calendar,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import type { FlightTrackerWidgetProps } from './types';
 

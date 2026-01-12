@@ -5,16 +5,16 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Button,
+  Input,
+  Label,
+  Checkbox,
+  Skeleton,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { GitHubStreakWidgetProps, GitHubStreakWidgetConfig } from './types';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Checkbox } from '../../ui/checkbox';
 import { AlertCircle, Github, Shield } from 'lucide-react';
-import { Skeleton } from '../../ui/skeleton';
 
 /**
  * Size categories for widget content rendering

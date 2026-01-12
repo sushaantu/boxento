@@ -7,13 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '../../ui/dialog';
-import { Input } from '../../ui/input';
-import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
-import { Switch } from '../../ui/switch';
-import { Calendar } from '../../ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+  Input,
+  Button,
+  Label,
+  Switch,
+  Calendar,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import type { CountdownWidgetProps, TimeRemaining } from './types';
 

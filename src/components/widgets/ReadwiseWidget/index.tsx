@@ -5,15 +5,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Button,
+  Input,
+  Label,
+  Switch,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { RefreshCw, Quote, AlertCircle, BookOpen, Book } from 'lucide-react';
 import { ReadwiseHighlight, ReadwiseWidgetConfig, ReadwiseWidgetProps } from './types';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Switch } from '../../ui/switch';
 
 // Widget size categories, same as template widget
 enum WidgetSizeCategory {

@@ -8,20 +8,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog'
-import {
+  DialogFooter,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../ui/select"
+  Button,
+  Label,
+  Checkbox,
+} from '@boxento/primitives'
 import WidgetHeader from '../../widgets/common/WidgetHeader'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
-import { Button } from '../../ui/button'
-import { Label } from '../../ui/label'
-import { Checkbox } from '../../ui/checkbox';
 
 interface GoogleCalendarEvent {
   id: string;

@@ -7,9 +7,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '../../ui/dialog';
-import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
+  Button,
+  Label,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import type { QRCodeWidgetProps } from './types';
 

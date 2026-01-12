@@ -6,19 +6,22 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Input,
+  Label,
+  Button,
+  Switch,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Skeleton,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { RSSWidgetConfig, RSSFeedItem, RSSDisplayMode, RSSFeed } from './types';
 import type { RSSWidgetProps } from './types';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Button } from '../../ui/button';
-import { Switch } from '../../ui/switch';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
 import { Rss, AlertCircle, Upload } from 'lucide-react';
-import { Skeleton } from '../../ui/skeleton';
 
 /**
  * Size categories for widget content rendering

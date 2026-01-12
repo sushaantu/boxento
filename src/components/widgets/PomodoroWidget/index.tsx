@@ -4,14 +4,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Label,
+  Input,
+  Button,
+} from '@boxento/primitives';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import WidgetHeader from '../common/WidgetHeader';
 import { PomodoroWidgetConfig, PomodoroWidgetProps } from './types';
-import { Label } from '../../ui/label';
-import { Input } from '../../ui/input';
-import { Button } from '../../ui/button';
 import { faviconService } from '@/lib/services/favicon';
 
 /**

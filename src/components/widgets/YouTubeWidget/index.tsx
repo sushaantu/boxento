@@ -5,16 +5,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Button,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  Label,
+  Input,
+  Checkbox,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { YouTubeWidgetProps, YouTubeWidgetConfig } from './types';
-import { Button } from '../../ui/button';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
-import { Label } from '../../ui/label';
-import { Input } from '../../ui/input';
-import { Checkbox } from '../../ui/checkbox';
-// Add Youtube icon import
 import { Youtube } from 'lucide-react';
 
 /**

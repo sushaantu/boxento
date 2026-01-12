@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
-// Add CheckSquare import
-// Add AlertCircle import
 import { Check, Loader2, CalendarIcon, ExternalLink, CheckSquare, AlertCircle } from 'lucide-react';
 import {
   Dialog,
@@ -9,14 +7,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '../../ui/dialog';
-import { Input } from '../../ui/input';
-import { Switch } from '../../ui/switch';
-import { Label } from '../../ui/label';
+  Input,
+  Switch,
+  Label,
+  Button,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { TodoistWidgetProps, TodoistTask } from './types';
-// Add import for Button
-import { Button } from '../../ui/button';
 
 // Memoized task content formatter
 const TaskContent = memo(({ content, completed }: { content: string; completed: boolean }) => {

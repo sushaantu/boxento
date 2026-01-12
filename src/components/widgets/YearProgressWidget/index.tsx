@@ -5,11 +5,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
-import { Switch } from '../../ui/switch';
-import { Label } from '../../ui/label';
-import { Button } from '../../ui/button';
+  DialogFooter,
+  Switch,
+  Label,
+  Button,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { YearProgressProps, YearProgressConfig } from './types';
 

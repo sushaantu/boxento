@@ -4,14 +4,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Label,
+  Input,
+  Switch,
+  Button,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { WidgetProps } from '@/types';
-import { Label } from '../../ui/label';
-import { Input } from '../../ui/input';
-import { Switch } from '../../ui/switch';
-import { Button } from '../../ui/button';
 import { TemplateWidgetConfig } from './types';
 
 type TemplateWidgetProps = WidgetProps<TemplateWidgetConfig>;

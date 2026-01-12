@@ -4,16 +4,23 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
-import { Input } from '@/components/ui/input';
+  DialogFooter,
+  Input,
+  Button,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Switch,
+  Checkbox,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
-import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { Switch } from "../../ui/switch";
-import { Checkbox } from "../../ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import type { CurrencyConverterWidgetProps, CurrencyConverterWidgetConfig } from './types';
 import { AlertCircle, BadgeCent } from 'lucide-react';
 

@@ -6,18 +6,16 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog'
-import { WorldClocksWidgetProps, TimezoneItem } from './types'
-import { Button } from '../../ui/button'
-import { Input } from '../../ui/input'
-import { Label } from '../../ui/label'
-import {
+  DialogFooter,
+  Button,
+  Input,
+  Label,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from '../../ui/card'
+} from '@boxento/primitives'
+import { WorldClocksWidgetProps, TimezoneItem } from './types'
 
 /**
  * World Clocks Widget Component

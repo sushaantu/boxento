@@ -2,20 +2,21 @@ import { useState, useEffect, useRef, type FC, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info, Search, MapPin, Loader2 } from 'lucide-react';
-import { Skeleton } from '../../ui/skeleton';
 import {
+  Skeleton,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
-import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
-import { Label } from '../../ui/label';
+  DialogFooter,
+  RadioGroup,
+  RadioGroupItem,
+  Label,
+  Button,
+  Input,
+} from '@boxento/primitives';
 import WidgetHeader from '../../widgets/common/WidgetHeader';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
 import { faviconService } from '@/lib/services/favicon';
 
 interface CitySearchResult {

@@ -4,21 +4,19 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
+  DialogFooter,
+  Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
+  Slider,
+  Button,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { NotesWidgetProps, NotesWidgetConfig } from './types';
-import { Button } from '../../ui/button';
 
 /**
  * Notes Widget Component

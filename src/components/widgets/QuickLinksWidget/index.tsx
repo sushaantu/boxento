@@ -6,14 +6,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog'
-import { Input } from '@/components/ui/input'
+  DialogFooter,
+  Input,
+  Button,
+  Label,
+  Switch,
+  RadioGroup,
+  RadioGroupItem,
+} from '@boxento/primitives'
 import { QuickLinksWidgetProps, LinkItem } from './types'
-import { Button } from '../../ui/button'
-import { Label } from '../../ui/label'
-import { Switch } from '@/components/ui/switch'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 /**
  * Fetches metadata from a URL including title and favicon

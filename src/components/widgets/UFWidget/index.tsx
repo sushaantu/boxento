@@ -6,14 +6,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Button,
+  Input,
+  Label,
+  Checkbox,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import { UFWidgetProps, UFWidgetConfig, UFData } from './types';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Checkbox } from '../../ui/checkbox';
 
 /**
  * Size categories for widget content rendering

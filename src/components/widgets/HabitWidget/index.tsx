@@ -6,10 +6,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '../../ui/dialog';
-import { Input } from '../../ui/input';
-import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
+  Input,
+  Button,
+  Label,
+} from '@boxento/primitives';
 import WidgetHeader from '../common/WidgetHeader';
 import type { HabitWidgetProps, Habit } from './types';
 

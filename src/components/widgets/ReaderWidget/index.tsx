@@ -5,22 +5,20 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
-import WidgetHeader from '../common/WidgetHeader';
-import { RefreshCw, AlertCircle, BookOpen, ExternalLink, Clock, FileText, ArrowLeft, Loader2 } from 'lucide-react';
-import { ReaderDocument, ReaderWidgetConfig, ReaderWidgetProps } from './types';
-import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
-import { Label } from '../../ui/label';
-import { Switch } from '../../ui/switch';
-import {
+  DialogFooter,
+  Button,
+  Input,
+  Label,
+  Switch,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../../ui/select';
+} from '@boxento/primitives';
+import WidgetHeader from '../common/WidgetHeader';
+import { RefreshCw, AlertCircle, BookOpen, ExternalLink, Clock, FileText, ArrowLeft, Loader2 } from 'lucide-react';
+import { ReaderDocument, ReaderWidgetConfig, ReaderWidgetProps } from './types';
 
 enum WidgetSizeCategory {
   SMALL = 'small',

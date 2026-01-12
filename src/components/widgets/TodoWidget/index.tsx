@@ -4,27 +4,25 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
+  DialogFooter,
+  Input,
+  Button,
+  Label,
+  Switch,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@boxento/primitives';
 import {
   Check,
   Plus,
   Trash2,
   GripVertical,
 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import WidgetHeader from '../common/WidgetHeader';
 import { TodoWidgetProps, TodoWidgetConfig, TodoItem } from './types';
-import { Button } from '../../ui/button';
-import { Label } from '../../ui/label';
-import { Switch } from '../../ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../ui/select';
 
 /**
  * Todo Widget Component
