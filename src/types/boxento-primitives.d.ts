@@ -32,8 +32,14 @@ declare module '@boxento/primitives' {
   export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
   export const Input: React.ForwardRefExoticComponent<InputProps & React.RefAttributes<HTMLInputElement>>;
 
-  // Select
-  export const Select: React.FC<{ value?: string; onValueChange?: (value: string) => void; children?: React.ReactNode; defaultValue?: string }>;
+  // Select - uses generic to support typed value handlers
+  export const Select: <T extends string = string>(props: {
+    value?: T;
+    onValueChange?: (value: T) => void;
+    children?: React.ReactNode;
+    defaultValue?: T;
+    className?: string;
+  }) => React.ReactElement | null;
   export const SelectTrigger: React.FC<React.HTMLAttributes<HTMLButtonElement> & { id?: string }>;
   export const SelectValue: React.FC<{ placeholder?: string }>;
   export const SelectContent: React.FC<React.HTMLAttributes<HTMLDivElement>>;
@@ -58,8 +64,14 @@ declare module '@boxento/primitives' {
   }
   export const Checkbox: React.ForwardRefExoticComponent<CheckboxProps & React.RefAttributes<HTMLButtonElement>>;
 
-  // Tabs
-  export const Tabs: React.FC<{ value?: string; onValueChange?: (value: string) => void; defaultValue?: string; children?: React.ReactNode }>;
+  // Tabs - uses generic to support typed value handlers
+  export const Tabs: <T extends string = string>(props: {
+    value?: T;
+    onValueChange?: (value: T) => void;
+    defaultValue?: T;
+    children?: React.ReactNode;
+    className?: string;
+  }) => React.ReactElement | null;
   export const TabsList: React.FC<React.HTMLAttributes<HTMLDivElement>>;
   export const TabsTrigger: React.FC<React.HTMLAttributes<HTMLButtonElement> & { value: string }>;
   export const TabsContent: React.FC<React.HTMLAttributes<HTMLDivElement> & { value: string }>;
@@ -106,8 +118,14 @@ declare module '@boxento/primitives' {
   }
   export const ScrollBar: React.ForwardRefExoticComponent<ScrollBarProps & React.RefAttributes<HTMLDivElement>>;
 
-  // Radio Group
-  export const RadioGroup: React.FC<{ value?: string; onValueChange?: (value: string) => void; children?: React.ReactNode; defaultValue?: string }>;
+  // Radio Group - uses generic to support typed value handlers
+  export const RadioGroup: <T extends string = string>(props: {
+    value?: T;
+    onValueChange?: (value: T) => void;
+    children?: React.ReactNode;
+    defaultValue?: T;
+    className?: string;
+  }) => React.ReactElement | null;
   export interface RadioGroupItemProps extends React.HTMLAttributes<HTMLButtonElement> {
     value: string;
     disabled?: boolean;
