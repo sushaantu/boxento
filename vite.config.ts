@@ -28,6 +28,8 @@ const getAllowedHosts = () => {
     '.docker.internal',
     // OrbStack domains
     '.orb.local',
+    // Tailscale domains
+    '.ts.net',
     // Allow all subdomains of these base domains
     'boxento-dev.boxento.orb.local',
     'boxento-prod.boxento.orb.local',
@@ -57,6 +59,12 @@ export default defineConfig({
         target: 'https://mindicador.cl',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/mindicador/, ''),
+        secure: false
+      },
+      '/api/ollama': {
+        target: 'http://localhost:11434',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ollama/, '/api'),
         secure: false
       }
     },

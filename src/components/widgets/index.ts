@@ -24,6 +24,12 @@ const HabitWidget = React.lazy(() => import('./HabitWidget/index'));
 const CountdownWidget = React.lazy(() => import('./CountdownWidget/index'));
 const QRCodeWidget = React.lazy(() => import('./QRCodeWidget/index'));
 const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
+const ServicesWidget = React.lazy(() => import('./ServicesWidget/index'));
+const OllamaWidget = React.lazy(() => import('./OllamaWidget/index'));
+const PaisaWidget = React.lazy(() => import('./PaisaWidget/index'));
+const JellyfinWidget = React.lazy(() => import('./JellyfinWidget/index'));
+const FavaWidget = React.lazy(() => import('./FavaWidget/index'));
+const RivenWidget = React.lazy(() => import('./RivenWidget/index'));
 
 // Export widget types
 export * from './CalendarWidget/types';
@@ -48,6 +54,12 @@ export * from './HabitWidget/types';
 export * from './CountdownWidget/types';
 export * from './QRCodeWidget/types';
 export * from './ReaderWidget/types';
+export * from './ServicesWidget/types';
+export * from './OllamaWidget/types';
+export * from './PaisaWidget/types';
+export * from './JellyfinWidget/types';
+export * from './FavaWidget/types';
+export * from './RivenWidget/types';
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -299,6 +311,72 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     defaultHeight: 3,
     category: 'Information',
     description: 'Random articles from your Readwise Reader library'
+  },
+  {
+    type: 'services',
+    name: 'Services',
+    icon: 'Server',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Local Services',
+    description: 'Monitor and access your self-hosted services'
+  },
+  {
+    type: 'ollama',
+    name: 'Ollama Chat',
+    icon: 'Bot',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 4,
+    category: 'Local Services',
+    description: 'Chat with your local Ollama AI models'
+  },
+  {
+    type: 'paisa',
+    name: 'Paisa Finance',
+    icon: 'PiggyBank',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Local Services',
+    description: 'View your networth and asset breakdown from Paisa'
+  },
+  {
+    type: 'jellyfin',
+    name: 'Jellyfin',
+    icon: 'Film',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Local Services',
+    description: 'View now playing and recently added media from Jellyfin'
+  },
+  {
+    type: 'fava',
+    name: 'Fava',
+    icon: 'BookOpen',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Local Services',
+    description: 'View beancount balance sheet and income statement'
+  },
+  {
+    type: 'riven',
+    name: 'Riven',
+    icon: 'Film',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 3,
+    category: 'Local Services',
+    description: 'Quick access to Riven media automation'
   }
 ];
 
@@ -309,7 +387,8 @@ export const WIDGET_CATEGORIES = [
   { id: 'social', name: 'Social' },
   { id: 'utilities', name: 'Utilities' },
   { id: 'finance', name: 'Finance' },
-  { id: 'entertainment', name: 'Entertainment' }
+  { id: 'entertainment', name: 'Entertainment' },
+  { id: 'local-services', name: 'Local Services' }
 ];
 
 // Widget component type - now supports lazy components
@@ -343,6 +422,12 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'countdown': CountdownWidget,
   'qrcode': QRCodeWidget,
   'reader': ReaderWidget,
+  'services': ServicesWidget as unknown as LazyWidgetComponent,
+  'ollama': OllamaWidget as unknown as LazyWidgetComponent,
+  'paisa': PaisaWidget as unknown as LazyWidgetComponent,
+  'jellyfin': JellyfinWidget as unknown as LazyWidgetComponent,
+  'fava': FavaWidget as unknown as LazyWidgetComponent,
+  'riven': RivenWidget as unknown as LazyWidgetComponent,
 };
 
 /**
