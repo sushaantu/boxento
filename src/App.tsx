@@ -168,6 +168,23 @@ const layoutSignature = (layout: LayoutItem[]): string => (
     .join('|')
 );
 
+const layoutPersistenceSignature = (layout: LayoutItem[]): string => (
+  [...layout]
+    .sort((a, b) => a.i.localeCompare(b.i))
+    .map((item) => [
+      item.i,
+      item.x,
+      item.y,
+      item.w,
+      item.h,
+      item.minW ?? '',
+      item.minH ?? '',
+      item.maxW ?? '',
+      item.maxH ?? '',
+    ].join(':'))
+    .join('|')
+);
+
 const findFallbackBreakpoint = (layouts: LayoutsByBreakpoint, breakpoint: BreakpointName): BreakpointName | null => {
   const startIndex = BREAKPOINT_ORDER.indexOf(breakpoint);
 
@@ -278,7 +295,7 @@ const rebalanceWideSparseLayout = (layout: LayoutItem[], colCount: number): Layo
   });
 };
 
-const createLayoutsFromTemplates = (widgetIds: string[]): LayoutsByBreakpoint => {
+const createLayoutsFromTemplates = (widgetsToLayout: Widget[]): LayoutsByBreakpoint => {
   const layoutsByBreakpoint: LayoutsByBreakpoint = {};
 
   BREAKPOINT_ORDER.forEach((breakpoint) => {
@@ -286,18 +303,23 @@ const createLayoutsFromTemplates = (widgetIds: string[]): LayoutsByBreakpoint =>
     const colCount = cols[breakpoint];
     const layout: LayoutItem[] = [];
 
-    widgetIds.forEach((widgetId, index) => {
+    widgetsToLayout.forEach((widget, index) => {
       if (index < template.length) {
         layout.push({
           ...template[index],
-          i: widgetId,
-          minW: GRID.MIN_WIDGET_WIDTH,
-          minH: GRID.MIN_WIDGET_HEIGHT,
+          i: widget.id,
         });
+        layout[index] = applyWidgetLayoutConstraints(layout[index], widget, breakpoint);
         return;
       }
 
-      layout.push(createDefaultLayoutItem(widgetId, index, colCount, breakpoint, layout));
+      layout.push(
+        applyWidgetLayoutConstraints(
+          createDefaultLayoutItem(widget.id, index, colCount, breakpoint, layout),
+          widget,
+          breakpoint
+        )
+      );
     });
 
     layoutsByBreakpoint[breakpoint] = layout;
@@ -418,12 +440,7 @@ function App() {
   }, []);
   
   // Default layouts configuration
-  const getDefaultLayouts = () => createLayoutsFromTemplates([
-    'default-todo',
-    'default-weather',
-    'default-quick-links',
-    'default-notes',
-  ]);
+  const getDefaultLayouts = () => createLayoutsFromTemplates(getDefaultWidgets());
 
   // Default widgets
   const getDefaultWidgets = (): Widget[] => [
@@ -620,9 +637,7 @@ function App() {
   };
 
   // Helper to generate layouts for given widgets
-  const generateLayoutsForWidgets = (widgets: Widget[]) => createLayoutsFromTemplates(
-    widgets.map((widget) => widget.id)
-  );
+  const generateLayoutsForWidgets = (widgets: Widget[]) => createLayoutsFromTemplates(widgets);
 
   const reconcileLayoutsWithWidgets = (
     layoutsToReconcile: LayoutsByBreakpoint,
@@ -689,9 +704,15 @@ function App() {
       });
     });
 
+    const validatedLayouts = validateLayouts(reconciledLayouts, options);
+    const validationChanged = BREAKPOINT_ORDER.some(
+      (breakpoint) => layoutPersistenceSignature(validatedLayouts[breakpoint] || [])
+        !== layoutPersistenceSignature(reconciledLayouts[breakpoint] || [])
+    );
+
     return {
-      layouts: validateLayouts(reconciledLayouts, options),
-      changed,
+      layouts: validatedLayouts,
+      changed: changed || validationChanged,
     };
   };
 
