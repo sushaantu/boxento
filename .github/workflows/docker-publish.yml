@@ -7,17 +7,6 @@ on:
     tags: [ 'v*.*.*' ]
   pull_request:
     branches: [ "main" ]
-    paths:
-      - 'src/**'
-      - 'public/**'
-      - 'package.json'
-      - 'bun.lock'
-      - 'Dockerfile'
-      - '.dockerignore'
-      - 'docker-compose*.yml'
-      - 'vite.config.ts'
-      - 'tsconfig*.json'
-      - '.github/workflows/docker-publish.yml'
 
 env:
   # Use github.repository as <account>/<repo>
