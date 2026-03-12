@@ -18,7 +18,7 @@ import { configManager } from '@/lib/configManager'
 import { UserMenuButton } from '@/components/auth/UserMenuButton'
 import { auth } from '@/lib/firebase'
 import { userDashboardService, publicDashboardService } from '@/lib/firestoreService'
-import { TIMING, STORAGE_KEYS } from '@/lib/constants'
+import { GRID, TIMING, STORAGE_KEYS } from '@/lib/constants'
 import { useSync } from '@/lib/SyncContext'
 import { Button } from './components/ui/button'
 import { Skeleton } from './components/ui/skeleton'
@@ -48,29 +48,192 @@ interface WidgetCategory {
 // This is important for performance as it prevents recreation on each render
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 
+type BreakpointName = keyof typeof cols;
+type LayoutsByBreakpoint = { [key: string]: LayoutItem[] };
+type LayoutTemplate = Omit<LayoutItem, 'i'>;
+
+const BREAKPOINT_ORDER = Object.keys(breakpoints)
+  .sort((a, b) => breakpoints[b as BreakpointName] - breakpoints[a as BreakpointName]) as BreakpointName[];
+
+const DEFAULT_LAYOUT_TEMPLATES: Record<BreakpointName, LayoutTemplate[]> = {
+  xxxl: [
+    { x: 0, y: 0, w: 6, h: 3, minW: 2, minH: 2 },
+    { x: 6, y: 0, w: 6, h: 3, minW: 2, minH: 2 },
+    { x: 12, y: 0, w: 6, h: 3, minW: 2, minH: 2 },
+    { x: 18, y: 0, w: 6, h: 3, minW: 2, minH: 2 },
+  ],
+  xxl: [
+    { x: 0, y: 0, w: 5, h: 3, minW: 2, minH: 2 },
+    { x: 5, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+    { x: 9, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+    { x: 13, y: 0, w: 5, h: 3, minW: 2, minH: 2 },
+  ],
+  xl: [
+    { x: 0, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+    { x: 4, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+    { x: 7, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+    { x: 10, y: 0, w: 4, h: 3, minW: 2, minH: 2 },
+  ],
+  lg: [
+    { x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+    { x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+    { x: 8, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+  ],
+  md: [
+    { x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+    { x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 2 },
+  ],
+  sm: [
+    { x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
+    { x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 },
+    { x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 2 },
+  ],
+  xs: [
+    { x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 },
+  ],
+  xxs: [
+    { x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
+    { x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 },
+  ],
+};
+
 const validateLayoutItem = (item: LayoutItem): LayoutItem => ({
   ...item,
   w: Math.max(item.w, 2), // Minimum width of 2
   h: Math.max(item.h, 2)  // Minimum height of 2
 });
 
+const clampLayoutItemToCols = (item: LayoutItem, colCount: number): LayoutItem => {
+  const validated = validateLayoutItem(item);
+  const nextW = Math.min(validated.w, colCount);
+  const nextX = Math.min(validated.x, Math.max(0, colCount - nextW));
+
+  return {
+    ...validated,
+    x: nextX,
+    w: nextW,
+    maxW: validated.maxW ? Math.min(validated.maxW, colCount) : validated.maxW,
+  };
+};
+
 const validateLayout = (layout: LayoutItem[]): LayoutItem[] => {
   return layout.map(validateLayoutItem);
 };
 
-const validateLayouts = (layouts: { [key: string]: LayoutItem[] }): { [key: string]: LayoutItem[] } => {
-  const validatedLayouts = { ...layouts };
-  
-  // Ensure all breakpoints have layouts
-  Object.keys(breakpoints).forEach(breakpoint => {
-    if (!validatedLayouts[breakpoint]) {
-      validatedLayouts[breakpoint] = [];
+const layoutSignature = (layout: LayoutItem[]): string => (
+  [...layout]
+    .sort((a, b) => a.i.localeCompare(b.i))
+    .map((item) => `${item.i}:${item.x}:${item.y}:${item.w}:${item.h}`)
+    .join('|')
+);
+
+const findFallbackBreakpoint = (layouts: LayoutsByBreakpoint, breakpoint: BreakpointName): BreakpointName | null => {
+  const startIndex = BREAKPOINT_ORDER.indexOf(breakpoint);
+
+  for (let index = startIndex + 1; index < BREAKPOINT_ORDER.length; index += 1) {
+    const candidate = BREAKPOINT_ORDER[index];
+    if ((layouts[candidate] || []).length > 0) {
+      return candidate;
     }
-    
-    // Enforce minimum sizes on all layouts
-    validatedLayouts[breakpoint] = validatedLayouts[breakpoint].map(validateLayoutItem);
+  }
+
+  return null;
+};
+
+const scaleLayoutToCols = (
+  layout: LayoutItem[],
+  fromCols: number,
+  toCols: number
+): LayoutItem[] => {
+  if (!layout.length || fromCols === toCols) {
+    return layout.map((item) => clampLayoutItemToCols({ ...item }, toCols));
+  }
+
+  const scale = toCols / fromCols;
+
+  return layout.map((item) => {
+    const minW = item.minW || 2;
+    const scaledW = Math.max(minW, Math.round(item.w * scale));
+    const scaledX = Math.round(item.x * scale);
+    const scaledMaxW = item.maxW ? Math.max(minW, Math.round(item.maxW * scale)) : item.maxW;
+
+    return clampLayoutItemToCols(
+      {
+        ...item,
+        x: scaledX,
+        w: scaledW,
+        maxW: scaledMaxW,
+      },
+      toCols
+    );
   });
-  
+};
+
+const createLayoutsFromTemplates = (widgetIds: string[]): LayoutsByBreakpoint => {
+  const layoutsByBreakpoint: LayoutsByBreakpoint = {};
+
+  BREAKPOINT_ORDER.forEach((breakpoint) => {
+    const template = DEFAULT_LAYOUT_TEMPLATES[breakpoint];
+    const colCount = cols[breakpoint];
+    const layout: LayoutItem[] = [];
+
+    widgetIds.forEach((widgetId, index) => {
+      if (index < template.length) {
+        layout.push({ ...template[index], i: widgetId });
+        return;
+      }
+
+      layout.push(createDefaultLayoutItem(widgetId, index, colCount, breakpoint, layout));
+    });
+
+    layoutsByBreakpoint[breakpoint] = layout;
+  });
+
+  return layoutsByBreakpoint;
+};
+
+const validateLayouts = (layouts: LayoutsByBreakpoint): LayoutsByBreakpoint => {
+  const validatedLayouts: LayoutsByBreakpoint = { ...layouts };
+
+  BREAKPOINT_ORDER.forEach((breakpoint) => {
+    const colCount = cols[breakpoint];
+    validatedLayouts[breakpoint] = (validatedLayouts[breakpoint] || []).map((item) => clampLayoutItemToCols(item, colCount));
+  });
+
+  BREAKPOINT_ORDER.forEach((breakpoint) => {
+    const fallbackBreakpoint = findFallbackBreakpoint(validatedLayouts, breakpoint);
+    if (!fallbackBreakpoint) {
+      return;
+    }
+
+    const currentLayout = validatedLayouts[breakpoint];
+    const fallbackLayout = validatedLayouts[fallbackBreakpoint];
+    const targetCols = cols[breakpoint];
+    const fallbackCols = cols[fallbackBreakpoint];
+
+    if (!currentLayout.length) {
+      validatedLayouts[breakpoint] = scaleLayoutToCols(fallbackLayout, fallbackCols, targetCols);
+      return;
+    }
+
+    if (targetCols <= fallbackCols || currentLayout.length !== fallbackLayout.length) {
+      return;
+    }
+
+    if (targetCols > cols.lg && layoutSignature(currentLayout) === layoutSignature(fallbackLayout)) {
+      validatedLayouts[breakpoint] = scaleLayoutToCols(fallbackLayout, fallbackCols, targetCols);
+    }
+  });
+
   return validatedLayouts;
 };
 
@@ -137,38 +300,12 @@ function App() {
   }, []);
   
   // Default layouts configuration
-  const getDefaultLayouts = () => ({
-    lg: [
-      { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'default-notes', x: 8, y: 0, w: 3, h: 3, minW: 2, minH: 2 }
-    ],
-    md: [
-      { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: 'default-weather', x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-quick-links', x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'default-notes', x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
-    ],
-    sm: [
-      { i: 'default-todo', x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: 'default-weather', x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'default-quick-links', x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: 'default-notes', x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
-    ],
-    xs: [
-      { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
-    ],
-    xxs: [
-      { i: 'default-todo', x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-weather', x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-quick-links', x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: 'default-notes', x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
-    ]
-  });
+  const getDefaultLayouts = () => createLayoutsFromTemplates([
+    'default-todo',
+    'default-weather',
+    'default-quick-links',
+    'default-notes',
+  ]);
 
   // Default widgets
   const getDefaultWidgets = (): Widget[] => [
@@ -271,7 +408,7 @@ function App() {
     return getDefaultWidgets();
   });
   
-  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth - 40 : 1200);
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false);
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>('lg');
   const [isLayoutReady, setIsLayoutReady] = useState(false);
@@ -363,38 +500,9 @@ function App() {
   };
 
   // Helper to generate layouts for given widgets
-  const generateLayoutsForWidgets = (widgets: Widget[]) => ({
-    lg: [
-      { i: widgets[0].id, x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: widgets[1].id, x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[2].id, x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: widgets[3].id, x: 8, y: 0, w: 3, h: 3, minW: 2, minH: 2 }
-    ],
-    md: [
-      { i: widgets[0].id, x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: widgets[1].id, x: 3, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[2].id, x: 5, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: widgets[3].id, x: 0, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
-    ],
-    sm: [
-      { i: widgets[0].id, x: 0, y: 0, w: 3, h: 3, minW: 2, minH: 2 },
-      { i: widgets[1].id, x: 3, y: 0, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: widgets[2].id, x: 0, y: 3, w: 3, h: 2, minW: 2, minH: 2 },
-      { i: widgets[3].id, x: 3, y: 3, w: 3, h: 3, minW: 2, minH: 2 }
-    ],
-    xs: [
-      { i: widgets[0].id, x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[1].id, x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[2].id, x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[3].id, x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
-    ],
-    xxs: [
-      { i: widgets[0].id, x: 0, y: 0, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[1].id, x: 0, y: 2, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[2].id, x: 0, y: 4, w: 2, h: 2, minW: 2, minH: 2 },
-      { i: widgets[3].id, x: 0, y: 6, w: 2, h: 3, minW: 2, minH: 2 }
-    ]
-  });
+  const generateLayoutsForWidgets = (widgets: Widget[]) => createLayoutsFromTemplates(
+    widgets.map((widget) => widget.id)
+  );
 
   // Load widgets and layouts for a specific dashboard
   const loadDashboardData = async (dashboardId: string) => {
@@ -410,15 +518,15 @@ function App() {
     if (savedWidgets && savedLayouts) {
       // Dashboard has saved data
       widgetsToLoad = JSON.parse(savedWidgets);
-      layoutsToLoad = JSON.parse(savedLayouts);
+      layoutsToLoad = validateLayouts(JSON.parse(savedLayouts));
     } else if (dashboardId === 'personal') {
       // Personal dashboard falls back to legacy storage
       widgetsToLoad = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
-      layoutsToLoad = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts());
+      layoutsToLoad = validateLayouts(loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts()));
     } else {
       // Non-personal dashboards without storage get fresh widgets with unique IDs
       widgetsToLoad = generateFreshDefaultWidgets();
-      layoutsToLoad = generateLayoutsForWidgets(widgetsToLoad);
+      layoutsToLoad = validateLayouts(generateLayoutsForWidgets(widgetsToLoad));
       // Save immediately so they persist
       localStorage.setItem(keys.widgets, JSON.stringify(widgetsToLoad));
       localStorage.setItem(keys.layouts, JSON.stringify(layoutsToLoad));
@@ -439,7 +547,7 @@ function App() {
       return widget;
     });
     setWidgets(widgetsWithConfigs);
-    setLayouts(layoutsToLoad);
+    setLayouts(validateLayouts(layoutsToLoad));
   };
 
   const handleSwitchDashboard = async (dashboard: Dashboard) => {
@@ -474,7 +582,7 @@ function App() {
     const freshLayouts = generateLayoutsForWidgets(freshWidgets);
 
     setWidgets(freshWidgets);
-    setLayouts(freshLayouts);
+    setLayouts(validateLayouts(freshLayouts));
 
     // Save to the new dashboard's storage immediately
     const keys = getDashboardStorageKeys(newDashboard.id);
@@ -663,12 +771,14 @@ function App() {
    *                   Use debounce=false when sequential operation order matters (e.g., during migration).
    */
   const saveLayouts = async (updatedLayouts: { [key: string]: LayoutItem[] }, debounce = true): Promise<void> => {
+    const normalizedLayouts = validateLayouts(updatedLayouts);
+
     // Update state
-    setLayouts(updatedLayouts);
+    setLayouts(normalizedLayouts);
 
     // Save to per-dashboard localStorage
     const keys = getDashboardStorageKeys(currentDashboardId);
-    localStorage.setItem(keys.layouts, JSON.stringify(updatedLayouts));
+    localStorage.setItem(keys.layouts, JSON.stringify(normalizedLayouts));
 
     // Save to Firestore if logged in
     if (auth?.currentUser) {
@@ -679,7 +789,7 @@ function App() {
         // Extract Firestore save logic to avoid duplication
         const saveToFirestore = async () => {
           try {
-            await userDashboardService.saveLayouts(updatedLayouts);
+            await userDashboardService.saveLayouts(normalizedLayouts);
             // Layouts saved to Firestore
           } catch (error) {
             console.error('Error saving layouts to Firestore:', error);
@@ -702,7 +812,7 @@ function App() {
       }
 
       // Sync to public dashboard if visibility is public/team
-      syncPublicDashboard(currentDashboard, widgets, updatedLayouts);
+      syncPublicDashboard(currentDashboard, widgets, normalizedLayouts);
     }
   };
 
@@ -734,8 +844,7 @@ function App() {
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      const bodyPadding = 40; // Account for any potential body margin/padding
-      setWindowWidth(window.innerWidth - bodyPadding);
+      setWindowWidth(window.innerWidth);
     };
     
     window.addEventListener('resize', handleResize);
@@ -775,22 +884,19 @@ function App() {
   
   // Calculate row height based on window width to ensure square widgets
   const calculateRowHeight = (): number => {
-    // Calculate the column width based on available width
-    const totalPadding = 40; // containerPadding (20px * 2)
-    const totalMargins = 10 * (12 - 1); // margin (10px) * (cols - 1)
+    const columnCount = cols[currentBreakpoint as BreakpointName] || cols.lg;
+    const totalPadding = GRID.CONTAINER_PADDING * 2;
+    const totalMargins = GRID.ITEM_MARGIN * (columnCount - 1);
     const usableWidth = windowWidth - totalPadding - totalMargins;
-    
-    // Calculate column width (each column should be square)
-    const columnWidth = usableWidth / 12;
-    
-    // Return the column width as row height to ensure squares
-    // Apply responsiveness scaling similar to before
+
+    const columnWidth = usableWidth / columnCount;
+
     if (windowWidth < 600) {
-      return columnWidth * 0.8; // Smaller on mobile
+      return columnWidth * 0.8;
     } else if (windowWidth < 1200) {
-      return columnWidth * 0.9; // Slightly smaller on tablets
+      return columnWidth * 0.9;
     } else {
-      return columnWidth; // Default for desktop
+      return columnWidth;
     }
   };
   
@@ -1256,6 +1362,7 @@ function App() {
     return widgets.map(widget => {
       // Find the layout data for this widget
       const layoutItem = layouts[currentBreakpoint]?.find(item => item.i === widget.id);
+      const widgetMeta = getWidgetConfigByType(widget.type);
       
       // Determine if mobile view
       const isMobile = currentBreakpoint === 'xs' || currentBreakpoint === 'xxs';
@@ -1271,8 +1378,10 @@ function App() {
         y: layoutItem?.y ?? 0,
         w: layoutItem?.w ?? defaultWidth,
         h: isMobile ? 5 : (layoutItem?.h ?? defaultHeight),
-        minW: layoutItem?.minW ?? 2,
-        minH: isMobile ? 3 : (layoutItem?.minH ?? 2)
+        minW: layoutItem?.minW ?? widgetMeta?.minWidth ?? 2,
+        minH: isMobile ? 3 : (layoutItem?.minH ?? widgetMeta?.minHeight ?? 2),
+        maxW: isMobile ? undefined : (layoutItem?.maxW ?? widgetMeta?.maxSize?.w),
+        maxH: isMobile ? undefined : (layoutItem?.maxH ?? widgetMeta?.maxSize?.h),
       };
       
       // Add different classes based on screen size
@@ -1338,23 +1447,23 @@ function App() {
     if (dashboardWidgets && dashboardLayouts) {
       // Dashboard has saved data - use it
       localWidgets = JSON.parse(dashboardWidgets);
-      localLayouts = JSON.parse(dashboardLayouts);
+      localLayouts = validateLayouts(JSON.parse(dashboardLayouts));
     } else if (currentDashboardId === 'personal') {
       // Personal dashboard can fall back to legacy storage
       localWidgets = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
-      localLayouts = loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts());
+      localLayouts = validateLayouts(loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts()));
     } else {
       // Non-personal dashboards without storage get fresh widgets with unique IDs
       // AND matching layouts to ensure they work together
       localWidgets = generateFreshDefaultWidgets();
-      localLayouts = generateLayoutsForWidgets(localWidgets);
+      localLayouts = validateLayouts(generateLayoutsForWidgets(localWidgets));
       // Save immediately so they persist
       const keys = getDashboardStorageKeys(currentDashboardId);
       localStorage.setItem(keys.widgets, JSON.stringify(localWidgets));
       localStorage.setItem(keys.layouts, JSON.stringify(localLayouts));
     }
 
-    setLayouts(localLayouts);
+    setLayouts(validateLayouts(localLayouts));
 
     // Load and decrypt widget configs from localStorage
     const localConfigs = await configManager.getConfigs(true);
@@ -1473,9 +1582,9 @@ function App() {
           }) : [];
 
           // 6. Validate and fix layouts based on the widgets
-          const validatedLayouts = await userDashboardService.validateAndFixLayouts(
+          const validatedLayouts = validateLayouts(await userDashboardService.validateAndFixLayouts(
             typedWidgets.map(w => ({ id: w.id, type: w.type }))
-          );
+          ));
 
           // 7. Update localStorage for personal dashboard
           const personalKeys = getDashboardStorageKeys('personal');
@@ -1489,7 +1598,7 @@ function App() {
           // This prevents overwriting other dashboard data with personal dashboard data
           if (currentDashboardId === 'personal') {
             setWidgets(typedWidgets);
-            setLayouts(validatedLayouts);
+            setLayouts(validateLayouts(validatedLayouts));
           }
 
           userHasFirestoreData = true;
@@ -1966,8 +2075,8 @@ function App() {
                     onResizeStart={handleResizeStart}
                     onResize={handleResize}
                     onResizeStop={handleResizeStop}
-                    margin={[15, 15]}
-                    containerPadding={[10, 10]}
+                    margin={[GRID.ITEM_MARGIN, GRID.ITEM_MARGIN]}
+                    containerPadding={[GRID.CONTAINER_PADDING, GRID.CONTAINER_PADDING]}
                     draggableHandle=".widget-drag-handle"
                     draggableCancel=".settings-button"
                     useCSSTransforms={true}

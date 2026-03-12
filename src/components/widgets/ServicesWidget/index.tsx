@@ -187,6 +187,13 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
     return 'grid-cols-2';
   };
 
+  const getRegularGridColumns = () => {
+    if (width >= 8) return 4;
+    if (width >= 6) return 3;
+    if (width >= 3) return 2;
+    return 1;
+  };
+
   // Render service card
   const renderServiceCard = (service: Service, compact: boolean = false) => {
     const Icon = getIcon(service.icon);
@@ -235,6 +242,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
   const renderContent = () => {
     const services = localConfig.services || [];
     const isCompact = width <= 2 || height <= 2;
+    const regularColumns = Math.min(getRegularGridColumns(), Math.max(services.length, 1));
 
     if (services.length === 0) {
       return (
@@ -260,7 +268,10 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
     }
 
     return (
-      <div className="grid gap-2 h-full overflow-auto" style={{ gridTemplateColumns: `repeat(${Math.min(width, 2)}, 1fr)` }}>
+      <div
+        className="grid gap-2 h-full overflow-auto"
+        style={{ gridTemplateColumns: `repeat(${regularColumns}, minmax(0, 1fr))` }}
+      >
         {services.map(service => renderServiceCard(service, false))}
       </div>
     );

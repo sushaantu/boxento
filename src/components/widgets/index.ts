@@ -320,6 +320,7 @@ export const WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     minHeight: 2,
     defaultWidth: 3,
     defaultHeight: 3,
+    maxSize: { w: 6, h: 4 },
     category: 'Local Services',
     description: 'Monitor and access your self-hosted services'
   },

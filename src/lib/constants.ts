@@ -24,9 +24,9 @@ export const GRID = {
   /** Default minimum widget height */
   MIN_WIDGET_HEIGHT: 2,
   /** Container padding in pixels */
-  CONTAINER_PADDING: 20,
+  CONTAINER_PADDING: 10,
   /** Margin between grid items in pixels */
-  ITEM_MARGIN: 10,
+  ITEM_MARGIN: 15,
 } as const;
 
 // Breakpoints for responsive layout (in pixels)
