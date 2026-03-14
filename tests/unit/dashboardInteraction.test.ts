@@ -17,6 +17,18 @@ const createClosestTarget = (closestResult: Element | null) => {
   };
 };
 
+const createTextNodeTarget = (closestResult: Element | null) => {
+  const parentElement = createClosestTarget(closestResult);
+
+  return {
+    parentElement,
+  } as unknown as EventTarget & {
+    parentElement: {
+      closest: (selector: string) => Element | null;
+    };
+  };
+};
+
 describe('dashboard interaction helpers', () => {
   it('matches the shared selector for standard widget controls', () => {
     expect(DASHBOARD_INTERACTIVE_CHILD_SELECTOR).toContain('.settings-button');
@@ -40,11 +52,31 @@ describe('dashboard interaction helpers', () => {
     expect(target.closest).toHaveBeenCalledWith(DASHBOARD_INTERACTIVE_CHILD_SELECTOR);
   });
 
+  it('treats text-node targets inside interactive descendants as interactive', () => {
+    const target = createTextNodeTarget({} as Element);
+
+    expect(isDashboardInteractiveTarget(target)).toBe(true);
+    expect(target.parentElement.closest).toHaveBeenCalledWith(
+      DASHBOARD_INTERACTIVE_CHILD_SELECTOR
+    );
+  });
+
   it('stops propagation for interactive targets', () => {
     const stopPropagation = vi.fn();
 
     stopDashboardInteractionPropagation({
       target: createClosestTarget({} as Element),
+      stopPropagation,
+    });
+
+    expect(stopPropagation).toHaveBeenCalledOnce();
+  });
+
+  it('stops propagation for text-node targets inside interactive descendants', () => {
+    const stopPropagation = vi.fn();
+
+    stopDashboardInteractionPropagation({
+      target: createTextNodeTarget({} as Element),
       stopPropagation,
     });
 

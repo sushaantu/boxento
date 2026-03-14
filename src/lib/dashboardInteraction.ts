@@ -1,5 +1,7 @@
 type ClosestCapableTarget = EventTarget & {
   closest?: (selector: string) => Element | null;
+  parentElement?: Element | null;
+  parentNode?: ParentNode | null;
 };
 
 type DashboardInteractionEvent = {
@@ -26,17 +28,38 @@ const DASHBOARD_INTERACTIVE_CHILD_SELECTORS = [
 export const DASHBOARD_INTERACTIVE_CHILD_SELECTOR =
   DASHBOARD_INTERACTIVE_CHILD_SELECTORS.join(', ');
 
-export const isDashboardInteractiveTarget = (
+const resolveClosestCapableTarget = (
   target: EventTarget | null
-): target is ClosestCapableTarget => {
+): ClosestCapableTarget | null => {
   if (!target || typeof target !== 'object') {
-    return false;
+    return null;
   }
 
   const closestTarget = target as ClosestCapableTarget;
-  return (
-    typeof closestTarget.closest === 'function' &&
-    Boolean(closestTarget.closest(DASHBOARD_INTERACTIVE_CHILD_SELECTOR))
+  if (typeof closestTarget.closest === 'function') {
+    return closestTarget;
+  }
+
+  const parentElement = closestTarget.parentElement;
+  if (parentElement && typeof parentElement.closest === 'function') {
+    return parentElement as ClosestCapableTarget;
+  }
+
+  const parentNode = closestTarget.parentNode as ClosestCapableTarget | null;
+  if (parentNode && typeof parentNode.closest === 'function') {
+    return parentNode;
+  }
+
+  return null;
+};
+
+export const isDashboardInteractiveTarget = (
+  target: EventTarget | null
+): target is ClosestCapableTarget => {
+  const closestTarget = resolveClosestCapableTarget(target);
+
+  return Boolean(
+    closestTarget?.closest(DASHBOARD_INTERACTIVE_CHILD_SELECTOR)
   );
 };
 
