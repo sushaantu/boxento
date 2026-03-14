@@ -1,7 +1,14 @@
 import { defineConfig } from '@playwright/test';
 
 const reuseExistingServer = process.env.PLAYWRIGHT_USE_EXISTING_SERVER === '1';
-const playwrightPort = Number(process.env.PLAYWRIGHT_PORT || 4417);
+// Keep each workspace on its own port range and vary by process so stale local
+// dev servers do not block repeated Playwright runs in parallel workspaces.
+const workspacePortSeed = Array.from(process.cwd()).reduce(
+  (hash, character) => (hash * 31 + character.charCodeAt(0)) % 1000,
+  0
+);
+const defaultPlaywrightPort = 45000 + ((workspacePortSeed + process.pid) % 10000);
+const playwrightPort = Number(process.env.PLAYWRIGHT_PORT || defaultPlaywrightPort);
 const baseURL = `http://127.0.0.1:${playwrightPort}`;
 const playwrightChannel = process.env.PLAYWRIGHT_CHANNEL;
 const playwrightExtraArgs = (process.env.PLAYWRIGHT_EXTRA_ARGS || '')

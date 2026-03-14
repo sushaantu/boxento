@@ -11,8 +11,8 @@
     "lint": "bun eslint .",
     "test": "bunx vitest run",
     "test:watch": "bunx vitest",
-    "test:e2e": "bunx playwright test",
-    "test:e2e:reuse": "PLAYWRIGHT_USE_EXISTING_SERVER=1 bunx playwright test",
+    "test:e2e": "node scripts/run-playwright.mjs",
+    "test:e2e:reuse": "PLAYWRIGHT_USE_EXISTING_SERVER=1 node scripts/run-playwright.mjs",
     "preview": "bunx --bun vite preview",
     "deploy": "bun run build && firebase deploy --only hosting"
   },
