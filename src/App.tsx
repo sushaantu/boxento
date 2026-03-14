@@ -36,6 +36,14 @@ import { useAppSettings } from '@/context/AppSettingsContext'
 import { DashboardContextMenu } from '@/components/dashboard/DashboardContextMenu'
 import DashboardWidgetFrame from '@/components/dashboard/DashboardWidgetFrame'
 import { DashboardSwitcher, Dashboard, DashboardVisibility } from '@/components/dashboard/DashboardSwitcher'
+import {
+  createDashboardRecord,
+  getDashboardStorageKeys,
+  loadDashboardDataFromStorage,
+  persistDashboardData,
+  planDashboardDeletion,
+  removeDashboardData,
+} from '@/lib/dashboardPersistence'
 import { breakpoints, cols, createDefaultLayoutItem } from '@/lib/layoutUtils'
 import {
   applyValidatedBreakpointLayout,
@@ -323,18 +331,9 @@ function App() {
     localStorage.setItem('boxento-current-dashboard', currentDashboardId);
   }, [currentDashboardId]);
 
-  // Helper to get storage keys for a specific dashboard
-  const getDashboardStorageKeys = (dashboardId: string) => ({
-    widgets: `boxento-widgets-${dashboardId}`,
-    layouts: `boxento-layouts-${dashboardId}`,
-    configs: `boxento-configs-${dashboardId}`,
-  });
-
   // Save current dashboard's widgets and layouts before switching
   const saveCurrentDashboardData = () => {
-    const keys = getDashboardStorageKeys(currentDashboardId);
-    localStorage.setItem(keys.widgets, JSON.stringify(widgets));
-    localStorage.setItem(keys.layouts, JSON.stringify(layouts));
+    persistDashboardData(localStorage, currentDashboardId, widgets, layouts);
   };
 
   // Helper to generate fresh widgets with unique IDs
@@ -426,39 +425,19 @@ function App() {
 
   // Load widgets and layouts for a specific dashboard
   const loadDashboardData = async (dashboardId: string) => {
-    const keys = getDashboardStorageKeys(dashboardId);
-
-    // Try to load from dashboard-specific storage
-    const savedWidgets = localStorage.getItem(keys.widgets);
-    const savedLayouts = localStorage.getItem(keys.layouts);
-
-    let widgetsToLoad: Widget[];
-    let layoutsToLoad: { [key: string]: LayoutItem[] };
-
-    if (savedWidgets && savedLayouts) {
-      // Dashboard has saved data
-      widgetsToLoad = JSON.parse(savedWidgets);
-      layoutsToLoad = reconcileLayoutsWithWidgets(
-        JSON.parse(savedLayouts),
-        widgetsToLoad,
+    const { layouts: layoutsToLoad, widgets: widgetsToLoad } = loadDashboardDataFromStorage({
+      createFreshLayouts: (freshWidgets) => validateLayouts(generateLayoutsForWidgets(freshWidgets), { rebalanceWideSparse: true }),
+      createFreshWidgets: generateFreshDefaultWidgets,
+      dashboardId,
+      getDefaultLayouts,
+      getDefaultWidgets,
+      reconcileLayouts: (storedLayouts, storedWidgets) => reconcileLayoutsWithWidgets(
+        storedLayouts,
+        storedWidgets,
         { rebalanceWideSparse: true }
-      ).layouts;
-    } else if (dashboardId === 'personal') {
-      // Personal dashboard falls back to legacy storage
-      widgetsToLoad = loadFromLocalStorage(STORAGE_KEYS.WIDGETS, getDefaultWidgets());
-      layoutsToLoad = reconcileLayoutsWithWidgets(
-        loadFromLocalStorage(STORAGE_KEYS.LAYOUTS, getDefaultLayouts()),
-        widgetsToLoad,
-        { rebalanceWideSparse: true }
-      ).layouts;
-    } else {
-      // Non-personal dashboards without storage get fresh widgets with unique IDs
-      widgetsToLoad = generateFreshDefaultWidgets();
-      layoutsToLoad = validateLayouts(generateLayoutsForWidgets(widgetsToLoad), { rebalanceWideSparse: true });
-      // Save immediately so they persist
-      localStorage.setItem(keys.widgets, JSON.stringify(widgetsToLoad));
-      localStorage.setItem(keys.layouts, JSON.stringify(layoutsToLoad));
-    }
+      ).layouts,
+      storage: localStorage,
+    });
 
     // Load configs for these widgets
     const localConfigs = await configManager.getConfigs(true);
@@ -493,14 +472,8 @@ function App() {
     // Save current dashboard's data first
     saveCurrentDashboardData();
 
-    const newDashboard: Dashboard = {
-      id: `dashboard-${Date.now()}`,
-      name,
-      visibility,
-      sharedWith: [],
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-    };
+    const timestamp = Date.now();
+    const newDashboard = createDashboardRecord(name, visibility, timestamp);
     setDashboards(prev => [...prev, newDashboard]);
     setCurrentDashboardId(newDashboard.id);
 
@@ -513,9 +486,7 @@ function App() {
     setLayouts(validateLayouts(freshLayouts));
 
     // Save to the new dashboard's storage immediately
-    const keys = getDashboardStorageKeys(newDashboard.id);
-    localStorage.setItem(keys.widgets, JSON.stringify(freshWidgets));
-    localStorage.setItem(keys.layouts, JSON.stringify(freshLayouts));
+    persistDashboardData(localStorage, newDashboard.id, freshWidgets, freshLayouts);
 
     // Sync to Firestore if the dashboard is public or team
     if (visibility !== 'private') {
@@ -534,14 +505,20 @@ function App() {
   };
 
   const handleDeleteDashboard = async (dashboardId: string) => {
-    const dashboard = dashboards.find(d => d.id === dashboardId);
+    const {
+      dashboard,
+      nextDashboardId,
+      remainingDashboards,
+      shouldReloadDashboardId,
+    } = planDashboardDeletion({
+      currentDashboardId,
+      dashboardId,
+      dashboards,
+    });
     if (dashboard?.isDefault) return; // Can't delete default
 
     // Clean up storage for deleted dashboard
-    const keys = getDashboardStorageKeys(dashboardId);
-    localStorage.removeItem(keys.widgets);
-    localStorage.removeItem(keys.layouts);
-    localStorage.removeItem(keys.configs);
+    removeDashboardData(localStorage, dashboardId);
 
     // Delete from public-dashboards collection if it was public/team
     if (dashboard?.visibility !== 'private' && auth?.currentUser) {
@@ -552,11 +529,10 @@ function App() {
       }
     }
 
-    setDashboards(prev => prev.filter(d => d.id !== dashboardId));
-    if (currentDashboardId === dashboardId) {
-      setCurrentDashboardId('personal');
-      // Load personal dashboard data
-      loadDashboardData('personal');
+    setDashboards(remainingDashboards);
+    if (shouldReloadDashboardId) {
+      setCurrentDashboardId(nextDashboardId);
+      loadDashboardData(shouldReloadDashboardId);
     }
   };
 
@@ -1013,7 +989,7 @@ function App() {
     clearInteractionCompletionTimeout();
     setCompletedWidgetId(widgetId);
     interactionCompletionTimeoutRef.current = window.setTimeout(() => {
-      setCompletedWidgetId(currentWidgetId => (
+      setCompletedWidgetId((currentWidgetId) => (
         currentWidgetId === widgetId ? null : currentWidgetId
       ));
       interactionCompletionTimeoutRef.current = null;

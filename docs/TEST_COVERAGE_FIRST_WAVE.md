@@ -24,7 +24,19 @@ This first wave expands automated coverage around Boxento's highest-risk shared 
 - tablet breakpoint rendering
 - representative responsive widget rendering checks
 
+## Subsequent Coverage
+
+- Unit coverage for app-level dashboard flow persistence helpers in `tests/unit/dashboardPersistence.test.ts`
+  - scoped dashboard snapshot persistence during switching
+  - personal dashboard legacy fallback restoration
+  - fresh non-personal dashboard initialization and persistence
+  - create/delete dashboard metadata and cleanup planning
+- Browser coverage for multi-dashboard flows in `tests/e2e/dashboard-switching.spec.ts`
+  - switching between personal and non-personal dashboards
+  - restoring dashboard-scoped widget and layout state after reload
+  - creating and deleting dashboards through the UI
+  - confirming non-personal storage cleanup and personal/non-personal isolation
+
 ## Deferred Follow-Ups
 
-- [SUS-16](https://linear.app/sushaantu/issue/SUS-16/add-automated-coverage-for-dashboard-switching-and-cross-dashboard): dashboard switching, create/delete flows, and cross-dashboard persistence isolation
 - [SUS-17](https://linear.app/sushaantu/issue/SUS-17/expand-widget-coverage-for-richer-interactions-and-responsive-settings): richer widget interactions and responsive settings regressions for the next widget tranche
