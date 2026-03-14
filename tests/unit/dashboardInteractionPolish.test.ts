@@ -20,10 +20,14 @@ describe('dashboard interaction polish components', () => {
   it('renders the custom resize handle with the expected axis classes', () => {
     const html = renderToStaticMarkup(React.createElement(DashboardResizeHandle, {
       handleAxis: 'se',
+      className: 'probe-handle',
+      'data-probe': 'resize',
     }));
 
     expect(html).toContain('dashboard-resize-handle');
     expect(html).toContain('react-resizable-handle-se');
+    expect(html).toContain('probe-handle');
+    expect(html).toContain('data-probe="resize"');
     expect(html).toContain('dashboard-resize-handle__visual');
   });
 });

@@ -517,7 +517,8 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 /* Resize Handle - reverted to previous styling */
 .react-resizable-handle,
 .react-resizable .react-resizable-handle,
-.react-grid-item .react-resizable-handle {
+.react-grid-item .react-resizable-handle,
+.react-grid-item > .dashboard-resize-handle.react-resizable-handle {
   @apply absolute bottom-[6px] right-[6px] bg-none pointer-events-auto cursor-se-resize z-10;
   width: 44px;
   height: 44px;
@@ -573,6 +574,11 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   width: 7px;
   right: 7px;
   bottom: 9px;
+}
+
+.react-grid-item > .dashboard-resize-handle.react-resizable-handle.react-resizable-handle-se {
+  right: 6px;
+  bottom: 6px;
 }
 
 .dark .dashboard-resize-handle__visual::before,

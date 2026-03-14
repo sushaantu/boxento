@@ -98,6 +98,12 @@ type WidgetInteractionMode = 'dragging' | 'resizing';
 const WIDGET_INTERACTION_COMPLETION_DURATION_MS = 240;
 const REDUCED_MOTION_WIDGET_INTERACTION_COMPLETION_DURATION_MS = 140;
 
+const cloneLayoutsByBreakpoint = (sourceLayouts: LayoutsByBreakpoint): LayoutsByBreakpoint => (
+  Object.fromEntries(
+    Object.entries(sourceLayouts).map(([breakpoint, layout]) => [breakpoint, [...layout]])
+  )
+);
+
 function App() {
   // Get storage context for provider info
   const { providerType: _providerType, refresh: refreshStorage, isInitialized: storageInitialized } = useStorage();
@@ -871,7 +877,7 @@ function App() {
     const updatedWidgets = [...widgets, newWidget];
     
     // For each breakpoint, create a layout item
-    const updatedLayouts = { ...layouts };
+    const updatedLayouts = cloneLayoutsByBreakpoint(layouts);
     
     // For each breakpoint, add a layout item
     Object.keys(breakpoints).forEach((breakpoint) => {
@@ -1608,7 +1614,7 @@ function App() {
     if (widgets.length === 0 || !layouts) return;
 
     let needsUpdate = false;
-    const updatedLayouts = { ...layouts };
+    const updatedLayouts = cloneLayoutsByBreakpoint(layouts);
 
     // Check each breakpoint
     Object.keys(breakpoints).forEach(breakpoint => {
@@ -1667,7 +1673,7 @@ function App() {
         updatedWidgets = [...widgets, newWidget];
         
         // For each breakpoint, create a layout item
-        updatedLayouts = { ...layouts };
+        updatedLayouts = cloneLayoutsByBreakpoint(layouts);
         
         // For each breakpoint, add a layout item
         Object.keys(breakpoints).forEach((breakpoint) => {
