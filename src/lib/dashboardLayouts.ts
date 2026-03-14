@@ -280,6 +280,12 @@ export const validateLayouts = (
     const targetCols = cols[breakpoint];
     const fallbackCols = cols[fallbackBreakpoint];
 
+    // Preserve persisted wide-screen layouts as authored. Auto-scaling laptop layouts
+    // into wider breakpoints made the same dashboard drift on external displays.
+    if (targetCols > cols.lg) {
+      return;
+    }
+
     if (!currentLayout.length) {
       validatedLayouts[breakpoint] = scaleLayoutToCols(fallbackLayout, fallbackCols, targetCols);
       return;

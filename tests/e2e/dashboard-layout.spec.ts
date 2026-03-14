@@ -96,6 +96,73 @@ test('persists quick links drag and resize changes across reloads', async ({ pag
   expect(reloadedLayout).toEqual(persistedLayout);
 });
 
+test('keeps widget geometry stable when switching from laptop to 4K-class viewports', async ({ page }) => {
+  await page.setViewportSize({ width: 1512, height: 982 });
+
+  const widgets = Array.from({ length: 4 }, (_, index) => ({
+    id: `quick-links-${index + 1}`,
+    type: 'quick-links',
+    config: {
+      customTitle: `Quick Links ${index + 1}`,
+      links: [],
+    },
+  }));
+
+  const lgLayout = [
+    { i: 'quick-links-1', x: 0, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+    { i: 'quick-links-2', x: 3, y: 0, w: 2, h: 2, minW: 1, minH: 1 },
+    { i: 'quick-links-3', x: 5, y: 0, w: 3, h: 2, minW: 1, minH: 1 },
+    { i: 'quick-links-4', x: 8, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+  ];
+
+  await seedDashboard(page, {
+    widgets,
+    layouts: {
+      lg: lgLayout,
+    },
+  });
+
+  const captureRenderedLayout = async () => page.evaluate(() => {
+    const grid = document.querySelector('.react-grid-layout');
+    if (!(grid instanceof HTMLElement)) {
+      throw new Error('Grid layout is not available');
+    }
+
+    const gridRect = grid.getBoundingClientRect();
+    return Array.from(document.querySelectorAll('.react-grid-item'))
+      .map((element) => {
+        if (!(element instanceof HTMLElement)) {
+          return null;
+        }
+
+        const rect = element.getBoundingClientRect();
+        return {
+          id: element.dataset.widgetId || '',
+          x: Math.round(rect.left - gridRect.left),
+          y: Math.round(rect.top - gridRect.top),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        };
+      })
+      .filter((item): item is { id: string; x: number; y: number; width: number; height: number } => item !== null)
+      .sort((left, right) => left.id.localeCompare(right.id));
+  });
+
+  await expect(page.locator('.react-grid-item')).toHaveCount(4);
+  const laptopGeometry = await captureRenderedLayout();
+  const storedBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}'));
+
+  await page.setViewportSize({ width: 2560, height: 1440 });
+  await page.reload();
+
+  await expect(page.locator('.react-grid-item')).toHaveCount(4);
+  const externalDisplayGeometry = await captureRenderedLayout();
+  const storedAfter = await page.evaluate(() => JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}'));
+
+  expect(externalDisplayGeometry).toEqual(laptopGeometry);
+  expect(storedAfter).toEqual(storedBefore);
+});
+
 test('preserves drag persistence on dashboards with more than five widgets', async ({ page }) => {
   await page.setViewportSize({ width: 1512, height: 982 });
 

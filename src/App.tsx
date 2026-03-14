@@ -44,10 +44,14 @@ import {
   ValidateLayoutsOptions,
   applyWidgetLayoutConstraints,
   createLayoutsFromTemplates,
-  getBreakpointForWidth,
   validateLayout,
   validateLayouts,
 } from '@/lib/dashboardLayouts'
+import {
+  DASHBOARD_LAYOUT_MAX_WIDTH,
+  calculateDashboardRowHeight,
+  getDashboardBreakpointForWidth,
+} from '@/lib/dashboardViewport'
 import { useNetworkStatus } from '@/lib/useNetworkStatus'
 import { AppFooter } from '@/components/AppFooter'
 import { useStorage } from '@/lib/storage/StorageContext'
@@ -238,7 +242,7 @@ function App() {
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false);
   const [currentBreakpoint, setCurrentBreakpoint] = useState<string>(() => (
-    typeof window === 'undefined' ? 'lg' : getBreakpointForWidth(window.innerWidth)
+    typeof window === 'undefined' ? 'lg' : getDashboardBreakpointForWidth(window.innerWidth)
   ));
   const [isLayoutReady, setIsLayoutReady] = useState(false);
   const [isTransitionsEnabled, setIsTransitionsEnabled] = useState(false);
@@ -747,8 +751,9 @@ function App() {
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-      setCurrentBreakpoint(getBreakpointForWidth(window.innerWidth));
+      const nextWidth = window.innerWidth;
+      setWindowWidth(nextWidth);
+      setCurrentBreakpoint(getDashboardBreakpointForWidth(nextWidth));
     };
     
     window.addEventListener('resize', handleResize);
@@ -756,21 +761,7 @@ function App() {
   }, []);
   
   const rowHeight = useMemo(() => {
-    const columnCount = cols[currentBreakpoint as BreakpointName] || cols.lg;
-    const totalPadding = GRID.CONTAINER_PADDING * 2;
-    const totalMargins = GRID.ITEM_MARGIN * (columnCount - 1);
-    const usableWidth = windowWidth - totalPadding - totalMargins;
-    const columnWidth = usableWidth / columnCount;
-
-    if (windowWidth < 600) {
-      return columnWidth * 0.8;
-    }
-
-    if (windowWidth < 1200) {
-      return columnWidth * 0.9;
-    }
-
-    return columnWidth;
+    return calculateDashboardRowHeight(windowWidth, currentBreakpoint as BreakpointName);
   }, [currentBreakpoint, windowWidth]);
   
   const toggleTheme = (): void => {
@@ -1845,63 +1836,70 @@ function App() {
               </div>
             ) : (
               <div className="desktop-view-container">
-                {!isLayoutReady && widgets.length > 0 && (
-                  <div className="px-[10px] py-[10px]">
-                    <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-4 auto-rows-[100px]">
-                      <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
-                        <Skeleton className="w-full h-full rounded-2xl" />
-                      </div>
-                      <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
-                        <Skeleton className="w-full h-full rounded-2xl" />
-                      </div>
-                      <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
-                        <Skeleton className="w-full h-full rounded-2xl" />
-                      </div>
-                      <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
-                        <Skeleton className="w-full h-full rounded-2xl" />
+                <div style={{ width: '100%', maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH, margin: '0 auto' }}>
+                  {!isLayoutReady && widgets.length > 0 && (
+                    <div className="px-[10px] py-[10px]">
+                      <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-4 auto-rows-[100px]">
+                        <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
+                          <Skeleton className="w-full h-full rounded-2xl" />
+                        </div>
+                        <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-3">
+                          <Skeleton className="w-full h-full rounded-2xl" />
+                        </div>
+                        <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
+                          <Skeleton className="w-full h-full rounded-2xl" />
+                        </div>
+                        <div className="col-span-2 md:col-span-3 lg:col-span-3 row-span-2">
+                          <Skeleton className="w-full h-full rounded-2xl" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                <DashboardContextMenu onAddWidget={toggleWidgetSelector} onAutoArrange={handleAutoArrange}>
-                  <div>
-                    <ResponsiveReactGridLayout
-                      className={`layout ${!isTransitionsEnabled ? 'layout-loading' : ''}`}
-                      layouts={layouts}
-                      breakpoints={breakpoints}
-                      cols={cols}
-                      rowHeight={rowHeight}
-                      onLayoutChange={handleLayoutChange}
-                      onBreakpointChange={(newBreakpoint: string) => {
-                        if (newBreakpoint !== currentBreakpoint) {
-                          setCurrentBreakpoint(newBreakpoint);
-                        }
-                      }}
-                      onDragStart={handleDragStart}
-                      onDragStop={handleDragStop}
-                      onResizeStart={handleResizeStart}
-                      onResize={handleResize}
-                      onResizeStop={handleResizeStop}
-                      margin={[GRID.ITEM_MARGIN, GRID.ITEM_MARGIN]}
-                      containerPadding={[GRID.CONTAINER_PADDING, GRID.CONTAINER_PADDING]}
-                      draggableHandle=".widget-drag-handle"
-                      draggableCancel=".settings-button"
-                      useCSSTransforms={true}
-                      measureBeforeMount={false}
-                      compactType="vertical"
-                      verticalCompact={true}
-                      preventCollision={false}
-                      isResizable={true}
-                      isDraggable={true}
-                      isBounded={false}
-                      autoSize={true}
-                      transformScale={1}
-                      style={{ width: '100%', minHeight: '100%' }}
-                    >
-                      {renderWidgetItems()}
-                    </ResponsiveReactGridLayout>
-                  </div>
-                </DashboardContextMenu>
+                  )}
+                  <DashboardContextMenu onAddWidget={toggleWidgetSelector} onAutoArrange={handleAutoArrange}>
+                    <div>
+                      <ResponsiveReactGridLayout
+                        className={`layout ${!isTransitionsEnabled ? 'layout-loading' : ''}`}
+                        layouts={layouts}
+                        breakpoints={breakpoints}
+                        cols={cols}
+                        rowHeight={rowHeight}
+                        onLayoutChange={handleLayoutChange}
+                        onBreakpointChange={(newBreakpoint: string) => {
+                          if (newBreakpoint !== currentBreakpoint) {
+                            setCurrentBreakpoint(newBreakpoint);
+                          }
+                        }}
+                        onDragStart={handleDragStart}
+                        onDragStop={handleDragStop}
+                        onResizeStart={handleResizeStart}
+                        onResize={handleResize}
+                        onResizeStop={handleResizeStop}
+                        margin={[GRID.ITEM_MARGIN, GRID.ITEM_MARGIN]}
+                        containerPadding={[GRID.CONTAINER_PADDING, GRID.CONTAINER_PADDING]}
+                        draggableHandle=".widget-drag-handle"
+                        draggableCancel=".settings-button"
+                        useCSSTransforms={true}
+                        measureBeforeMount={false}
+                        compactType="vertical"
+                        verticalCompact={true}
+                        preventCollision={false}
+                        isResizable={true}
+                        isDraggable={true}
+                        isBounded={false}
+                        autoSize={true}
+                        transformScale={1}
+                        style={{
+                          width: '100%',
+                          maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH,
+                          margin: '0 auto',
+                          minHeight: '100%',
+                        }}
+                      >
+                        {renderWidgetItems()}
+                      </ResponsiveReactGridLayout>
+                    </div>
+                  </DashboardContextMenu>
+                </div>
               </div>
             )}
           </div>

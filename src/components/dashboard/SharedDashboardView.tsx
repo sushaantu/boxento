@@ -6,6 +6,11 @@ import { publicDashboardService, PublicDashboardData } from '@/lib/firestoreServ
 import { getWidgetComponent } from '@/components/widgets';
 import WidgetErrorBoundary from '@/components/widgets/common/WidgetErrorBoundary';
 import { breakpoints, cols } from '@/lib/layoutUtils';
+import {
+  DASHBOARD_LAYOUT_MAX_WIDTH,
+  calculateDashboardRowHeight,
+  getDashboardBreakpointForWidth,
+} from '@/lib/dashboardViewport';
 import { Loader2, Lock, AlertCircle, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/lib/firebase';
@@ -22,7 +27,9 @@ export function SharedDashboardView() {
   const [dashboard, setDashboard] = useState<PublicDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentBreakpoint, setCurrentBreakpoint] = useState('lg');
+  const [currentBreakpoint, setCurrentBreakpoint] = useState<keyof typeof cols>(() => (
+    typeof window === 'undefined' ? 'lg' : getDashboardBreakpointForWidth(window.innerWidth)
+  ));
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     if (typeof window !== 'undefined') {
@@ -46,27 +53,17 @@ export function SharedDashboardView() {
 
   // Track window resize
   useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
+    const handleResize = () => {
+      const nextWidth = window.innerWidth;
+      setWindowWidth(nextWidth);
+      setCurrentBreakpoint(getDashboardBreakpointForWidth(nextWidth));
+    };
+
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Calculate row height based on window width (same as main app)
-  const calculateRowHeight = (): number => {
-    const totalPadding = 40;
-    const totalMargins = 15 * (12 - 1);
-    const usableWidth = windowWidth - totalPadding - totalMargins;
-    const columnWidth = usableWidth / 12;
-
-    if (windowWidth < 600) {
-      return Math.max(60, columnWidth * 0.8);
-    } else if (windowWidth < 1200) {
-      return columnWidth * 0.9;
-    }
-    return columnWidth;
-  };
-
-  const rowHeight = calculateRowHeight();
+  const rowHeight = calculateDashboardRowHeight(windowWidth, currentBreakpoint);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -222,26 +219,33 @@ export function SharedDashboardView() {
 
       {/* Dashboard content */}
       <main className="flex-1 pt-16 md:pt-20">
-        <ResponsiveGridLayout
-          className="layout"
-          layouts={dashboard.layouts}
-          breakpoints={breakpoints}
-          cols={cols}
-          rowHeight={rowHeight}
-          isDraggable={false}
-          isResizable={false}
-          onBreakpointChange={(bp: string) => setCurrentBreakpoint(bp)}
-          margin={[15, 15]}
-          containerPadding={[10, 10]}
-          useCSSTransforms={true}
-          compactType="vertical"
-        >
-          {dashboard.widgets.map((widget) => (
-            <div key={widget.id} className="widget-wrapper">
-              {renderWidget(widget)}
-            </div>
-          ))}
-        </ResponsiveGridLayout>
+        <div style={{ width: '100%', maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH, margin: '0 auto' }}>
+          <ResponsiveGridLayout
+            className="layout"
+            layouts={dashboard.layouts}
+            breakpoints={breakpoints}
+            cols={cols}
+            rowHeight={rowHeight}
+            isDraggable={false}
+            isResizable={false}
+            onBreakpointChange={(bp: string) => setCurrentBreakpoint(bp as keyof typeof cols)}
+            margin={[15, 15]}
+            containerPadding={[10, 10]}
+            useCSSTransforms={true}
+            compactType="vertical"
+            style={{
+              width: '100%',
+              maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH,
+              margin: '0 auto',
+            }}
+          >
+            {dashboard.widgets.map((widget) => (
+              <div key={widget.id} className="widget-wrapper">
+                {renderWidget(widget)}
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        </div>
       </main>
 
       {/* Footer */}

@@ -123,20 +123,17 @@ describe('dashboardLayouts', () => {
     ]);
   });
 
-  it('scales and rebalances matching wide layouts during validation', () => {
+  it('keeps wide layouts empty when only a laptop layout is persisted', () => {
     const lgLayout = [
       createLayoutItem({ i: 'left', x: 0, y: 0, w: 3, h: 3 }),
       createLayoutItem({ i: 'right', x: 9, y: 0, w: 3, h: 3 }),
     ];
 
-    const validated = validateLayouts({
-      lg: lgLayout,
-      xxxl: lgLayout.map((item) => ({ ...item })),
-    }, { rebalanceWideSparse: true });
+    const validated = validateLayouts({ lg: lgLayout }, { rebalanceWideSparse: true });
 
-    expect(validated.xxxl.map((item) => [item.i, item.x, item.w])).toEqual([
-      ['left', 0, 12],
-      ['right', 12, 12],
-    ]);
+    expect(validated.lg).toEqual(lgLayout);
+    expect(validated.xl).toEqual([]);
+    expect(validated.xxl).toEqual([]);
+    expect(validated.xxxl).toEqual([]);
   });
 });
