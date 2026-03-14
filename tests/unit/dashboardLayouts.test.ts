@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyValidatedBreakpointLayout,
   applyWidgetLayoutConstraints,
   getBreakpointForWidth,
   rebalanceWideSparseLayout,
@@ -108,6 +109,31 @@ describe('dashboardLayouts', () => {
       const current = scaled[index];
       expect(current.x).toBeGreaterThanOrEqual(previous.x + previous.w);
     }
+  });
+
+  it('updates only the active breakpoint with a validated persisted layout', () => {
+    const savedLayouts = {
+      lg: [
+        createLayoutItem({ i: 'a', x: 0, y: 0, w: 3, h: 3 }),
+      ],
+      md: [
+        createLayoutItem({ i: 'a', x: 0, y: 0, w: 1, h: 1 }),
+      ],
+    };
+
+    const updated = applyValidatedBreakpointLayout(savedLayouts, 'md', [
+      createLayoutItem({ i: 'a', x: 1, y: 2, w: 1, h: 1 }),
+      createLayoutItem({ i: 'b', x: 4, y: 5, w: 1, h: 1 }),
+    ]);
+
+    expect(updated.lg).toEqual(savedLayouts.lg);
+    expect(updated.md).toEqual([
+      createLayoutItem({ i: 'a', x: 1, y: 2, w: 1, h: 1 }),
+      createLayoutItem({ i: 'b', x: 4, y: 5, w: 1, h: 1 }),
+    ]);
+    expect(savedLayouts.md).toEqual([
+      createLayoutItem({ i: 'a', x: 0, y: 0, w: 1, h: 1 }),
+    ]);
   });
 
   it('rebalances sparse single-row wide layouts into evenly filled rows', () => {

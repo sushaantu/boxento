@@ -100,6 +100,15 @@ export const clampLayoutItemToCols = (item: LayoutItem, colCount: number): Layou
 
 export const validateLayout = (layout: LayoutItem[]): LayoutItem[] => layout.map(validateLayoutItem);
 
+export const applyValidatedBreakpointLayout = (
+  layouts: LayoutsByBreakpoint,
+  breakpoint: BreakpointName,
+  layout: LayoutItem[]
+): LayoutsByBreakpoint => ({
+  ...layouts,
+  [breakpoint]: validateLayout(layout),
+});
+
 export const applyWidgetLayoutConstraints = (
   item: LayoutItem,
   widget: Widget,

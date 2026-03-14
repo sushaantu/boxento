@@ -38,13 +38,13 @@ import DashboardWidgetFrame from '@/components/dashboard/DashboardWidgetFrame'
 import { DashboardSwitcher, Dashboard, DashboardVisibility } from '@/components/dashboard/DashboardSwitcher'
 import { breakpoints, cols, createDefaultLayoutItem } from '@/lib/layoutUtils'
 import {
+  applyValidatedBreakpointLayout,
   BREAKPOINT_ORDER,
   BreakpointName,
   LayoutsByBreakpoint,
   ValidateLayoutsOptions,
   applyWidgetLayoutConstraints,
   createLayoutsFromTemplates,
-  validateLayout,
   validateLayouts,
 } from '@/lib/dashboardLayouts'
 import {
@@ -251,7 +251,7 @@ function App() {
   
   const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1200);
   const [widgetSelectorOpen, setWidgetSelectorOpen] = useState<boolean>(false);
-  const [currentBreakpoint, setCurrentBreakpoint] = useState<string>(() => (
+  const [currentBreakpoint, setCurrentBreakpoint] = useState<BreakpointName>(() => (
     typeof window === 'undefined' ? 'lg' : getDashboardBreakpointForWidth(window.innerWidth)
   ));
   const [isLayoutReady, setIsLayoutReady] = useState(false);
@@ -1064,12 +1064,10 @@ function App() {
       return;
     }
 
-    const updatedLayouts = {
-      ...layoutsRef.current,
-      [currentBreakpoint]: validateLayout(currentLayout),
-    };
-
-    void saveLayouts(updatedLayouts, false);
+    void saveLayouts(
+      applyValidatedBreakpointLayout(layoutsRef.current, currentBreakpoint, currentLayout),
+      false
+    );
   };
 
   useEffect(() => {
@@ -1138,12 +1136,10 @@ function App() {
     setLiveResizeDimensions(null);
     finishWidgetInteraction(activeResizingWidgetId);
 
-    const updatedLayouts = {
-      ...layoutsRef.current,
-      [currentBreakpoint]: validateLayout(currentLayout),
-    };
-
-    void saveLayouts(updatedLayouts, false);
+    void saveLayouts(
+      applyValidatedBreakpointLayout(layoutsRef.current, currentBreakpoint, currentLayout),
+      false
+    );
   };
   
   // Toggle widget selector
@@ -1933,8 +1929,8 @@ function App() {
                         rowHeight={rowHeight}
                         onLayoutChange={handleLayoutChange}
                         onBreakpointChange={(newBreakpoint: string) => {
-                          if (newBreakpoint !== currentBreakpoint) {
-                            setCurrentBreakpoint(newBreakpoint);
+                          if (newBreakpoint in cols && newBreakpoint !== currentBreakpoint) {
+                            setCurrentBreakpoint(newBreakpoint as BreakpointName);
                           }
                         }}
                         onDragStart={handleDragStart}
