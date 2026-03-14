@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { seedDashboard } from './helpers/dashboardSeed';
 
@@ -48,6 +48,114 @@ const readStoredWidgetConfigs = async (page: Page) => (
   page.evaluate<Record<string, StoredWidgetConfig>, string>((storageKey) => JSON.parse(localStorage.getItem(storageKey) || '{}'), PERSONAL_DASHBOARD_STORAGE_KEYS.widgetConfigs)
 );
 
+const readStoredLayoutX = async (page: Page, widgetId: string) => (
+  page.evaluate(([storageKey, currentWidgetId]) => {
+    const layouts = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    return layouts.lg?.find((item: { i: string; x: number }) => item.i === currentWidgetId)?.x ?? -1;
+  }, [PERSONAL_DASHBOARD_STORAGE_KEYS.layouts, widgetId] as const)
+);
+
+const readFirstTextNodeCenter = async (locator: Locator) => (
+  locator.evaluate((element) => {
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (node) => (
+          node.textContent && node.textContent.trim().length > 0
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_SKIP
+        ),
+      }
+    );
+
+    const textNode = walker.nextNode();
+    const fallbackRect = element.getBoundingClientRect();
+
+    if (!textNode) {
+      return {
+        x: fallbackRect.left + fallbackRect.width / 2,
+        y: fallbackRect.top + fallbackRect.height / 2,
+      };
+    }
+
+    const range = document.createRange();
+    range.selectNodeContents(textNode);
+    const textRect = Array.from(range.getClientRects()).find((rect) => rect.width > 0 && rect.height > 0) ?? fallbackRect;
+
+    return {
+      x: textRect.left + textRect.width / 2,
+      y: textRect.top + textRect.height / 2,
+    };
+  })
+);
+
+const assertWidgetInteractionInactive = async (widget: Locator) => {
+  await expect.poll(async () => widget.getAttribute('data-widget-interaction')).toBeNull();
+  await expect.poll(async () => widget.getAttribute('data-widget-complete')).toBeNull();
+};
+
+const dragFromTextNodeWithoutStartingWidgetInteraction = async (
+  page: Page,
+  widget: Locator,
+  control: Locator,
+  expectedLayoutX: number,
+  widgetId: string
+) => {
+  await control.scrollIntoViewIfNeeded();
+  const { x, y } = await readFirstTextNodeCenter(control);
+
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await assertWidgetInteractionInactive(widget);
+
+  await page.mouse.move(x + 120, y + 14, { steps: 10 });
+  await assertWidgetInteractionInactive(widget);
+
+  await page.mouse.up();
+  await assertWidgetInteractionInactive(widget);
+  await expect.poll(async () => readStoredLayoutX(page, widgetId)).toBe(expectedLayoutX);
+};
+
+const readOverflowingLeafNodes = async (page: Page, widgetId: string) => (
+  page.locator(`.react-grid-item[data-widget-id="${widgetId}"]`).evaluate((element) => {
+    const widgetRect = element.getBoundingClientRect();
+
+    return Array.from(element.querySelectorAll<HTMLElement>('*'))
+      .map((node) => {
+        const text = node.textContent?.trim();
+        if (!text || node.children.length > 0) {
+          return null;
+        }
+
+        const rect = node.getBoundingClientRect();
+        const exceedsBounds = (
+          rect.left < widgetRect.left - 1
+          || rect.right > widgetRect.right + 1
+          || rect.top < widgetRect.top - 1
+          || rect.bottom > widgetRect.bottom + 1
+        );
+        const hasScrollOverflow = (
+          node.scrollWidth > node.clientWidth + 1
+          || node.scrollHeight > node.clientHeight + 1
+        );
+
+        if (!exceedsBounds && !hasScrollOverflow) {
+          return null;
+        }
+
+        return {
+          text,
+          className: String(node.className),
+          clientHeight: node.clientHeight,
+          clientWidth: node.clientWidth,
+          scrollHeight: node.scrollHeight,
+          scrollWidth: node.scrollWidth,
+        };
+      })
+      .filter(Boolean);
+  })
+);
 test('persists quick links drag and resize changes across reloads', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await seedDashboard(page, {
@@ -115,85 +223,6 @@ test('persists quick links drag and resize changes across reloads', async ({ pag
   const reloadedLayout = reloadedLayouts.lg?.find((item: { i: string }) => item.i === 'quick-links-1') ?? null;
 
   expect(reloadedLayout).toEqual(persistedLayout);
-});
-
-test('shows clearer drag and resize affordances during dashboard interactions', async ({ page }) => {
-  await page.setViewportSize({ width: 1400, height: 900 });
-  await seedDashboard(page, {
-    widgets: [
-      { id: 'quick-links-1', type: 'quick-links', config: { customTitle: 'Quick Links', links: [] } },
-    ],
-    layouts: {
-      lg: [
-        { i: 'quick-links-1', x: 0, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
-      ],
-    },
-  });
-
-  const widget = page.locator('.react-grid-item[data-widget-id="quick-links-1"]');
-  const dragAffordance = widget.locator('.widget-drag-affordance');
-  const dragHandle = widget.locator('.widget-drag-handle').first();
-  const resizeHandle = widget.locator('.react-resizable-handle-se');
-
-  await expect(widget).toBeVisible();
-  await expect(dragAffordance).toBeVisible();
-
-  const resizeBox = await resizeHandle.boundingBox();
-  if (!resizeBox) {
-    throw new Error('Quick Links resize handle is not available');
-  }
-
-  expect(resizeBox.width).toBeGreaterThanOrEqual(40);
-  expect(resizeBox.height).toBeGreaterThanOrEqual(40);
-
-  const readResizeHandleOpacity = async () => (
-    resizeHandle.evaluate((element) => Number.parseFloat(window.getComputedStyle(element).opacity))
-  );
-
-  const idleOpacity = await readResizeHandleOpacity();
-  expect(idleOpacity).toBeGreaterThan(0.3);
-
-  await widget.hover();
-  await expect.poll(readResizeHandleOpacity).toBeGreaterThan(idleOpacity);
-
-  const dragBox = await dragHandle.boundingBox();
-  if (!dragBox) {
-    throw new Error('Quick Links drag handle is not available');
-  }
-
-  await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + dragBox.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(dragBox.x + dragBox.width / 2 + 120, dragBox.y + dragBox.height / 2 + 12, { steps: 8 });
-
-  await expect(widget).toHaveAttribute('data-widget-interaction', 'dragging');
-
-  await page.mouse.up();
-
-  await expect.poll(async () => widget.getAttribute('data-widget-interaction')).toBeNull();
-  await expect.poll(async () => widget.getAttribute('data-widget-complete')).toBeNull();
-
-  const refreshedResizeBox = await resizeHandle.boundingBox();
-  if (!refreshedResizeBox) {
-    throw new Error('Quick Links resize handle is not available after dragging');
-  }
-
-  await page.mouse.move(
-    refreshedResizeBox.x + refreshedResizeBox.width / 2,
-    refreshedResizeBox.y + refreshedResizeBox.height / 2
-  );
-  await page.mouse.down();
-  await page.mouse.move(
-    refreshedResizeBox.x + refreshedResizeBox.width / 2 + 90,
-    refreshedResizeBox.y + refreshedResizeBox.height / 2 + 70,
-    { steps: 8 }
-  );
-
-  await expect(widget).toHaveAttribute('data-widget-interaction', 'resizing');
-
-  await page.mouse.up();
-
-  await expect.poll(async () => widget.getAttribute('data-widget-interaction')).toBeNull();
-  await expect.poll(async () => widget.getAttribute('data-widget-complete')).toBeNull();
 });
 
 test('keeps widget geometry stable when switching from laptop to 4K-class viewports', async ({ page }) => {
@@ -330,6 +359,140 @@ test('keeps quick links app header controls from dragging the widget', async ({ 
 
   await clearSearchButton.click();
   await expect(searchInput).toHaveValue('');
+});
+
+test('keeps app-mode text button controls from triggering widget press or drag visuals', async ({ page }) => {
+  await page.route('https://www.googleapis.com/calendar/v3/calendars/**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        items: [
+          {
+            id: 'evt-1',
+            summary: 'Team sync',
+            start: { dateTime: '2026-03-18T14:00:00.000Z' },
+            end: { dateTime: '2026-03-18T15:00:00.000Z' },
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.setViewportSize({ width: 1512, height: 1400 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'calendar-app',
+        type: 'calendar',
+        config: {
+          googleCalendarConnected: true,
+          viewMode: 'month',
+          calendars: [
+            {
+              id: 'primary',
+              name: 'Primary',
+              color: '#4285F4',
+              selected: true,
+            },
+          ],
+        },
+      },
+      {
+        id: 'todo-app',
+        type: 'todo',
+        config: {
+          title: 'Operations Todo',
+          items: [
+            { id: 'todo-1', text: 'Pay rent', completed: false, createdAt: '2026-03-12T00:00:00.000Z', sortOrder: 0 },
+          ],
+          showCompletedItems: true,
+          sortOrder: 'manual',
+        },
+      },
+      {
+        id: 'quick-links-app',
+        type: 'quick-links',
+        config: {
+          customTitle: 'Quick Links',
+          links: [
+            { id: 1, title: 'Boxento', url: 'https://boxento.test', favicon: '', category: 'Utilities' },
+          ],
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'calendar-app', x: 0, y: 0, w: 6, h: 6, minW: 2, minH: 2 },
+        { i: 'todo-app', x: 6, y: 0, w: 6, h: 6, minW: 2, minH: 2 },
+        { i: 'quick-links-app', x: 0, y: 6, w: 6, h: 6, minW: 2, minH: 2 },
+      ],
+    },
+  });
+
+  await page.evaluate(() => {
+    localStorage.setItem('googleAccessToken-calendar-app', 'test-access-token');
+    localStorage.setItem('googleRefreshToken-calendar-app', 'test-refresh-token');
+    localStorage.setItem('googleTokenExpiry-calendar-app', String(Date.now() + 60 * 60 * 1000));
+  });
+  await page.reload();
+
+  const calendarWidget = page.locator('.react-grid-item[data-widget-id="calendar-app"]');
+  const todoWidget = page.locator('.react-grid-item[data-widget-id="todo-app"]');
+  const quickLinksWidget = page.locator('.react-grid-item[data-widget-id="quick-links-app"]');
+
+  const weekButton = calendarWidget.getByRole('button', { name: 'Week' });
+  await expect(weekButton).toBeVisible();
+
+  await dragFromTextNodeWithoutStartingWidgetInteraction(
+    page,
+    calendarWidget,
+    weekButton,
+    0,
+    'calendar-app'
+  );
+
+  const weekPoint = await readFirstTextNodeCenter(weekButton);
+  await page.mouse.click(weekPoint.x, weekPoint.y);
+  await assertWidgetInteractionInactive(calendarWidget);
+  await expect.poll(async () => weekButton.getAttribute('class')).toContain('bg-background');
+  await expect.poll(async () => readStoredLayoutX(page, 'calendar-app')).toBe(0);
+
+  const todoComposer = todoWidget.getByRole('textbox', { name: 'New task' });
+  await todoComposer.fill('Call supplier');
+  const todoAddButton = todoWidget.getByRole('button', { name: 'Add' });
+
+  await dragFromTextNodeWithoutStartingWidgetInteraction(
+    page,
+    todoWidget,
+    todoAddButton,
+    6,
+    'todo-app'
+  );
+
+  const todoAddPoint = await readFirstTextNodeCenter(todoAddButton);
+  await page.mouse.click(todoAddPoint.x, todoAddPoint.y);
+  await assertWidgetInteractionInactive(todoWidget);
+  await expect(todoWidget).toContainText('Call supplier');
+  await expect.poll(async () => readStoredLayoutX(page, 'todo-app')).toBe(6);
+
+  const quickLinksAddButton = quickLinksWidget.getByRole('button', { name: 'Add Link' });
+  await expect(quickLinksAddButton).toBeVisible();
+
+  await dragFromTextNodeWithoutStartingWidgetInteraction(
+    page,
+    quickLinksWidget,
+    quickLinksAddButton,
+    0,
+    'quick-links-app'
+  );
+
+  const quickLinksAddPoint = await readFirstTextNodeCenter(quickLinksAddButton);
+  await page.mouse.click(quickLinksAddPoint.x, quickLinksAddPoint.y);
+  await assertWidgetInteractionInactive(quickLinksWidget);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Add Link' })).toBeVisible();
+  await expect.poll(async () => readStoredLayoutX(page, 'quick-links-app')).toBe(0);
 });
 
 test('preserves drag persistence on dashboards with more than five widgets', async ({ page }) => {
@@ -590,7 +753,7 @@ test('renders audited 1x1 widgets without header chrome', async ({ page }) => {
         id: 'world-clocks-1',
         type: 'world-clocks',
         config: {
-          timezones: [{ id: 1, name: 'Tokyo, Japan', timezone: 'Asia/Tokyo' }],
+          timezones: [{ id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' }],
         },
       },
       {
@@ -613,10 +776,73 @@ test('renders audited 1x1 widgets without header chrome', async ({ page }) => {
   const clocksWidget = page.locator('.react-grid-item[data-widget-id="world-clocks-1"]');
   await expect(clocksWidget).toBeVisible();
   await expect(clocksWidget.getByRole('heading', { name: 'World Clocks' })).toHaveCount(0);
-  await expect(clocksWidget).toContainText('Tokyo');
+  await expect(clocksWidget).toContainText('Mexico');
+  expect(await readOverflowingLeafNodes(page, 'world-clocks-1')).toEqual([]);
 
   const yearProgressWidget = page.locator('.react-grid-item[data-widget-id="year-progress-1"]');
   await expect(yearProgressWidget).toBeVisible();
   await expect(yearProgressWidget.getByRole('heading', { name: 'Year Progress' })).toHaveCount(0);
   await expect(yearProgressWidget.getByText(/\d+%/)).toBeVisible();
+});
+
+test('keeps world clock audit layouts within bounds from 1x1 through 4x4', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1200 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'world-clocks-1',
+        type: 'world-clocks',
+        config: {
+          timezones: [{ id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' }],
+        },
+      },
+      {
+        id: 'world-clocks-2',
+        type: 'world-clocks',
+        config: {
+          timezones: [
+            { id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' },
+            { id: 2, name: 'San Francisco, USA', timezone: 'America/Los_Angeles' },
+          ],
+        },
+      },
+      {
+        id: 'world-clocks-3',
+        type: 'world-clocks',
+        config: {
+          timezones: [
+            { id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' },
+            { id: 2, name: 'San Francisco, USA', timezone: 'America/Los_Angeles' },
+            { id: 3, name: 'New York, USA', timezone: 'America/New_York' },
+          ],
+        },
+      },
+      {
+        id: 'world-clocks-4',
+        type: 'world-clocks',
+        config: {
+          timezones: [
+            { id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' },
+            { id: 2, name: 'San Francisco, USA', timezone: 'America/Los_Angeles' },
+            { id: 3, name: 'New York, USA', timezone: 'America/New_York' },
+            { id: 4, name: 'Los Angeles, USA', timezone: 'America/Los_Angeles' },
+          ],
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'world-clocks-1', x: 0, y: 0, w: 1, h: 1, minW: 1, minH: 1 },
+        { i: 'world-clocks-2', x: 1, y: 0, w: 2, h: 2, minW: 1, minH: 1 },
+        { i: 'world-clocks-3', x: 3, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+        { i: 'world-clocks-4', x: 6, y: 0, w: 4, h: 4, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  for (const widgetId of ['world-clocks-1', 'world-clocks-2', 'world-clocks-3', 'world-clocks-4']) {
+    const widget = page.locator(`.react-grid-item[data-widget-id="${widgetId}"]`);
+    await expect(widget).toBeVisible();
+    expect(await readOverflowingLeafNodes(page, widgetId)).toEqual([]);
+  }
 });

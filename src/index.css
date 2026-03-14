@@ -146,43 +146,6 @@
 /* Widget Interaction Styles */
 .widget-drag-handle {
   @apply cursor-move touch-none select-none;
-  position: relative;
-  min-height: 44px;
-  border-radius: calc(var(--border-radius-standard) - 6px);
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.widget-drag-handle::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(148, 163, 184, 0.08));
-  opacity: 0;
-  transition: opacity 0.18s ease;
-  pointer-events: none;
-}
-
-.widget-drag-affordance {
-  @apply flex shrink-0 items-center justify-center rounded-full;
-  background: rgba(148, 163, 184, 0.14);
-  color: rgba(71, 85, 105, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  transition:
-    background-color 0.18s ease,
-    color 0.18s ease,
-    border-color 0.18s ease,
-    transform 0.18s ease;
-}
-
-.dark .widget-drag-affordance {
-  background: rgba(148, 163, 184, 0.16);
-  color: rgba(226, 232, 240, 0.92);
-  border-color: rgba(148, 163, 184, 0.18);
 }
 
 .widget-container > div:not(.widget-drag-handle) {
@@ -206,8 +169,7 @@
 }
 
 .widget-container:hover .settings-button,
-.widget-container:focus-within .settings-button,
-.react-grid-item[data-widget-interaction] .settings-button {
+.widget-container:focus-within .settings-button {
   @apply opacity-100;
 }
 
@@ -240,38 +202,6 @@
 
 .react-grid-item.widget-wrapper {
   @apply h-full w-full;
-  position: relative;
-  isolation: isolate;
-  transform-origin: center center;
-  transition:
-    transform 0.18s ease-out,
-    box-shadow 0.18s ease-out,
-    opacity 0.18s ease-out;
-  will-change: transform;
-}
-
-.react-grid-item.widget-wrapper::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  border-radius: var(--border-radius-standard);
-  opacity: 0;
-  box-shadow:
-    inset 0 0 0 1px rgba(59, 130, 246, 0.12),
-    0 16px 34px rgba(15, 23, 42, 0.08);
-  transition:
-    opacity 0.18s ease,
-    box-shadow 0.18s ease;
-}
-
-.react-grid-item .widget-container {
-  transition:
-    transform 0.18s ease,
-    box-shadow 0.18s ease,
-    border-color 0.18s ease,
-    background-color 0.18s ease;
-  will-change: transform, box-shadow;
 }
 
 /* Mouse interaction states */
@@ -296,34 +226,6 @@
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.react-grid-item.widget-wrapper:hover::after,
-.react-grid-item.widget-wrapper:focus-within::after {
-  opacity: 1;
-}
-
-.react-grid-item:hover .widget-drag-handle::before,
-.react-grid-item:focus-within .widget-drag-handle::before,
-.react-grid-item[data-widget-interaction] .widget-drag-handle::before {
-  opacity: 1;
-}
-
-.react-grid-item:hover .widget-drag-affordance,
-.react-grid-item:focus-within .widget-drag-affordance,
-.react-grid-item[data-widget-interaction] .widget-drag-affordance {
-  background: rgba(59, 130, 246, 0.16);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: rgb(37, 99, 235);
-  transform: translateY(-1px);
-}
-
-.dark .react-grid-item:hover .widget-drag-affordance,
-.dark .react-grid-item:focus-within .widget-drag-affordance,
-.dark .react-grid-item[data-widget-interaction] .widget-drag-affordance {
-  background: rgba(96, 165, 250, 0.16);
-  border-color: rgba(96, 165, 250, 0.28);
-  color: rgb(191, 219, 254);
-}
-
 /* Active resizing state */
 .react-grid-item.resizing {
   @apply z-10 shadow-lg;
@@ -337,36 +239,6 @@
 .react-grid-item.react-draggable-dragging > .widget-container,
 .react-grid-item.react-draggable-dragging > .widget-wrapper {
   transition: none !important;
-}
-
-.react-grid-item.widget-wrapper[data-widget-interaction="dragging"]::after {
-  opacity: 1;
-  box-shadow:
-    inset 0 0 0 1px rgba(59, 130, 246, 0.24),
-    0 20px 42px rgba(37, 99, 235, 0.18);
-}
-
-.react-grid-item[data-widget-interaction="dragging"] .widget-container {
-  transform: translateY(-2px) scale(1.01);
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
-  border-color: rgba(59, 130, 246, 0.24);
-}
-
-.react-grid-item.widget-wrapper[data-widget-interaction="resizing"]::after {
-  opacity: 1;
-  box-shadow:
-    inset 0 0 0 1px rgba(14, 165, 233, 0.24),
-    0 18px 36px rgba(14, 165, 233, 0.16);
-}
-
-.react-grid-item[data-widget-interaction="resizing"] .widget-container {
-  transform: scale(0.992);
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
-  border-color: rgba(14, 165, 233, 0.28);
-}
-
-.react-grid-item[data-widget-complete="true"] .widget-container {
-  animation: widgetInteractionComplete 240ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Grid Layout container styles */
@@ -412,30 +284,6 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   filter: saturate(0.96);
 }
 
-/*
- * =================================
- * MIN/MAX CONSTRAINT FEEDBACK
- * =================================
- */
-
-/* Visual feedback when hitting min size constraint */
-.react-grid-item.at-min-size {
-  animation: constraintPulse 0.3s ease-out;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4) !important;
-}
-
-/* Visual feedback when hitting max size constraint */
-.react-grid-item.at-max-size {
-  animation: constraintPulse 0.3s ease-out;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4) !important;
-}
-
-@keyframes constraintPulse {
-  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
-  50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3); }
-  100% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4); }
-}
-
 /* 
  * =================================
  * PLACEHOLDER STYLES
@@ -453,10 +301,10 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
               width 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94),
               height 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
-  /* Subtle gradient background with slight blue tint */
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(147, 197, 253, 0.05)) !important;
+  /* Subtle neutral placeholder */
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.02)) !important;
   /* Soft border */
-  border: 1.5px dashed rgba(59, 130, 246, 0.3) !important;
+  border: 1.5px dashed rgba(15, 23, 42, 0.12) !important;
   /* Subtle shadow */
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.02),
@@ -517,122 +365,55 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 /* Resize Handle - reverted to previous styling */
 .react-resizable-handle,
 .react-resizable .react-resizable-handle,
-.react-grid-item .react-resizable-handle,
-.react-grid-item > .dashboard-resize-handle.react-resizable-handle {
+.react-grid-item .react-resizable-handle {
   @apply absolute bottom-[6px] right-[6px] bg-none pointer-events-auto cursor-se-resize z-10;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
-  opacity: 0.58;
-  transform: translate3d(0, 0, 0);
-  transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.18s ease;
 }
 
-.dashboard-resize-handle__visual {
-  position: relative;
-  display: block;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, rgba(148, 163, 184, 0.18), rgba(255, 255, 255, 0.9));
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  box-shadow:
-    0 8px 16px rgba(15, 23, 42, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
-}
-
-.dark .dashboard-resize-handle__visual {
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.96), rgba(51, 65, 85, 0.92));
-  border-color: rgba(148, 163, 184, 0.22);
-  box-shadow:
-    0 10px 18px rgba(2, 6, 23, 0.32),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.dashboard-resize-handle__visual::before,
-.dashboard-resize-handle__visual::after {
+.react-resizable-handle::after,
+.react-resizable .react-resizable-handle::after,
+.react-grid-item .react-resizable-handle::after {
   content: '';
   position: absolute;
-  right: 5px;
-  bottom: 5px;
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(71, 85, 105, 0.72);
-  transform-origin: right center;
-  transform: rotate(-45deg);
+  right: 2px;
+  bottom: 2px;
+  width: 8px;
+  height: 8px;
+  border-right: 1px solid rgba(15, 23, 42, 0.28);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.28);
 }
 
-.dashboard-resize-handle__visual::before {
-  width: 11px;
-}
-
-.dashboard-resize-handle__visual::after {
-  width: 7px;
-  right: 7px;
-  bottom: 9px;
-}
-
-.dark .dashboard-resize-handle__visual::before,
-.dark .dashboard-resize-handle__visual::after {
-  background: rgba(226, 232, 240, 0.72);
+.dark .react-resizable-handle::after,
+.dark .react-resizable .react-resizable-handle::after,
+.dark .react-grid-item .react-resizable-handle::after {
+  border-right-color: rgba(226, 232, 240, 0.34);
+  border-bottom-color: rgba(226, 232, 240, 0.34);
 }
 
 .widget-container:hover .react-resizable-handle,
 .react-grid-item:hover .react-resizable-handle,
-.react-grid-item:focus-within .react-resizable-handle,
-.react-grid-item[data-widget-interaction] .react-resizable-handle {
+.react-grid-item:focus-within .react-resizable-handle {
   opacity: 1;
-  transform: translate3d(-1px, -1px, 0);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .react-resizable-handle,
+  .react-resizable .react-resizable-handle,
+  .react-grid-item .react-resizable-handle {
+    width: 22px;
+    height: 22px;
+    opacity: 1;
+  }
 }
 
 /* Adding a subtle hover effect to grid items */
 .react-grid-item:hover {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
   @apply dark:shadow-lg dark:shadow-black/20;
-}
-
-@keyframes widgetInteractionComplete {
-  0% {
-    transform: translateY(-2px) scale(1.01);
-  }
-
-  55% {
-    transform: translateY(0) scale(0.996);
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .widget-drag-handle,
-  .widget-drag-handle::before,
-  .widget-drag-affordance,
-  .react-grid-item.widget-wrapper,
-  .react-grid-item.widget-wrapper::after,
-  .react-grid-item .widget-container,
-  .react-resizable-handle {
-    transition-duration: 0.01ms !important;
-  }
-
-  .react-grid-item[data-widget-complete="true"] .widget-container {
-    animation: widgetInteractionCompleteReduced 140ms linear;
-  }
-}
-
-@keyframes widgetInteractionCompleteReduced {
-  from {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
-  }
-
-  to {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
 }
 
 /* Widget Header Styles */

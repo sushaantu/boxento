@@ -50,9 +50,12 @@ const getPriorityBorder = (priority: number) => {
     case 4: return 'border-red-500 hover:border-red-600';
     case 3: return 'border-orange-500 hover:border-orange-600';
     case 2: return 'border-blue-500 hover:border-blue-600';
-    default: return 'border-border hover:border-[#db4c3f]';
+    default: return 'border-border hover:border-muted-foreground/60';
   }
 };
+
+const COMPLETED_TASK_CHROME_CLASS = 'bg-foreground border-foreground';
+const COMPLETED_TASK_ICON_CLASS = 'text-background';
 
 const getPriorityLabel = (priority: number) => {
   switch (priority) {
@@ -91,7 +94,7 @@ const TaskContent = memo(({ content, completed, className }: { content: string; 
           href={match[2]}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#db4c3f] hover:underline"
+          className="text-foreground hover:underline"
         >
           {match[1]}
         </a>
@@ -141,7 +144,7 @@ const Task = memo(({
           onClick={() => onToggle(task.id, !task.completed)}
           className={`flex-shrink-0 ${compact ? 'w-4 h-4' : 'w-[18px] h-[18px]'} rounded-full border-2 ${
             task.completed
-              ? 'bg-[#db4c3f] border-[#db4c3f]'
+              ? COMPLETED_TASK_CHROME_CLASS
               : getPriorityBorder(task.priority)
           } flex items-center justify-center transition-colors relative`}
           aria-label={task.completed ? 'Mark task as incomplete' : 'Mark task as complete'}
@@ -149,23 +152,30 @@ const Task = memo(({
         >
           {task.completed && (
             <Check
-              className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-white ${isPending ? 'opacity-50' : ''}`}
+              className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} ${COMPLETED_TASK_ICON_CLASS} ${isPending ? 'opacity-50' : ''}`}
               strokeWidth={3}
             />
           )}
           {isPending && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} animate-spin text-[#db4c3f]`} />
+              <Loader2
+                className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} animate-spin ${
+                  task.completed ? COMPLETED_TASK_ICON_CLASS : 'text-foreground'
+                }`}
+              />
             </div>
           )}
         </button>
       )}
       {readOnly && (
         <div className={`flex-shrink-0 ${compact ? 'w-4 h-4' : 'w-[18px] h-[18px]'} rounded-full border-2 ${
-          task.completed ? 'bg-[#db4c3f] border-[#db4c3f]' : getPriorityBorder(task.priority)
+          task.completed ? COMPLETED_TASK_CHROME_CLASS : getPriorityBorder(task.priority)
         } flex items-center justify-center`}>
           {task.completed && (
-            <Check className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-white`} strokeWidth={3} />
+            <Check
+              className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} ${COMPLETED_TASK_ICON_CLASS}`}
+              strokeWidth={3}
+            />
           )}
         </div>
       )}
@@ -779,13 +789,13 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
                               }}
                               className={`flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 ${
                                 task.completed
-                                  ? 'bg-[#db4c3f] border-[#db4c3f]'
+                                  ? COMPLETED_TASK_CHROME_CLASS
                                   : getPriorityBorder(task.priority)
                               } flex items-center justify-center transition-colors relative`}
                               disabled={pendingTasks.has(task.id)}
                             >
                               {pendingTasks.has(task.id) && (
-                                <Loader2 className="w-3 h-3 animate-spin text-[#db4c3f]" />
+                                <Loader2 className="w-3 h-3 animate-spin text-foreground" />
                               )}
                             </button>
                           ) : (

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { GripVertical, Settings2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { CardHeader, CardTitle } from '@/components/ui/card';
@@ -55,15 +55,6 @@ export const WidgetShell = React.forwardRef<HTMLDivElement, WidgetShellProps>(
             )}
           >
             <div className="flex min-w-0 items-center gap-2">
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'widget-drag-affordance shrink-0',
-                  compactHeader ? 'h-5 w-5' : 'h-6 w-6'
-                )}
-              >
-                <GripVertical size={compactHeader ? 11 : 13} strokeWidth={1.9} />
-              </span>
               {icon ? (
                 <span className="shrink-0 text-muted-foreground">{icon}</span>
               ) : null}

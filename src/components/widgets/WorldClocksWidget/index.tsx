@@ -190,6 +190,76 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     }
   }
 
+  const clampValue = (value: number, min: number, max: number): number => (
+    Math.min(max, Math.max(min, value))
+  );
+
+  const interpolate = (start: number, end: number, progress: number): number => (
+    start + (end - start) * progress
+  );
+
+  const getAreaScale = (minArea: number, maxArea: number): number => (
+    clampValue((width * height - minArea) / (maxArea - minArea), 0, 1)
+  );
+
+  const getCityLabel = (name: string): string => name.split(',')[0].trim();
+
+  const abbreviateWord = (word: string, maxLength: number): string => {
+    if (word.length <= maxLength) {
+      return word;
+    }
+
+    if (maxLength <= 1) {
+      return word.slice(0, Math.max(maxLength, 0));
+    }
+
+    return `${word.slice(0, maxLength - 1)}.`;
+  };
+
+  const getTinyLabelLines = (name: string): string[] => {
+    const city = getCityLabel(name);
+
+    if (city.length <= 10) {
+      return [city];
+    }
+
+    const words = city.split(/\s+/).filter(Boolean);
+
+    if (words.length === 1) {
+      return [abbreviateWord(words[0], 9)];
+    }
+
+    if (words.length === 2) {
+      if (city.length <= 12) {
+        return [city];
+      }
+
+      return words.map((word) => abbreviateWord(word, 7));
+    }
+
+    const firstLine = words
+      .slice(0, 2)
+      .map((word, index) => (index === 0 ? abbreviateWord(word, 6) : `${word[0]}.`))
+      .join(' ');
+    const secondLine = words.slice(2).map((word) => `${word[0]}.`).join(' ');
+
+    return [firstLine, secondLine];
+  };
+
+  const getTimezoneDisplay = (timezoneItem: TimezoneItem) => {
+    const formattedTime = formatTime(currentTime, timezoneItem.timezone);
+    const [timeWithSeconds = '12:00:00', period = ''] = formattedTime.split(' ');
+
+    return {
+      city: getCityLabel(timezoneItem.name),
+      time: timeWithSeconds.split(':').slice(0, 2).join(':'),
+      period,
+      diff: getTimeDiff(timezoneItem.timezone),
+      relativeDate: getRelativeDate(currentTime, timezoneItem.timezone),
+      dateLine: formatDateLine(currentTime, timezoneItem.timezone),
+    };
+  };
+
   /**
    * Removes a timezone from the list
    *
@@ -473,20 +543,32 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderCompactView = (): React.ReactElement => {
     const mainTimezone = timezones[0] || { id: 0, name: 'Local', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
-    const timeString = formatTime(currentTime, mainTimezone.timezone).split(':').slice(0, 2).join(':');
-    const period = formatTime(currentTime, mainTimezone.timezone).split(' ')[1];
-    const label = mainTimezone.name.split(',')[0];
+    const { time, period } = getTimezoneDisplay(mainTimezone);
+    const labelLines = getTinyLabelLines(mainTimezone.name);
 
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
-        <div className="text-[2.15rem] font-semibold leading-none tracking-tight text-foreground">
-          {timeString}
+      <div className="flex h-full flex-col items-center justify-between px-1 py-0.5 text-center">
+        <div
+          className="font-semibold text-foreground"
+          style={{ fontSize: '1.64rem', lineHeight: 1.06, letterSpacing: '-0.045em' }}
+        >
+          {time}
         </div>
-        <div className="max-w-[5.25rem] truncate whitespace-nowrap text-[11px] font-medium leading-none text-foreground">
-          {label}
+        <div
+          className="flex min-h-[1.35rem] flex-col items-center justify-center text-foreground/90"
+          style={{ fontSize: '0.58rem', lineHeight: 1.05 }}
+        >
+          {labelLines.map((line, index) => (
+            <span key={`${mainTimezone.id}-${index}`} className="block max-w-full whitespace-nowrap">
+              {line}
+            </span>
+          ))}
         </div>
-        <div className="text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-          {period}
+        <div
+          className="rounded-full bg-muted px-1.5 py-0.5 font-semibold uppercase text-muted-foreground"
+          style={{ fontSize: '0.47rem', lineHeight: 1, letterSpacing: '0.16em' }}
+        >
+          {period || 'LOCAL'}
         </div>
       </div>
     );
@@ -634,44 +716,92 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     // For small number of timezones, use a cleaner layout
     if (timezones.length <= 2) {
       return (
-        <div className="grid grid-cols-1 gap-3 p-3 h-full transition-all duration-300">
-          {timezones.map(tz => (
-            <div key={tz.id} className="flex justify-between items-center h-full transition-all duration-300">
-              <div className="flex flex-col">
-                <div className="font-medium text-sm tracking-tight text-foreground">{tz.name}</div>
-                <div className="text-xs text-muted-foreground tracking-wide">{getTimeDiff(tz.timezone)}</div>
-              </div>
-              <div className="flex flex-col items-end">
-                <div className="text-2xl font-light tracking-tighter leading-tight">
-                  {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+        <div className="flex h-full flex-col gap-2.5 p-2.5 transition-all duration-300">
+          {timezones.map(tz => {
+            const display = getTimezoneDisplay(tz);
+
+            return (
+              <div
+                key={tz.id}
+                className="flex min-h-0 flex-1 items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/35 px-2.5 py-2 transition-all duration-300"
+              >
+                <div className="min-w-0 flex-1">
+                  <div
+                    className="truncate font-semibold text-foreground"
+                    style={{ fontSize: '0.78rem', lineHeight: 1.15 }}
+                  >
+                    {display.city}
+                  </div>
+                  <div
+                    className="mt-1 text-muted-foreground"
+                    style={{ fontSize: '0.68rem', lineHeight: 1.1 }}
+                  >
+                    {display.diff}
+                  </div>
                 </div>
-                <div className="text-xs text-muted-foreground leading-none tracking-wide">
-                  {formatTime(currentTime, tz.timezone).split(' ')[1]}
+                <div className="shrink-0 text-right">
+                  <div
+                    className="font-light text-foreground"
+                    style={{ fontSize: '1.45rem', lineHeight: 1, letterSpacing: '-0.05em' }}
+                  >
+                    {display.time}
+                  </div>
+                  <div
+                    className="mt-1 uppercase text-muted-foreground"
+                    style={{ fontSize: '0.6rem', lineHeight: 1.1, letterSpacing: '0.14em' }}
+                  >
+                    {display.period}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
     }
 
     // For 3+ timezones, use a more compact list view with scrolling
     return (
-      <div className="flex flex-col space-y-2 overflow-y-auto h-full py-2 px-3 transition-all duration-300">
-        {timezones.map(tz => (
-          <div key={tz.id} className="flex justify-between items-center py-1 transition-all duration-300">
-            <div className="flex flex-col min-w-0">
-              <div className="font-medium text-xs tracking-tight text-foreground truncate">{tz.name}</div>
-              <div className="text-xs text-muted-foreground tracking-wide">{getTimeDiff(tz.timezone)}</div>
+      <div className="flex h-full flex-col gap-1.5 overflow-y-auto p-2.5 transition-all duration-300">
+        {timezones.map(tz => {
+          const display = getTimezoneDisplay(tz);
+
+          return (
+            <div
+              key={tz.id}
+              className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/30 px-2 py-1.5 transition-all duration-300"
+            >
+              <div className="min-w-0 flex-1">
+                <div
+                  className="truncate font-medium text-foreground"
+                  style={{ fontSize: '0.72rem', lineHeight: 1.15 }}
+                >
+                  {display.city}
+                </div>
+                <div
+                  className="mt-0.5 text-muted-foreground"
+                  style={{ fontSize: '0.62rem', lineHeight: 1.1 }}
+                >
+                  {display.diff}
+                </div>
+              </div>
+              <div className="shrink-0 text-right">
+                <div
+                  className="font-light text-foreground"
+                  style={{ fontSize: '1.05rem', lineHeight: 1, letterSpacing: '-0.045em' }}
+                >
+                  {display.time}
+                </div>
+                <div
+                  className="uppercase text-muted-foreground"
+                  style={{ fontSize: '0.55rem', lineHeight: 1.1, letterSpacing: '0.12em' }}
+                >
+                  {display.period}
+                </div>
+              </div>
             </div>
-            <div className="text-base font-light tracking-tighter whitespace-nowrap ml-1">
-              {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
-              <span className="text-xs ml-0.5 text-muted-foreground font-normal tracking-normal">
-                {formatTime(currentTime, tz.timezone).split(' ')[1]}
-              </span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -683,16 +813,38 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderMediumView = (): React.ReactElement => {
     return (
-      <div className="grid grid-cols-2 gap-1 p-1 h-full overflow-y-auto">
-        {timezones.map(tz => (
-          <div key={tz.id} className="flex flex-col items-center justify-center p-1.5 bg-muted dark:bg-opacity-50 rounded">
-            <div className="text-base font-bold">
-              {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+      <div className="grid h-full grid-cols-2 overflow-y-auto p-2" style={{ gap: '0.55rem' }}>
+        {timezones.map(tz => {
+          const display = getTimezoneDisplay(tz);
+
+          return (
+            <div
+              key={tz.id}
+              className="flex flex-col items-center justify-between rounded-xl border border-border/60 bg-muted/35 px-2 py-2 text-center"
+            >
+              <div
+                className="min-h-[1.7rem] w-full px-1 font-semibold text-foreground"
+                style={{ fontSize: '0.72rem', lineHeight: 1.1 }}
+              >
+                {display.city}
+              </div>
+              <div
+                className="mt-1 font-light text-foreground"
+                style={{ fontSize: '1.15rem', lineHeight: 1, letterSpacing: '-0.05em' }}
+              >
+                {display.time}
+              </div>
+              <div
+                className="mt-1 flex items-center justify-center gap-1 text-muted-foreground"
+                style={{ fontSize: '0.56rem', lineHeight: 1.1, letterSpacing: '0.08em' }}
+              >
+                <span>{display.diff}</span>
+                <span className="h-1 w-1 rounded-full bg-border" />
+                <span className="uppercase">{display.period}</span>
+              </div>
             </div>
-            <div className="text-xs font-medium truncate w-full text-center">{tz.name}</div>
-            <div className="text-xs text-muted-foreground">{getTimeDiff(tz.timezone)}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -774,48 +926,102 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderTallView = (): React.ReactElement => {
     const isDarkMode = document.documentElement.classList.contains('dark');
+    const layoutScale = getAreaScale(6, 16);
+    const clockSize = Math.round(interpolate(46, 64, layoutScale));
+    const gap = `${interpolate(0.625, 0.95, layoutScale)}rem`;
+    const cardPadding = `${interpolate(0.65, 0.95, layoutScale)}rem`;
+    const titleSize = `${interpolate(0.76, 0.94, layoutScale)}rem`;
+    const timeSize = `${interpolate(1.05, 1.55, layoutScale)}rem`;
+    const metaSize = `${interpolate(0.58, 0.76, layoutScale)}rem`;
 
     // For 1-4 timezones, show larger clocks with more details
     if (timezones.length <= 4) {
       return (
-        <div className="grid grid-cols-2 gap-2 h-full transition-all duration-300">
-          {timezones.map(tz => (
-            <div key={tz.id} className="flex flex-col items-center justify-center h-full transition-all duration-300">
-              <div className="text-xs font-medium mb-0.5 truncate w-full text-center text-foreground">
-                {tz.name}
+        <div className="grid h-full grid-cols-2 transition-all duration-300" style={{ gap }}>
+          {timezones.map(tz => {
+            const display = getTimezoneDisplay(tz);
+
+            return (
+              <div
+                key={tz.id}
+                className="flex h-full flex-col items-center justify-between rounded-2xl border border-border/60 bg-muted/35 text-center transition-all duration-300"
+                style={{ padding: cardPadding }}
+              >
+                <div
+                  className="min-h-[1.6rem] w-full px-1 font-semibold text-foreground"
+                  style={{ fontSize: titleSize, lineHeight: 1.12 }}
+                >
+                  {display.city}
+                </div>
+                <div className="my-1 flex grow items-center justify-center">
+                  {renderClock(tz.timezone, clockSize, isDarkMode)}
+                </div>
+                <div
+                  className="font-light text-foreground"
+                  style={{ fontSize: timeSize, lineHeight: 1, letterSpacing: '-0.05em' }}
+                >
+                  {display.time}
+                </div>
+                <div
+                  className="mt-1 flex items-center justify-center gap-1 text-muted-foreground"
+                  style={{ fontSize: metaSize, lineHeight: 1.1 }}
+                >
+                  <span>{display.diff}</span>
+                  <span className="h-1 w-1 rounded-full bg-border" />
+                  <span className="uppercase" style={{ letterSpacing: '0.14em' }}>
+                    {display.period}
+                  </span>
+                </div>
               </div>
-              <div className="mb-0.5">
-                {renderClock(tz.timezone, 50, isDarkMode)}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                {getTimeDiff(tz.timezone)}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
     }
 
     // For 5+ timezones, use a compact layout with smaller clocks
     return (
-      <div className="grid grid-cols-2 auto-rows-min gap-1 h-full overflow-y-auto transition-all duration-300">
-        {timezones.map(tz => (
-          <div key={tz.id} className="flex items-center p-1 transition-all duration-300">
-            <div className="mr-1.5">
-              {renderClock(tz.timezone, 30, isDarkMode)}
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-              <div className="text-xs font-medium truncate text-foreground">{tz.name}</div>
-              <div className="text-xs font-bold">
-                {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
+      <div className="grid h-full grid-cols-2 auto-rows-min overflow-y-auto transition-all duration-300" style={{ gap: '0.55rem' }}>
+        {timezones.map(tz => {
+          const display = getTimezoneDisplay(tz);
+
+          return (
+            <div
+              key={tz.id}
+              className="flex items-center gap-2 rounded-xl border border-border/50 bg-muted/30 px-2 py-1.5 transition-all duration-300"
+            >
+              <div className="shrink-0">
+                {renderClock(tz.timezone, 32, isDarkMode)}
               </div>
-              <div className="text-xs text-muted-foreground">{getTimeDiff(tz.timezone)}</div>
+              <div className="min-w-0 flex-1">
+                <div
+                  className="truncate font-semibold text-foreground"
+                  style={{ fontSize: '0.72rem', lineHeight: 1.15 }}
+                >
+                  {display.city}
+                </div>
+                <div
+                  className="font-light text-foreground"
+                  style={{ fontSize: '0.95rem', lineHeight: 1.05, letterSpacing: '-0.04em' }}
+                >
+                  {display.time}
+                  <span
+                    className="ml-1 uppercase text-muted-foreground"
+                    style={{ fontSize: '0.55rem', lineHeight: 1, letterSpacing: '0.12em' }}
+                  >
+                    {display.period}
+                  </span>
+                </div>
+                <div
+                  className="mt-0.5 text-muted-foreground"
+                  style={{ fontSize: '0.6rem', lineHeight: 1.1 }}
+                >
+                  {display.diff}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -827,29 +1033,62 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderFullView = (): React.ReactElement => {
     const isDarkMode = document.documentElement.classList.contains('dark');
+    const layoutScale = getAreaScale(16, 25);
+    const columns = timezones.length <= 4 ? 2 : 3;
+    const clockSize = Math.round(interpolate(72, 84, layoutScale));
+    const gap = `${interpolate(0.8, 1.1, layoutScale)}rem`;
+    const cardPadding = `${interpolate(0.95, 1.2, layoutScale)}rem`;
+    const titleSize = `${interpolate(0.94, 1.08, layoutScale)}rem`;
+    const timeSize = interpolate(1.7, 2.05, layoutScale);
+    const metaSize = `${interpolate(0.68, 0.8, layoutScale)}rem`;
 
     return (
-      <div className="grid grid-cols-3 gap-3 h-full overflow-y-auto transition-all duration-300">
-        {timezones.map(tz => (
-          <div key={tz.id} className="flex flex-col items-center justify-center h-full transition-all duration-300">
-            <div className="text-sm font-medium mb-1 text-foreground truncate w-full text-center">{tz.name}</div>
-            <div className="mb-2">
-              {renderClock(tz.timezone, 70, isDarkMode)}
+      <div
+        className="grid h-full overflow-y-auto transition-all duration-300"
+        style={{ gap, gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      >
+        {timezones.map(tz => {
+          const display = getTimezoneDisplay(tz);
+
+          return (
+            <div
+              key={tz.id}
+              className="flex h-full flex-col items-center justify-between rounded-2xl border border-border/60 bg-muted/35 text-center transition-all duration-300"
+              style={{ padding: cardPadding }}
+            >
+              <div
+                className="min-h-[1.8rem] w-full px-1 font-semibold text-foreground"
+                style={{ fontSize: titleSize, lineHeight: 1.15 }}
+              >
+                {display.city}
+              </div>
+              <div className="my-2">
+                {renderClock(tz.timezone, clockSize, isDarkMode)}
+              </div>
+              <div
+                className="font-light text-foreground"
+                style={{ fontSize: `${timeSize}rem`, lineHeight: 1, letterSpacing: '-0.055em' }}
+              >
+                {display.time}
+                <span
+                  className="ml-1 font-medium uppercase text-muted-foreground"
+                  style={{ fontSize: `${Math.max(0.78, timeSize * 0.42)}rem`, letterSpacing: '0.14em' }}
+                >
+                  {display.period}
+                </span>
+              </div>
+              <div
+                className="mt-1 text-muted-foreground"
+                style={{ fontSize: metaSize, lineHeight: 1.15, letterSpacing: '0.05em' }}
+              >
+                {display.relativeDate}
+              </div>
+              <div className="text-muted-foreground" style={{ fontSize: metaSize, lineHeight: 1.15 }}>
+                {display.diff}
+              </div>
             </div>
-            <div className="text-lg font-light tracking-tighter">
-              {formatTime(currentTime, tz.timezone).split(':').slice(0, 2).join(':')}
-              <span className="text-sm font-normal text-muted-foreground ml-1">
-                {formatTime(currentTime, tz.timezone).split(' ')[1]}
-              </span>
-            </div>
-            <div className="text-xs text-muted-foreground mt-1 tracking-wide">
-              {getRelativeDate(currentTime, tz.timezone)}
-            </div>
-            <div className="text-xs text-muted-foreground tracking-wide">
-              {getTimeDiff(tz.timezone)}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
@@ -1320,7 +1559,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   const suppressHeader = isTiny || isApp;
 
   return (
-    <div ref={widgetRef} className={`widget-container h-full flex flex-col ${isTiny ? 'widget-drag-handle' : ''}`}>
+    <div ref={widgetRef} className={`widget-container h-full flex flex-col ${isTiny ? 'widget-drag-handle p-2.5' : ''}`}>
       {!suppressHeader && (
         <WidgetHeader
           title="World Clocks"
@@ -1329,7 +1568,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
         />
       )}
 
-      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-2' : ''}`}>
+      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-1' : ''}`}>
         {renderContent()}
       </div>
 

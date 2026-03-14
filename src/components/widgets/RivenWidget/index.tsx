@@ -44,6 +44,9 @@ const defaultConfig: RivenWidgetConfig = {
   tmdbToken: DEFAULT_TMDB_TOKEN,
 };
 
+const RIVEN_CHROME_BADGE_CLASS = 'bg-muted text-foreground';
+const RIVEN_CHROME_ICON_CLASS = 'text-muted-foreground';
+
 // State display mapping
 const STATE_LABELS: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
   Completed: { label: 'Completed', color: 'text-green-600 dark:text-green-400', icon: CheckCircle2 },
@@ -427,9 +430,9 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
       >
         <div className={`flex-shrink-0 ${compact ? 'w-5' : 'w-6'}`}>
           {item.type === 'movie' ? (
-            <Film className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-purple-500`} />
+            <Film className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} ${RIVEN_CHROME_ICON_CLASS}`} />
           ) : (
-            <Tv className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} text-blue-500`} />
+            <Tv className={`${compact ? 'w-4 h-4' : 'w-5 h-5'} ${RIVEN_CHROME_ICON_CLASS}`} />
           )}
         </div>
         <div className="flex-grow min-w-0">
@@ -509,7 +512,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
   // 1x1 ICON: media count
   const renderTiny = () => (
     <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
-      <Film className="w-4 h-4 text-purple-500" />
+      <Film className={`w-4 h-4 ${RIVEN_CHROME_ICON_CLASS}`} />
       <div className="text-lg font-semibold leading-none text-foreground">
         {totalItems || 0}
       </div>
@@ -524,7 +527,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
         variant="ghost"
         size="sm"
         onClick={openRiven}
-        className="shrink-0 h-auto flex items-center gap-1.5 rounded-full bg-purple-500/10 px-2.5 py-1 font-medium text-purple-700 dark:text-purple-300"
+        className={`shrink-0 h-auto flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium ${RIVEN_CHROME_BADGE_CLASS}`}
       >
         <Film className="w-3 h-3" />
         {totalItems} items
@@ -562,8 +565,8 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
         onClick={openRiven}
         className="h-auto flex items-center gap-2 p-1.5 rounded-lg hover:bg-accent transition-colors"
       >
-        <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-          <Film className="w-4 h-4 text-purple-500" />
+        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+          <Film className={`w-4 h-4 ${RIVEN_CHROME_ICON_CLASS}`} />
         </div>
         <div className="text-left min-w-0">
           <div className="text-xs font-semibold truncate">Riven</div>
@@ -588,8 +591,8 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
   const renderDefault = () => (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="flex items-center gap-2 mb-2">
-        <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-          <Film className="w-4 h-4 text-purple-500" />
+        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+          <Film className={`w-4 h-4 ${RIVEN_CHROME_ICON_CLASS}`} />
         </div>
         <div className="flex-grow min-w-0">
           <div className="text-sm font-semibold">Riven</div>
@@ -606,7 +609,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
 
       {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
       {!readOnly && !hasApiKey && searchResults.length > 0 && (
-        <div className="text-[10px] text-amber-500 mt-1">Configure API key to add items</div>
+        <div className="text-[10px] text-muted-foreground mt-1">Configure API key to add items</div>
       )}
 
       <div className="flex-1 overflow-auto mt-2 space-y-0.5">
@@ -664,10 +667,10 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
         </div>
         {stats && (
           <div className="flex gap-1.5 mb-2 text-[10px]">
-            <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-purple-700 dark:text-purple-300">
+            <span className={`rounded-full px-2 py-0.5 ${RIVEN_CHROME_BADGE_CLASS}`}>
               {stats.total_movies} movies
             </span>
-            <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-blue-700 dark:text-blue-300">
+            <span className={`rounded-full px-2 py-0.5 ${RIVEN_CHROME_BADGE_CLASS}`}>
               {stats.total_shows} shows
             </span>
           </div>
@@ -731,7 +734,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
             {!readOnly && renderSearchForm(false)}
             {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
             {!readOnly && !hasApiKey && searchResults.length > 0 && (
-              <div className="text-[10px] text-amber-500 mt-1">Configure API key to add items</div>
+              <div className="text-[10px] text-muted-foreground mt-1">Configure API key to add items</div>
             )}
             <div className="flex-1 overflow-auto mt-2 space-y-0.5">
               {searchResults.map((item) => renderResultItem(item, false))}
@@ -887,9 +890,9 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   {selectedItem.type === 'movie' ? (
-                    <Film className="w-8 h-8 text-purple-500 flex-shrink-0" />
+                    <Film className={`w-8 h-8 ${RIVEN_CHROME_ICON_CLASS} flex-shrink-0`} />
                   ) : (
-                    <Tv className="w-8 h-8 text-blue-500 flex-shrink-0" />
+                    <Tv className={`w-8 h-8 ${RIVEN_CHROME_ICON_CLASS} flex-shrink-0`} />
                   )}
                   <div className="min-w-0">
                     <h3 className="text-lg font-semibold">{selectedItem.title}</h3>
@@ -954,18 +957,18 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
           {stats ? (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] p-4 text-center">
+                <div className="rounded-xl bg-muted p-4 text-center">
                   <div className="text-3xl font-bold text-foreground">{stats.total_items}</div>
                   <div className="text-xs text-muted-foreground mt-1">Total Items</div>
                 </div>
-                <div className="rounded-xl bg-purple-500/5 dark:bg-purple-500/10 p-4 text-center">
-                  <div className="text-3xl font-bold text-purple-700 dark:text-purple-300">
+                <div className="rounded-xl bg-muted p-4 text-center">
+                  <div className="text-3xl font-bold text-foreground">
                     {stats.total_movies}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">Movies</div>
                 </div>
-                <div className="rounded-xl bg-blue-500/5 dark:bg-blue-500/10 p-4 text-center">
-                  <div className="text-3xl font-bold text-blue-700 dark:text-blue-300">
+                <div className="rounded-xl bg-muted p-4 text-center">
+                  <div className="text-3xl font-bold text-foreground">
                     {stats.total_shows}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">TV Shows</div>
