@@ -90,6 +90,12 @@ test('adds tasks in compact and wide todo layouts without extra submit chrome', 
 });
 
 test('adds, edits, reorders, and deletes todo items in the app layout', async ({ page }) => {
+  const taskToAdd = 'Call supplier';
+  const taskToEdit = 'Review PR';
+  const editedTaskText = 'Review release PR';
+  const taskToDelete = 'Plan trip';
+  const reorderedTaskTexts = [taskToAdd, 'Pay rent', editedTaskText];
+
   await page.setViewportSize({ width: 1440, height: 960 });
   await seedDashboard(page, {
     widgets: [
@@ -120,39 +126,35 @@ test('adds, edits, reorders, and deletes todo items in the app layout', async ({
   await expect(widget.getByRole('heading', { name: 'Operations Todo' })).toBeVisible();
 
   const composer = widget.getByRole('textbox', { name: 'New task' });
-  await composer.fill('Call supplier');
+  await composer.fill(taskToAdd);
   await widget.getByRole('button', { name: 'Add' }).click();
-  await expect(widget).toContainText('Call supplier');
+  await expect(widget).toContainText(taskToAdd);
 
-  const reviewRow = findTodoRow(widget, 'Review PR');
+  const reviewRow = findTodoRow(widget, taskToEdit);
   await reviewRow.hover();
   await reviewRow.getByRole('button', { name: 'Edit task' }).click();
 
   const reviewEditor = widget.locator('li').getByRole('textbox').first();
-  await reviewEditor.fill('Review release PR');
+  await reviewEditor.fill(editedTaskText);
   await reviewEditor.press('Enter');
-  await expect(widget).toContainText('Review release PR');
+  await expect(widget).toContainText(editedTaskText);
 
-  const sourceRow = findTodoRow(widget, 'Call supplier');
+  const sourceRow = findTodoRow(widget, taskToAdd);
   const targetRow = findTodoRow(widget, 'Pay rent');
   await sourceRow.dragTo(targetRow, {
     targetPosition: { x: 24, y: 6 },
   });
 
-  const deleteRow = findTodoRow(widget, 'Plan trip');
+  const deleteRow = findTodoRow(widget, taskToDelete);
   await deleteRow.hover();
   await deleteRow.getByRole('button', { name: 'Delete task' }).click();
-  await expect(widget).not.toContainText('Plan trip');
+  await expect(widget).not.toContainText(taskToDelete);
 
-  await expect.poll(async () => readStoredTodoTexts(page, 'todo-app')).toEqual([
-    'Call supplier',
-    'Pay rent',
-    'Review release PR',
-  ]);
+  await expect.poll(async () => readStoredTodoTexts(page, 'todo-app')).toEqual(reorderedTaskTexts);
 
   await page.reload();
   await expect(widget.getByRole('heading', { name: 'Operations Todo' })).toBeVisible();
-  await expect(widget).toContainText('Call supplier');
-  await expect(widget).toContainText('Review release PR');
-  await expect(widget).not.toContainText('Plan trip');
+  await expect(widget).toContainText(taskToAdd);
+  await expect(widget).toContainText(editedTaskText);
+  await expect(widget).not.toContainText(taskToDelete);
 });

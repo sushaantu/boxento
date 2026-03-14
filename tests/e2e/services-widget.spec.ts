@@ -72,6 +72,17 @@ test('keeps compact services cards within a mobile two-column widget', async ({ 
 });
 
 test('persists services settings changes from the tablet dialog flow', async ({ page }) => {
+  const updatedTitle = 'Homelab Services';
+  const updatedCheckInterval = 120;
+  const serviceToAdd = {
+    category: 'Media',
+    description: 'Photo backup',
+    name: 'Immich',
+    url: 'https://immich.test',
+  } as const;
+  const serviceToDelete = 'Boxento';
+  const remainingServiceNames = ['Paisa', 'Jellyfin', serviceToAdd.name];
+
   await page.route('https://*.test/**', (route) => route.fulfill({ status: 204, body: '' }));
   await page.setViewportSize({ width: 834, height: 1112 });
   await seedDashboard(page, {
@@ -105,34 +116,34 @@ test('persists services settings changes from the tablet dialog flow', async ({ 
   const settingsDialog = page.getByRole('dialog').filter({ hasText: 'Services Settings' });
   await expect(settingsDialog).toBeVisible();
 
-  await settingsDialog.locator('#title-input').fill('Homelab Services');
+  await settingsDialog.locator('#title-input').fill(updatedTitle);
   await settingsDialog.locator('#status-toggle').click();
-  await settingsDialog.locator('#interval-input').fill('120');
+  await settingsDialog.locator('#interval-input').fill(String(updatedCheckInterval));
   await settingsDialog.getByRole('button', { name: 'Add service' }).click();
 
-  await page.locator('#service-name').fill('Immich');
-  await page.locator('#service-url').fill('https://immich.test');
-  await page.locator('#service-desc').fill('Photo backup');
-  await page.locator('#service-category').fill('Media');
+  await page.locator('#service-name').fill(serviceToAdd.name);
+  await page.locator('#service-url').fill(serviceToAdd.url);
+  await page.locator('#service-desc').fill(serviceToAdd.description);
+  await page.locator('#service-category').fill(serviceToAdd.category);
   await page.getByRole('button', { name: 'Add Service', exact: true }).click();
 
-  await expect(settingsDialog).toContainText('Immich');
-  await settingsDialog.getByRole('button', { name: 'Delete Boxento' }).click();
+  await expect(settingsDialog).toContainText(serviceToAdd.name);
+  await settingsDialog.getByRole('button', { name: `Delete ${serviceToDelete}` }).click();
   await settingsDialog.getByRole('button', { name: 'Save' }).click();
 
-  await expect(widget.getByRole('heading', { name: 'Homelab Services' })).toBeVisible();
-  await expect(widget).toContainText('Immich');
-  await expect(widget).not.toContainText('Boxento');
+  await expect(widget.getByRole('heading', { name: updatedTitle })).toBeVisible();
+  await expect(widget).toContainText(serviceToAdd.name);
+  await expect(widget).not.toContainText(serviceToDelete);
 
   await expect.poll(async () => readStoredServicesConfig(page, 'services-tablet')).toEqual({
-    title: 'Homelab Services',
+    title: updatedTitle,
     showStatus: true,
-    checkInterval: 120,
-    serviceNames: ['Paisa', 'Jellyfin', 'Immich'],
+    checkInterval: updatedCheckInterval,
+    serviceNames: remainingServiceNames,
   });
 
   await page.reload();
-  await expect(widget.getByRole('heading', { name: 'Homelab Services' })).toBeVisible();
-  await expect(widget).toContainText('Immich');
-  await expect(widget).not.toContainText('Boxento');
+  await expect(widget.getByRole('heading', { name: updatedTitle })).toBeVisible();
+  await expect(widget).toContainText(serviceToAdd.name);
+  await expect(widget).not.toContainText(serviceToDelete);
 });
