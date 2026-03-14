@@ -104,6 +104,16 @@ const fetchUrlMetadata = async (url: string): Promise<{ title: string; favicon: 
   }
 };
 
+type AppDialogMode = 'add' | 'edit' | 'details';
+
+const createEmptyAppLink = (): LinkItem => ({
+  id: 0,
+  title: '',
+  url: '',
+  favicon: '',
+  category: '',
+});
+
 /**
  * QuickLinks Widget Component
  * 
@@ -131,7 +141,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   const [appSearchQuery, setAppSearchQuery] = useState('');
   const [selectedLinkId, setSelectedLinkId] = useState<number | null>(null);
   const [appEditingLink, setAppEditingLink] = useState<LinkItem | null>(null);
-  const [showAppAddForm, setShowAppAddForm] = useState(false);
+  const [appDialogMode, setAppDialogMode] = useState<AppDialogMode | null>(null);
 
   // Widget settings state
   const [displayMode, setDisplayMode] = useState<'regular' | 'compact'>(config?.displayMode || 'regular');
@@ -158,7 +168,8 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
         setShowFavicons(config.showFavicons);
       }
     }
-  }, [config]); // Depend on entire config object
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- sync local widget state only when upstream config changes
+  }, [config]);
 
   /**
    * Adds or updates a link in the links collection
@@ -214,6 +225,15 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
     
     // Update state
     setLinks(updatedLinks);
+    if (selectedLinkId === id) {
+      setSelectedLinkId(null);
+    }
+    if (appEditingLink?.id === id) {
+      setAppEditingLink(null);
+    }
+    if ((selectedLinkId === id || appEditingLink?.id === id) && appDialogMode) {
+      setAppDialogMode(null);
+    }
     
     // Save using onUpdate callback to persist
     if (config?.onUpdate) {
@@ -409,8 +429,31 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
     [links, selectedLinkId]
   );
 
+  const openAppAddDialog = () => {
+    setAppEditingLink(createEmptyAppLink());
+    setSelectedLinkId(null);
+    setAppDialogMode('add');
+  };
+
+  const openAppEditDialog = (link: LinkItem) => {
+    setAppEditingLink({ ...link });
+    setSelectedLinkId(link.id);
+    setAppDialogMode('edit');
+  };
+
+  const openAppDetailsDialog = (linkId: number) => {
+    setSelectedLinkId(linkId);
+    setAppEditingLink(null);
+    setAppDialogMode('details');
+  };
+
+  const closeAppDialog = () => {
+    setAppDialogMode(null);
+    setAppEditingLink(null);
+  };
+
   const handleAppAddLink = async () => {
-    if (!appEditingLink || !appEditingLink.url) return;
+    if (!appEditingLink || !appEditingLink.url.trim()) return;
     const normalizedUrl = appEditingLink.url.startsWith('http')
       ? appEditingLink.url
       : `https://${appEditingLink.url}`;
@@ -442,15 +485,22 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
       updatedLinks = [...links, newLink];
     }
 
+    const previousLinks = links;
     setLinks(updatedLinks);
-    setAppEditingLink(null);
-    setShowAppAddForm(false);
-    setSelectedLinkId(newLink.id);
 
     // Persist
-    if (config?.onUpdate) {
-      config.onUpdate({ ...config, links: updatedLinks });
+    try {
+      if (config?.onUpdate) {
+        await Promise.resolve(config.onUpdate({ ...config, links: updatedLinks }));
+      }
+    } catch (error) {
+      console.error('Error updating quick links:', error);
+      setLinks(previousLinks);
+      return;
     }
+
+    setSelectedLinkId(newLink.id);
+    closeAppDialog();
 
     // Fetch metadata in background
     try {
@@ -460,7 +510,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
         const enrichedLinks = updatedLinks.map(l => (l.id === newLink.id ? enriched : l));
         setLinks(enrichedLinks);
         if (config?.onUpdate) {
-          config.onUpdate({ ...config, links: enrichedLinks });
+          await Promise.resolve(config.onUpdate({ ...config, links: enrichedLinks }));
         }
       }
     } catch { /* best-effort */ }
@@ -468,16 +518,19 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
 
   // ─── App view (6x6+) ────────────────────────────────────────────────
   const renderAppView = () => {
-    const rightPanelLink = appEditingLink ?? selectedLink;
-
     return (
       <div className="flex h-full flex-col">
         {/* Top bar */}
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3 widget-drag-handle cursor-move">
-          <h2 className="text-lg font-semibold text-foreground">
-            {customTitle}
-          </h2>
-          <div className="relative flex-grow max-w-md">
+        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+          <div className="widget-drag-handle flex shrink-0 cursor-move items-center gap-2 rounded-md px-1 py-0.5">
+            <h2 className="text-lg font-semibold text-foreground">
+              {customTitle}
+            </h2>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {filteredLinks.length} / {links.length} links
+            </span>
+          </div>
+          <div className="relative min-w-0 max-w-md flex-1">
             <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
@@ -497,18 +550,11 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
               </Button>
             )}
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground">
-            {filteredLinks.length} / {links.length} links
-          </span>
           {!readOnly && (
             <Button
               size="sm"
-              onClick={() => {
-                setAppEditingLink({ id: 0, title: '', url: '', favicon: '', category: '' });
-                setShowAppAddForm(true);
-                setSelectedLinkId(null);
-              }}
-              className="ml-auto"
+              onClick={openAppAddDialog}
+              className="shrink-0"
             >
               <Plus size={14} className="mr-1" />
               Add Link
@@ -516,300 +562,237 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
           )}
         </div>
 
-        {/* Master-detail layout */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left: link grid */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {filteredLinks.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-                <Globe size={32} className="mb-2 opacity-60" />
-                <p className="text-sm">
-                  {appSearchQuery ? 'No links match your search' : 'No links yet. Add your first bookmark!'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {filteredLinks.map(link => (
-                  <div
-                    key={link.id}
-                    onClick={() => {
-                      setSelectedLinkId(link.id);
-                      setAppEditingLink(null);
-                      setShowAppAddForm(false);
-                    }}
-                    className={`group relative flex cursor-pointer flex-col rounded-lg border p-3 transition-all hover:shadow-md ${
-                      selectedLinkId === link.id
-                        ? 'border-blue-400 bg-blue-50 shadow-sm dark:border-blue-500 dark:bg-blue-900/20'
-                        : 'border-border bg-card hover:border-border'
-                    }`}
-                  >
-                    {/* Hover actions */}
-                    {!readOnly && (
-                      <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={e => {
-                            e.stopPropagation();
-                            setAppEditingLink({ ...link });
-                            setShowAppAddForm(false);
-                            setSelectedLinkId(link.id);
-                          }}
-                          aria-label={`Edit ${link.title}`}
-                        >
-                          <Pencil size={12} />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                          onClick={e => {
-                            e.stopPropagation();
-                            removeLink(link.id);
-                            if (selectedLinkId === link.id) setSelectedLinkId(null);
-                          }}
-                          aria-label={`Delete ${link.title}`}
-                        >
-                          <Trash2 size={12} />
-                        </Button>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-2.5">
-                      {showFavicons && link.favicon && (
-                        <img
-                          src={link.favicon}
-                          alt=""
-                          className="h-5 w-5 shrink-0 rounded"
-                          loading="lazy"
-                        />
-                      )}
-                      <span className="truncate text-sm font-medium text-foreground">
-                        {link.title}
-                      </span>
+        <div className="flex-1 overflow-y-auto p-4">
+          {filteredLinks.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+              <Globe size={32} className="mb-2 opacity-60" />
+              <p className="text-sm">
+                {appSearchQuery ? 'No links match your search' : 'No links yet. Add your first bookmark!'}
+              </p>
+              {!readOnly && !appSearchQuery && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={openAppAddDialog}
+                  className="mt-4"
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add Link
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div
+              className="grid gap-3"
+              style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}
+            >
+              {filteredLinks.map(link => (
+                <div
+                  key={link.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openAppDetailsDialog(link.id)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openAppDetailsDialog(link.id);
+                    }
+                  }}
+                  className={`group relative flex cursor-pointer flex-col rounded-lg border p-3 text-left transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    selectedLinkId === link.id
+                      ? 'border-blue-400 bg-blue-50 shadow-sm dark:border-blue-500 dark:bg-blue-900/20'
+                      : 'border-border bg-card hover:border-border'
+                  }`}
+                >
+                  {!readOnly && (
+                    <div className="absolute right-2 top-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={e => {
+                          e.stopPropagation();
+                          openAppEditDialog(link);
+                        }}
+                        aria-label={`Edit ${link.title}`}
+                      >
+                        <Pencil size={12} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={e => {
+                          e.stopPropagation();
+                          removeLink(link.id);
+                        }}
+                        aria-label={`Delete ${link.title}`}
+                      >
+                        <Trash2 size={12} />
+                      </Button>
                     </div>
-                    <p className="mt-1.5 truncate text-xs text-muted-foreground">
-                      {link.url}
-                    </p>
-                    {link.category && (
-                      <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                        <FolderOpen size={10} />
-                        {link.category}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  )}
 
-          {/* Right: detail / add form panel */}
-          <div className="w-72 shrink-0 border-l border-border bg-muted/50 overflow-y-auto">
-            {showAppAddForm && appEditingLink && !appEditingLink.id ? (
-              /* Add new link form */
-              <div className="p-4">
-                <h3 className="mb-4 text-sm font-semibold text-foreground">
-                  Add New Link
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="mb-1 block text-xs">URL</Label>
-                    <Input
-                      type="url"
-                      value={appEditingLink.url}
-                      onChange={e => setAppEditingLink({ ...appEditingLink, url: e.target.value })}
-                      placeholder="https://example.com"
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">Title</Label>
-                    <Input
-                      type="text"
-                      value={appEditingLink.title}
-                      onChange={e => setAppEditingLink({ ...appEditingLink, title: e.target.value })}
-                      placeholder="Auto-detected from URL"
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">Category</Label>
-                    <Input
-                      type="text"
-                      value={appEditingLink.category || ''}
-                      onChange={e => setAppEditingLink({ ...appEditingLink, category: e.target.value })}
-                      placeholder="e.g. Work, Social, News"
-                      list="app-link-categories"
-                    />
-                    {categories.length > 0 && (
-                      <datalist id="app-link-categories">
-                        {categories.map(c => (
-                          <option key={c} value={c} />
-                        ))}
-                      </datalist>
-                    )}
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setShowAppAddForm(false);
-                        setAppEditingLink(null);
-                      }}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleAppAddLink}
-                      disabled={!appEditingLink.url.trim()}
-                      className="flex-1"
-                    >
-                      Add Link
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : appEditingLink && appEditingLink.id ? (
-              /* Edit existing link form */
-              <div className="p-4">
-                <h3 className="mb-4 text-sm font-semibold text-foreground">
-                  Edit Link
-                </h3>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="mb-1 block text-xs">URL</Label>
-                    <Input
-                      type="url"
-                      value={appEditingLink.url}
-                      onChange={e => setAppEditingLink({ ...appEditingLink, url: e.target.value })}
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">Title</Label>
-                    <Input
-                      type="text"
-                      value={appEditingLink.title}
-                      onChange={e => setAppEditingLink({ ...appEditingLink, title: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">Category</Label>
-                    <Input
-                      type="text"
-                      value={appEditingLink.category || ''}
-                      onChange={e => setAppEditingLink({ ...appEditingLink, category: e.target.value })}
-                      placeholder="e.g. Work, Social, News"
-                      list="app-link-categories-edit"
-                    />
-                    {categories.length > 0 && (
-                      <datalist id="app-link-categories-edit">
-                        {categories.map(c => (
-                          <option key={c} value={c} />
-                        ))}
-                      </datalist>
-                    )}
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setAppEditingLink(null);
-                      }}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={handleAppAddLink}
-                      disabled={!appEditingLink.url.trim()}
-                      className="flex-1"
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : rightPanelLink ? (
-              /* Preview selected link */
-              <div className="p-4">
-                <h3 className="mb-4 text-sm font-semibold text-foreground">
-                  Link Details
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    {showFavicons && rightPanelLink.favicon && (
+                  <div className="flex items-center gap-2.5">
+                    {showFavicons && link.favicon && (
                       <img
-                        src={rightPanelLink.favicon}
+                        src={link.favicon}
                         alt=""
-                        className="h-8 w-8 rounded"
+                        className="h-5 w-5 shrink-0 rounded"
                         loading="lazy"
                       />
                     )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
-                        {rightPanelLink.title}
-                      </p>
-                      {rightPanelLink.category && (
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                          <FolderOpen size={10} />
-                          {rightPanelLink.category}
-                        </span>
-                      )}
-                    </div>
+                    <span className="truncate text-sm font-medium text-foreground">
+                      {link.title}
+                    </span>
                   </div>
-                  <div>
-                    <Label className="mb-1 block text-xs">URL</Label>
-                    <a
-                      href={sanitizeUrl(rightPanelLink.url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block truncate text-sm text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      {rightPanelLink.url}
-                    </a>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <a
-                      href={sanitizeUrl(rightPanelLink.url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700"
-                    >
-                      <ExternalLink size={12} />
-                      Open
-                    </a>
-                    {!readOnly && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setAppEditingLink({ ...rightPanelLink });
-                          setShowAppAddForm(false);
-                        }}
-                        className="flex-1"
-                      >
-                        <Pencil size={12} className="mr-1" />
-                        Edit
-                      </Button>
+                  <p className="mt-1.5 truncate text-xs text-muted-foreground">
+                    {link.url}
+                  </p>
+                  {link.category && (
+                    <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      <FolderOpen size={10} />
+                      {link.category}
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <Dialog
+          open={appDialogMode !== null}
+          onOpenChange={(open: boolean) => {
+            if (!open) {
+              closeAppDialog();
+            }
+          }}
+        >
+          {(appDialogMode === 'add' || appDialogMode === 'edit') && appEditingLink ? (
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>{appDialogMode === 'add' ? 'Add Link' : 'Edit Link'}</DialogTitle>
+              </DialogHeader>
+              <form
+                className="space-y-4"
+                onSubmit={event => {
+                  event.preventDefault();
+                  void handleAppAddLink();
+                }}
+              >
+                <div className="space-y-2">
+                  <Label htmlFor="app-link-url">URL</Label>
+                  <Input
+                    id="app-link-url"
+                    type="text"
+                    inputMode="url"
+                    value={appEditingLink.url}
+                    onChange={e => setAppEditingLink({ ...appEditingLink, url: e.target.value })}
+                    placeholder="https://example.com"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="app-link-title">Title</Label>
+                  <Input
+                    id="app-link-title"
+                    type="text"
+                    value={appEditingLink.title}
+                    onChange={e => setAppEditingLink({ ...appEditingLink, title: e.target.value })}
+                    placeholder="Auto-detected from URL"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="app-link-category">Category</Label>
+                  <Input
+                    id="app-link-category"
+                    type="text"
+                    value={appEditingLink.category || ''}
+                    onChange={e => setAppEditingLink({ ...appEditingLink, category: e.target.value })}
+                    placeholder="e.g. Work, Social, News"
+                    list="app-link-categories"
+                  />
+                  {categories.length > 0 && (
+                    <datalist id="app-link-categories">
+                      {categories.map(category => (
+                        <option key={category} value={category} />
+                      ))}
+                    </datalist>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={closeAppDialog}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={!appEditingLink.url.trim()}>
+                    {appDialogMode === 'add' ? 'Add Link' : 'Save'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          ) : appDialogMode === 'details' && selectedLink ? (
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Link Details</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  {showFavicons && selectedLink.favicon && (
+                    <img
+                      src={selectedLink.favicon}
+                      alt=""
+                      className="h-10 w-10 rounded"
+                      loading="lazy"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-base font-semibold text-foreground">
+                      {selectedLink.title}
+                    </p>
+                    {selectedLink.category && (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <FolderOpen size={10} />
+                        {selectedLink.category}
+                      </span>
                     )}
                   </div>
                 </div>
+                <div className="space-y-2">
+                  <Label>URL</Label>
+                  <a
+                    href={sanitizeUrl(selectedLink.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block truncate text-sm text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    {selectedLink.url}
+                  </a>
+                </div>
+                <DialogFooter>
+                  <a
+                    href={sanitizeUrl(selectedLink.url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                  >
+                    <ExternalLink size={14} />
+                    Open
+                  </a>
+                  {!readOnly && (
+                    <Button variant="outline" onClick={() => openAppEditDialog(selectedLink)}>
+                      <Pencil size={14} className="mr-1" />
+                      Edit
+                    </Button>
+                  )}
+                </DialogFooter>
               </div>
-            ) : (
-              /* Empty state */
-              <div className="flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground">
-                <Globe size={24} className="mb-2 opacity-50" />
-                <p className="text-xs">Select a link to preview details</p>
-              </div>
-            )}
-          </div>
-        </div>
+            </DialogContent>
+          ) : null}
+        </Dialog>
       </div>
     );
   };

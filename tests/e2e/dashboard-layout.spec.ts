@@ -224,6 +224,62 @@ test('preserves drag persistence on dashboards with more than five widgets', asy
   expect(reloadedLayout?.x).toBeGreaterThan(0);
 });
 
+test('uses an on-demand dialog for large quick links layouts and persists added links', async ({ page }) => {
+  await page.setViewportSize({ width: 1512, height: 982 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'quick-links-1',
+        type: 'quick-links',
+        config: {
+          customTitle: 'Quick Links',
+          links: [
+            {
+              id: 1,
+              title: 'Boxento',
+              url: 'https://boxento.test',
+              favicon: 'https://icons.duckduckgo.com/ip3/boxento.test.ico',
+              category: 'Work',
+            },
+          ],
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'quick-links-1', x: 0, y: 0, w: 6, h: 6, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="quick-links-1"]');
+  await expect(widget).toBeVisible();
+  await expect(widget.getByText('Select a link to preview details')).toHaveCount(0);
+  await expect(widget.locator('.w-72')).toHaveCount(0);
+
+  await widget.getByRole('button', { name: 'Add Link' }).click();
+
+  const addDialog = page.getByRole('dialog', { name: 'Add Link' });
+  await expect(addDialog).toBeVisible();
+  await addDialog.getByLabel('URL').fill('docs.boxento.test');
+  await addDialog.getByLabel('Title').fill('Docs');
+  await addDialog.getByLabel('Category').fill('Work');
+  await addDialog.getByRole('button', { name: 'Add Link' }).click();
+
+  await expect(widget.locator('[role="button"]').filter({ hasText: 'Docs' }).first()).toBeVisible();
+
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const configs = JSON.parse(localStorage.getItem('boxento-widget-configs') || '{}');
+      const quickLinks = configs['quick-links-1'];
+      return quickLinks?.links?.map((link: { title: string; url: string }) => `${link.title}:${link.url}`).join(',') ?? '';
+    });
+  }).toContain('Docs:https://docs.boxento.test');
+
+  await page.reload();
+  await expect(widget.locator('[role="button"]').filter({ hasText: 'Docs' }).first()).toBeVisible();
+});
+
 test('keeps the dashboard visible at the 768px tablet boundary', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 900 });
   await seedDashboard(page, {

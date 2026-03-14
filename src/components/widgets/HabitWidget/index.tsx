@@ -952,10 +952,9 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                 if (e.key === 'Enter') {
                   if (editingHabit) {
                     handleEditHabit();
-                    return;
+                  } else {
+                    handleAddHabit();
                   }
-
-                  handleAddHabit();
                 }
               }}
               autoFocus

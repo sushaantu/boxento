@@ -122,6 +122,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     setNewTodoText('');
   };
 
+  const handleAddTodoSubmit = (e?: React.FormEvent<HTMLFormElement>) => {
+    e?.preventDefault();
+    if (!newTodoText.trim()) return;
+    addTodo();
+  };
+
   const toggleTodo = (id: string) => {
     const updatedItems = (localConfig.items || []).map(item => {
       if (item.id === id) {
@@ -528,34 +534,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           )}
         </div>
         {!readOnly && (
-          <div className="mt-1 pt-1 border-t border-border">
-            <form
-              onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-                e.preventDefault();
-                if (newTodoText.trim()) {
-                  addTodo();
-                }
-              }}
-              className="flex items-center gap-1"
-            >
-              <Input
-                ref={newTodoInputRef}
-                type="text"
-                value={newTodoText}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
-                placeholder="Add task..."
-                className="flex-grow text-xs h-7"
-              />
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon"
-                disabled={!newTodoText.trim()}
-                className="h-7 w-7"
-              >
-                <Plus size={14} />
-              </Button>
-            </form>
+          <div className="mt-2">
+            {renderAddTodoForm({
+              dense: true,
+              placeholder: 'Add task',
+              showHint: false,
+            })}
           </div>
         )}
       </div>
@@ -617,36 +601,39 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
     </div>
   );
 
-  const renderAddTodoForm = () => {
+  const renderAddTodoForm = ({
+    dense = false,
+    placeholder = 'Add task and press Enter',
+    showHint = true,
+  }: {
+    dense?: boolean;
+    placeholder?: string;
+    showHint?: boolean;
+  } = {}) => {
     if (readOnly) return null;
     return (
       <form
-        onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
-          e.preventDefault();
-          if (newTodoText.trim()) {
-            addTodo();
-          }
-        }}
-        className="flex items-center gap-2"
+        onSubmit={handleAddTodoSubmit}
+        className={`flex items-center rounded-lg border border-border/60 bg-muted/30 transition-colors focus-within:border-ring focus-within:bg-background ${
+          dense ? 'gap-1.5 px-2 py-1.5' : 'gap-2 px-3 py-2'
+        }`}
       >
         <Input
           ref={newTodoInputRef}
           type="text"
           value={newTodoText}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTodoText(e.target.value)}
-          placeholder="Add task..."
-          className="flex-grow"
+          placeholder={placeholder}
+          className={`h-auto border-0 bg-transparent px-0 py-0 shadow-none placeholder:text-muted-foreground/70 focus-visible:border-transparent focus-visible:ring-0 ${
+            dense ? 'text-xs' : 'text-sm'
+          }`}
           aria-label="New task"
         />
-        <Button
-          type="submit"
-          variant="ghost"
-          size="icon"
-          disabled={!newTodoText.trim()}
-          aria-label="Add task"
-        >
-          <Plus size={20} />
-        </Button>
+        {showHint && (
+          <span className={`shrink-0 font-medium text-muted-foreground/70 ${dense ? 'text-[10px]' : 'text-xs'}`}>
+            Enter
+          </span>
+        )}
       </form>
     );
   };
@@ -666,7 +653,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           )}
         </div>
         {!readOnly && (
-          <div className="mt-3 pt-3 border-t border-border">
+          <div className="mt-3">
             {renderAddTodoForm()}
           </div>
         )}
@@ -677,22 +664,26 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   // ─── Wide View (4x2, 4x3, 5x3 etc.) ──────────────────────────────────
   const renderWideView = () => {
     const items = getFilteredAndSortedItems();
+    const pendingCount = getPendingCount();
     return (
-      <div className="h-full grid grid-cols-2 gap-4">
-        <div className="flex flex-col">
-          <h3 className="text-sm font-medium mb-2">Tasks</h3>
-          <div className="flex-grow overflow-y-auto">
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                <p>No tasks</p>
-              </div>
-            ) : (
-              renderTodoList(items)
-            )}
-          </div>
+      <div className="h-full flex flex-col">
+        <div className="mb-3">
+          <h3 className="text-sm font-medium">Tasks</h3>
+          <p className="text-xs text-muted-foreground">{pendingCount} pending</p>
         </div>
-        <div className="flex flex-col">
-          {renderAddTodoForm()}
+        {!readOnly && (
+          <div className="mb-3">
+            {renderAddTodoForm()}
+          </div>
+        )}
+        <div className="flex-grow overflow-y-auto">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+              <p>No tasks</p>
+            </div>
+          ) : (
+            renderTodoList(items)
+          )}
         </div>
       </div>
     );
