@@ -508,14 +508,13 @@ function App() {
     const {
       dashboard,
       nextDashboardId,
-      remainingDashboards,
       shouldReloadDashboardId,
     } = planDashboardDeletion({
       currentDashboardId,
       dashboardId,
       dashboards,
     });
-    if (dashboard?.isDefault) return; // Can't delete default
+    if (!dashboard || dashboard.isDefault) return; // Can't delete a non-existent or default dashboard
 
     // Clean up storage for deleted dashboard
     removeDashboardData(localStorage, dashboardId);
@@ -529,7 +528,7 @@ function App() {
       }
     }
 
-    setDashboards(remainingDashboards);
+    setDashboards((previousDashboards) => previousDashboards.filter((entry) => entry.id !== dashboardId));
     if (shouldReloadDashboardId) {
       setCurrentDashboardId(nextDashboardId);
       loadDashboardData(shouldReloadDashboardId);
