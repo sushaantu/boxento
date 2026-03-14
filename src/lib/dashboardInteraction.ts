@@ -52,10 +52,11 @@ export const isDashboardInteractiveTarget = (
   target: EventTarget | null
 ): target is ClosestCapableTarget => {
   const closestTarget = resolveClosestCapableTarget(target);
+  if (!closestTarget || typeof closestTarget.closest !== 'function') {
+    return false;
+  }
 
-  return Boolean(
-    closestTarget?.closest(DASHBOARD_INTERACTIVE_CHILD_SELECTOR)
-  );
+  return Boolean(closestTarget.closest(DASHBOARD_INTERACTIVE_CHILD_SELECTOR));
 };
 
 export const stopDashboardInteractionPropagation = (
