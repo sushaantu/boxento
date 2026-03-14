@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { StickyNote, FileText, Type, Hash, AlignLeft } from 'lucide-react';
+import { StickyNote, FileText, Type, Hash, AlignLeft, Settings } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {

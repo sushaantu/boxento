@@ -1248,14 +1248,18 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }, 300);
   };
 
-  const resetSettings = () => {
-    if (config) {
-      setLocalConfig(config);
-    }
+  const resetSearchState = () => {
     setCitySearch('');
     setCityResults([]);
     setShowResults(false);
     setLocationError(null);
+  };
+
+  const resetSettings = () => {
+    if (config) {
+      setLocalConfig(config);
+    }
+    resetSearchState();
     setIsSettingsOpen(false);
   };
 
@@ -1308,10 +1312,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
               return;
             }
             setIsSettingsOpen(true);
-            setCitySearch('');
-            setCityResults([]);
-            setShowResults(false);
-            setLocationError(null);
+            resetSearchState();
           }}
           title="Weather Settings"
           bodyClassName="flex flex-col gap-4"
