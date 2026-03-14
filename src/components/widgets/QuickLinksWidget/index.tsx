@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react'
 import { ExternalLink, Plus, Trash, Edit, Search, Globe, X, Pencil, Trash2, FolderOpen } from 'lucide-react'
-import WidgetHeader from '../../widgets/common/WidgetHeader'
+import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/common/WidgetSettingsDialog'
+import { WidgetShell } from '../../widgets/common/WidgetShell'
 import {
   Dialog,
   DialogContent,
@@ -273,6 +274,15 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
           customTitle
         });
       }, 0);
+    }
+    setShowSettings(false);
+  }
+
+  const resetSettings = () => {
+    if (config) {
+      setDisplayMode(config.displayMode || 'regular');
+      setShowFavicons(config.showFavicons !== false);
+      setCustomTitle(config.customTitle || 'Quick Links');
     }
     setShowSettings(false);
   }
@@ -1051,124 +1061,77 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
   };
 
   return (
-    <div className={`widget-container h-full flex flex-col ${isTiny ? 'widget-drag-handle' : ''}`}>
-      {!isTiny && !isApp && (
-        <WidgetHeader
-          title={customTitle}
-          onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-          compact={width === 1 || height === 1}
-        />
-      )}
-      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-2' : isApp ? '' : width === 1 || height === 1 ? 'p-1.5' : 'p-3'}`}>
-        {renderContent()}
-      </div>
-      
+    <WidgetShell
+      title={customTitle}
+      isTiny={isTiny}
+      hideHeader={isApp}
+      compactHeader={width === 1 || height === 1}
+      onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
+      contentClassName={isTiny ? 'p-2' : isApp ? '' : width === 1 || height === 1 ? 'p-1.5' : 'p-3'}
+    >
+      {renderContent()}
+
       {/* Settings Dialog */}
       {showSettings && (
-        <Dialog
+        <WidgetSettingsDialog
           open={showSettings}
           onOpenChange={(open: boolean) => {
             if (!open) {
-              // Reset to saved config on close without save
-              if (config) {
-                setDisplayMode(config.displayMode || 'regular');
-                setShowFavicons(config.showFavicons !== false);
-                setCustomTitle(config.customTitle || 'Quick Links');
-              }
-              setShowSettings(false);
+              resetSettings();
+              return;
             }
+            setShowSettings(true);
           }}
+          title="Quick Links Settings"
+          bodyClassName="flex flex-col gap-4 px-1"
+          footer={(
+            <WidgetSettingsDialogFooter
+              onDelete={config?.onDelete ? () => config.onDelete?.() : undefined}
+              onCancel={resetSettings}
+              onSave={saveSettings}
+            />
+          )}
         >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Quick Links Settings</DialogTitle>
-            </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="widget-title">Title</Label>
+            <Input
+              id="widget-title"
+              value={customTitle}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomTitle(e.target.value)}
+              placeholder="Quick Links"
+            />
+          </div>
 
-            <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
-              <div className="space-y-4 px-1">
-                <div className="space-y-2">
-                  <Label htmlFor="widget-title">Title</Label>
-                  <Input
-                    id="widget-title"
-                    value={customTitle}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCustomTitle(e.target.value)}
-                    placeholder="Quick Links"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Display Mode</Label>
-                  <RadioGroup value={displayMode} onValueChange={(val: string) => setDisplayMode(val as 'regular' | 'compact')}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="regular" id="regular-view" />
-                      <Label htmlFor="regular-view" className="flex items-center">
-                        Regular View
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="compact" id="compact-view" />
-                      <Label htmlFor="compact-view" className="flex items-center">
-                        Compact View
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Show Favicons</Label>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={showFavicons}
-                      onCheckedChange={setShowFavicons}
-                      id="show-favicons"
-                    />
-                    <Label htmlFor="show-favicons">Show website icons</Label>
-                  </div>
-                </div>
+          <div className="flex flex-col gap-2">
+            <Label>Display Mode</Label>
+            <RadioGroup value={displayMode} onValueChange={(val: string) => setDisplayMode(val as 'regular' | 'compact')}>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="regular" id="regular-view" />
+                <Label htmlFor="regular-view" className="flex items-center">
+                  Regular View
+                </Label>
               </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="compact" id="compact-view" />
+                <Label htmlFor="compact-view" className="flex items-center">
+                  Compact View
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Show Favicons</Label>
+            <div className="flex items-center gap-2">
+              <Switch
+                checked={showFavicons}
+                onCheckedChange={setShowFavicons}
+                id="show-favicons"
+              />
+              <Label htmlFor="show-favicons">Show website icons</Label>
             </div>
-
-            <DialogFooter>
-              <div className="flex justify-between w-full">
-                {config?.onDelete && (
-                  <Button
-                    variant="destructive"
-                    onClick={() => {
-                      if (config.onDelete) {
-                        config.onDelete();
-                      }
-                    }}
-                  >
-                    Delete
-                  </Button>
-                )}
-
-                <div className="flex items-center gap-2 ml-auto">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      // Reset to saved config on cancel
-                      if (config) {
-                        setDisplayMode(config.displayMode || 'regular');
-                        setShowFavicons(config.showFavicons !== false);
-                        setCustomTitle(config.customTitle || 'Quick Links');
-                      }
-                      setShowSettings(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="default"
-                    onClick={saveSettings}
-                  >
-                    Save
-                  </Button>
-                </div>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </WidgetSettingsDialog>
       )}
 
       {/* Edit Link Dialog */}
@@ -1229,7 +1192,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </WidgetShell>
   )
 }
 

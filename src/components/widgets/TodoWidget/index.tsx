@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
-import {
   Check,
   Plus,
   Trash2,
@@ -19,7 +12,8 @@ import {
   Pencil,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import WidgetHeader from '../common/WidgetHeader';
+import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../common/WidgetSettingsDialog';
+import { WidgetShell } from '../common/WidgetShell';
 import { TodoWidgetProps, TodoWidgetConfig, TodoItem } from './types';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
@@ -346,6 +340,16 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   const saveSettings = () => {
     if (config?.onUpdate) {
       config.onUpdate(localConfig);
+    }
+    setShowSettings(false);
+  };
+
+  const resetSettings = () => {
+    if (config) {
+      setLocalConfig(prev => ({
+        ...prev,
+        ...config
+      }));
     }
     setShowSettings(false);
   };
@@ -1069,134 +1073,81 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
   // ─── Settings modal ───────────────────────────────────────────────────
   const renderSettings = () => {
     return (
-      <Dialog
+      <WidgetSettingsDialog
         open={showSettings}
         onOpenChange={(open: boolean) => {
           if (!open) {
-            // Reset to original config when closing without save
-            if (config) {
-              setLocalConfig(prev => ({
-                ...prev,
-                ...config
-              }));
-            }
-            setShowSettings(false);
+            resetSettings();
+            return;
           }
+          setShowSettings(true);
         }}
+        title="To Do Settings"
+        bodyClassName="flex flex-col gap-4 px-1"
+        footer={(
+          <WidgetSettingsDialogFooter
+            onDelete={config?.onDelete ? () => config.onDelete?.() : undefined}
+            onCancel={resetSettings}
+            onSave={saveSettings}
+          />
+        )}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>To Do Settings</DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
-            <div className="space-y-4 px-1">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Widget Title</Label>
-                <Input
-                  id="title"
-                  placeholder="Todo List"
-                  value={localConfig.title || ''}
-                  onChange={handleTitleChange}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="showCompleted">Show Completed Items</Label>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="showCompleted"
-                    checked={!!localConfig.showCompletedItems}
-                    onCheckedChange={handleShowCompletedChange}
-                  />
-                  <Label htmlFor="showCompleted" className="text-sm text-muted-foreground">
-                    {localConfig.showCompletedItems ? 'On' : 'Off'}
-                  </Label>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="sortOrder">Sort Order</Label>
-                <Select
-                  value={localConfig.sortOrder || 'created'}
-                  onValueChange={(value: 'created' | 'alphabetical' | 'completed' | 'manual') => handleSortOrderChange(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select sort order" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="created">Created Date</SelectItem>
-                    <SelectItem value="alphabetical">Alphabetical</SelectItem>
-                    <SelectItem value="completed">Completion Status</SelectItem>
-                    <SelectItem value="manual">Manual (Drag to Sort)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="title">Widget Title</Label>
+          <Input
+            id="title"
+            placeholder="Todo List"
+            value={localConfig.title || ''}
+            onChange={handleTitleChange}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="showCompleted">Show Completed Items</Label>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="showCompleted"
+              checked={!!localConfig.showCompletedItems}
+              onCheckedChange={handleShowCompletedChange}
+            />
+            <Label htmlFor="showCompleted" className="text-sm text-muted-foreground">
+              {localConfig.showCompletedItems ? 'On' : 'Off'}
+            </Label>
           </div>
-
-          <DialogFooter>
-            <div className="flex justify-between w-full">
-              {config?.onDelete && (
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (config.onDelete) {
-                      config.onDelete();
-                    }
-                  }}
-                  aria-label="Delete this widget"
-                >
-                  Delete
-                </Button>
-              )}
-
-              <div className="flex items-center gap-2 ml-auto">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    // Reset to original config on cancel
-                    if (config) {
-                      setLocalConfig(prev => ({
-                        ...prev,
-                        ...config
-                      }));
-                    }
-                    setShowSettings(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="default"
-                  onClick={saveSettings}
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="sortOrder">Sort Order</Label>
+          <Select
+            value={localConfig.sortOrder || 'created'}
+            onValueChange={(value: 'created' | 'alphabetical' | 'completed' | 'manual') => handleSortOrderChange(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select sort order" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created">Created Date</SelectItem>
+              <SelectItem value="alphabetical">Alphabetical</SelectItem>
+              <SelectItem value="completed">Completion Status</SelectItem>
+              <SelectItem value="manual">Manual (Drag to Sort)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </WidgetSettingsDialog>
     );
   };
 
   return (
-    <div
+    <WidgetShell
       ref={widgetRef}
-      className={`widget-container h-full flex flex-col ${isTiny ? 'widget-drag-handle' : ''}`}
+      title={localConfig.title || defaultConfig.title}
+      isTiny={isTiny}
+      hideHeader={isApp}
+      compactHeader={isShort}
+      onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
+      contentClassName={isTiny ? 'p-1' : isApp ? '' : 'p-3'}
     >
-      {!isTiny && !isApp && (
-        <WidgetHeader
-          title={localConfig.title || defaultConfig.title}
-          onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-          compact={isShort}
-        />
-      )}
-
-      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-1' : isApp ? '' : 'p-3'}`}>
-        {renderContent()}
-      </div>
-
+      {renderContent()}
       {renderSettings()}
-    </div>
+    </WidgetShell>
   );
 };
 
