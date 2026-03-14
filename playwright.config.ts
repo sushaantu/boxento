@@ -4,6 +4,10 @@ const reuseExistingServer = process.env.PLAYWRIGHT_USE_EXISTING_SERVER === '1';
 const playwrightPort = Number(process.env.PLAYWRIGHT_PORT || '4417');
 const playwrightBaseUrl = `http://127.0.0.1:${playwrightPort}`;
 const playwrightChannel = process.env.PLAYWRIGHT_CHANNEL;
+const playwrightExtraArgs = (process.env.PLAYWRIGHT_EXTRA_ARGS || '')
+  .split(',')
+  .map((arg) => arg.trim())
+  .filter(Boolean);
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -13,6 +17,7 @@ export default defineConfig({
   use: {
     baseURL: playwrightBaseUrl,
     ...(playwrightChannel ? { channel: playwrightChannel } : {}),
+    ...(playwrightExtraArgs.length ? { launchOptions: { args: playwrightExtraArgs } } : {}),
     trace: 'on-first-retry',
   },
   webServer: reuseExistingServer ? undefined : {
