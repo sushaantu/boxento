@@ -3,16 +3,10 @@ import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info, Search, MapPin, Loader2, Thermometer, Gauge, Sunrise, Sunset, Settings } from 'lucide-react';
 import { Skeleton } from '../../ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
 import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { Label } from '../../ui/label';
-import WidgetHeader from '../../widgets/common/WidgetHeader';
+import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/common/WidgetSettingsDialog';
+import { WidgetShell } from '../../widgets/common/WidgetShell';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
@@ -1254,46 +1248,33 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     }, 300);
   };
 
+  const resetSearchState = () => {
+    setCitySearch('');
+    setCityResults([]);
+    setShowResults(false);
+    setLocationError(null);
+  };
+
+  const resetSettings = () => {
+    if (config) {
+      setLocalConfig(config);
+    }
+    resetSearchState();
+    setIsSettingsOpen(false);
+  };
+
   const renderSettingsFooter = () => {
     return (
-      <div className="flex justify-between w-full">
-        {config?.onDelete && (
-          <Button
-            variant="destructive"
-            onClick={() => {
-              if (config.onDelete) {
-                config.onDelete();
-              }
-            }}
-            aria-label="Delete this widget"
-          >
-            Delete
-          </Button>
-        )}
-
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsSettingsOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="default"
-            onClick={handleSaveSettings}
-            disabled={isValidating}
-          >
-            {isValidating ? (
-              <>
-                <span className="animate-spin mr-2">⏳</span>
-                Validating...
-              </>
-            ) : (
-              'Save'
-            )}
-          </Button>
-        </div>
-      </div>
+      <WidgetSettingsDialogFooter
+        onDelete={config?.onDelete ? () => config.onDelete?.() : undefined}
+        onCancel={resetSettings}
+        onSave={() => {
+          void handleSaveSettings();
+        }}
+        saveDisabled={isValidating}
+        savePending={isValidating}
+        savePendingLabel="Validating..."
+      />
     );
   };
 
@@ -1311,47 +1292,36 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   }, []);
 
   return (
-    <div ref={widgetRef} className={`widget-container h-full flex flex-col ${isTiny ? 'widget-drag-handle' : ''}`}>
-      {!isTiny && !isApp && (
-        <WidgetHeader
-          title="Weather"
-          onSettingsClick={readOnly ? undefined : () => setIsSettingsOpen(true)}
-          compact={isShort || width === 1 || height === 1}
-        />
-      )}
-
-      <div className={`flex-1 overflow-hidden rounded-md ${isTiny ? 'm-0 p-2' : isApp ? '' : 'm-1'}`}>
-        {renderContent()}
-      </div>
+    <WidgetShell
+      ref={widgetRef}
+      title="Weather"
+      isTiny={isTiny}
+      hideHeader={isApp}
+      compactHeader={isShort || width === 1 || height === 1}
+      onSettingsClick={readOnly ? undefined : () => setIsSettingsOpen(true)}
+      contentClassName={isTiny ? 'rounded-md p-2' : isApp ? '' : 'rounded-md m-1'}
+    >
+      {renderContent()}
       
       {isSettingsOpen && (
-        <Dialog open={isSettingsOpen} onOpenChange={(open: boolean) => {
-          setIsSettingsOpen(open);
-          if (open) {
-            // Reset search state when dialog opens
-            setCitySearch('');
-            setCityResults([]);
-            setShowResults(false);
-            setLocationError(null);
-          }
-        }}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Weather Settings</DialogTitle>
-            </DialogHeader>
-            {/* Add a div with space-y-4 inside the py-4 container */}
-            <div className="py-4">
-              <div className="space-y-4">
-                {renderSettingsContent()}
-              </div>
-            </div>
-            <DialogFooter>
-              {renderSettingsFooter()}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <WidgetSettingsDialog
+          open={isSettingsOpen}
+          onOpenChange={(open: boolean) => {
+            if (!open) {
+              resetSettings();
+              return;
+            }
+            setIsSettingsOpen(true);
+            resetSearchState();
+          }}
+          title="Weather Settings"
+          bodyClassName="flex flex-col gap-4"
+          footer={renderSettingsFooter()}
+        >
+          {renderSettingsContent()}
+        </WidgetSettingsDialog>
       )}
-    </div>
+    </WidgetShell>
   );
 };
 

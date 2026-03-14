@@ -4,20 +4,14 @@ import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh'
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Loader2, MapPin } from 'lucide-react'
 import { encryptionUtils } from '@/lib/encryption'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '../../ui/dialog'
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "../../ui/select"
-import WidgetHeader from '../../widgets/common/WidgetHeader'
+import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/common/WidgetSettingsDialog'
+import { WidgetShell } from '../../widgets/common/WidgetShell'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
 import { Button } from '../../ui/button'
 import { Label } from '../../ui/label'
@@ -2172,46 +2166,24 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
    */
   const renderSettingsFooter = () => {
     return (
-      <div className="flex justify-between w-full">
-        {config?.onDelete && (
-          <Button
-            variant="destructive"
-            onClick={() => {
-              if (config.onDelete) {
-                config.onDelete();
-              }
-              localStorage.removeItem(`calendar-widget-config-${localConfig.id || 'default'}`);
-            }}
-            aria-label="Delete this widget"
-          >
-            Delete
-          </Button>
-        )}
-
-        <div className="flex items-center gap-2 ml-auto">
-          <Button
-            variant="outline"
-            onClick={() => {
-              // Reset to original config on cancel
-              if (config) setLocalConfig(config);
-              setIsSettingsOpen(false);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => {
-              if (config?.onUpdate) {
-                config.onUpdate(localConfig);
-              }
-              setIsSettingsOpen(false);
-            }}
-          >
-            Save
-          </Button>
-        </div>
-      </div>
+      <WidgetSettingsDialogFooter
+        onDelete={config?.onDelete ? () => {
+          config.onDelete?.();
+          localStorage.removeItem(`calendar-widget-config-${localConfig.id || 'default'}`);
+        } : undefined}
+        onCancel={() => {
+          if (config) {
+            setLocalConfig(config);
+          }
+          setIsSettingsOpen(false);
+        }}
+        onSave={() => {
+          if (config?.onUpdate) {
+            config.onUpdate(localConfig);
+          }
+          setIsSettingsOpen(false);
+        }}
+      />
     );
   }
 
@@ -2259,49 +2231,39 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
   }
 
   return (
-    <div
+    <WidgetShell
       ref={widgetRef}
-      className={`widget-container h-full flex flex-col ${isTiny ? 'widget-drag-handle' : ''}`}
+      title="Calendar"
+      isTiny={isTiny}
+      hideHeader={isApp}
+      compactHeader={isShort}
+      onSettingsClick={readOnly ? undefined : () => setIsSettingsOpen(true)}
+      contentClassName={isTiny ? 'p-1' : isApp ? '' : 'p-2'}
     >
-      {!isTiny && !isApp && (
-        <WidgetHeader
-          title="Calendar"
-          onSettingsClick={readOnly ? undefined : () => setIsSettingsOpen(true)}
-          compact={isShort}
-        />
-      )}
-
-      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-1' : isApp ? '' : 'p-2'}`}>
-        {renderContent()}
-      </div>
+      {renderContent()}
 
       {isSettingsOpen && (
-        <Dialog
+        <WidgetSettingsDialog
           open={isSettingsOpen}
           onOpenChange={(open: boolean) => {
             if (!open) {
               // Reset to original config when closing without save
-              if (config) setLocalConfig(config);
+              if (config) {
+                setLocalConfig(config);
+              }
               setIsSettingsOpen(false);
+              return;
             }
+            setIsSettingsOpen(true);
           }}
+          title="Calendar Settings"
+          bodyClassName="flex flex-col gap-4 px-1"
+          footer={renderSettingsFooter()}
         >
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Calendar Settings</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
-              <div className="space-y-4 px-1">
-                {renderSettingsContent()}
-              </div>
-            </div>
-            <DialogFooter>
-              {renderSettingsFooter()}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          {renderSettingsContent()}
+        </WidgetSettingsDialog>
       )}
-    </div>
+    </WidgetShell>
   )
 }
 

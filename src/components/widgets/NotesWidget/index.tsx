@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { StickyNote, FileText, Type, Hash, AlignLeft, Settings } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -17,7 +10,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import WidgetHeader from '../common/WidgetHeader';
+import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../common/WidgetSettingsDialog';
+import { WidgetShell } from '../common/WidgetShell';
 import { NotesWidgetProps, NotesWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 
@@ -366,115 +360,84 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
 
   const renderSettings = () => {
     return (
-      <Dialog
+      <WidgetSettingsDialog
         open={showSettings}
         onOpenChange={(open: boolean) => {
           if (!open) {
             cancelSettings();
+            return;
           }
+          setShowSettings(true);
         }}
+        title="Notes Settings"
+        bodyClassName="flex flex-col gap-4 px-1"
+        footer={(
+          <WidgetSettingsDialogFooter
+            onDelete={config?.onDelete ? () => config.onDelete?.() : undefined}
+            onCancel={cancelSettings}
+            onSave={saveSettings}
+          />
+        )}
       >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Notes Settings</DialogTitle>
-          </DialogHeader>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="title-input">Title</Label>
+          <Input
+            id="title-input"
+            value={localConfig.title || ''}
+            onChange={handleTitleChange}
+          />
+        </div>
 
-          <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
-            <div className="space-y-4 px-1">
-              <div className="space-y-2">
-                <Label htmlFor="title-input">Title</Label>
-                <Input
-                  id="title-input"
-                  value={localConfig.title || ''}
-                  onChange={handleTitleChange}
-                />
-              </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="font-family-select">Font Family</Label>
+          <Select
+            value={localConfig.fontFamily || 'system-ui, -apple-system, sans-serif'}
+            onValueChange={(value) => handleFontFamilyChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select a font family" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="system-ui, -apple-system, sans-serif">System UI</SelectItem>
+              <SelectItem value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</SelectItem>
+              <SelectItem value="Georgia, serif">Georgia</SelectItem>
+              <SelectItem value="'Courier New', monospace">Monospace</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="font-family-select">Font Family</Label>
-                <Select
-                  value={localConfig.fontFamily || 'system-ui, -apple-system, sans-serif'}
-                  onValueChange={(value) => handleFontFamilyChange({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a font family" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="system-ui, -apple-system, sans-serif">System UI</SelectItem>
-                    <SelectItem value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</SelectItem>
-                    <SelectItem value="Georgia, serif">Georgia</SelectItem>
-                    <SelectItem value="'Courier New', monospace">Monospace</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="font-size-range">Font Size</Label>
-                  <span className="text-sm text-muted-foreground">{localConfig.fontSize || 14}px</span>
-                </div>
-                <Slider
-                  id="font-size-range"
-                  min={12}
-                  max={24}
-                  step={1}
-                  value={[localConfig.fontSize || 14]}
-                  onValueChange={(value: number[]) => handleFontSizeChange(value[0])}
-                  className="w-full"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <Label htmlFor="line-height-range">Line Height</Label>
-                  <span className="text-sm text-muted-foreground">{localConfig.lineHeight || 26}px</span>
-                </div>
-                <Slider
-                  id="line-height-range"
-                  min={20}
-                  max={40}
-                  step={2}
-                  value={[localConfig.lineHeight || 26]}
-                  onValueChange={(value: number[]) => handleLineHeightChange(value[0])}
-                  className="w-full"
-                />
-              </div>
-            </div>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="font-size-range">Font Size</Label>
+            <span className="text-sm text-muted-foreground">{localConfig.fontSize || 14}px</span>
           </div>
+          <Slider
+            id="font-size-range"
+            min={12}
+            max={24}
+            step={1}
+            value={[localConfig.fontSize || 14]}
+            onValueChange={(value: number[]) => handleFontSizeChange(value[0])}
+            className="w-full"
+          />
+        </div>
 
-          <DialogFooter>
-            <div className="flex justify-between w-full">
-              {config?.onDelete && (
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (config.onDelete) {
-                      config.onDelete();
-                    }
-                  }}
-                  aria-label="Delete this widget"
-                >
-                  Delete
-                </Button>
-              )}
-              <div className="flex items-center gap-2 ml-auto">
-                <Button
-                  variant="outline"
-                  onClick={cancelSettings}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={saveSettings}
-                  variant="default"
-                >
-                  Save
-                </Button>
-              </div>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="line-height-range">Line Height</Label>
+            <span className="text-sm text-muted-foreground">{localConfig.lineHeight || 26}px</span>
+          </div>
+          <Slider
+            id="line-height-range"
+            min={20}
+            max={40}
+            step={2}
+            value={[localConfig.lineHeight || 26]}
+            onValueChange={(value: number[]) => handleLineHeightChange(value[0])}
+            className="w-full"
+          />
+        </div>
+      </WidgetSettingsDialog>
     );
   };
 
@@ -483,25 +446,19 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
   // ============================================================
 
   return (
-    <div
+    <WidgetShell
       ref={widgetRef}
-      className={`widget-container h-full flex flex-col ${isTiny ? 'widget-drag-handle' : ''}`}
+      title={localConfig.title || 'Notes'}
+      isTiny={isTiny}
+      hideHeader={isApp}
+      compactHeader={isShort}
+      onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
+      contentClassName={isTiny ? 'p-1' : ''}
     >
-      {!isTiny && !isApp && (
-        <WidgetHeader
-          title={localConfig.title || 'Notes'}
-          onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-          compact={isShort}
-        />
-      )}
-
-      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-1' : isApp ? '' : ''}`}>
-        {renderContent()}
-      </div>
-
+      {renderContent()}
       {/* Settings modal */}
       {showSettings && renderSettings()}
-    </div>
+    </WidgetShell>
   );
 };
 
