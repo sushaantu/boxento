@@ -21,6 +21,9 @@ import WidgetHeader from '../common/WidgetHeader';
 import { NotesWidgetProps, NotesWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 
+const NOTES_ICON_CLASS_NAME = 'text-muted-foreground';
+const NOTES_BADGE_CLASS_NAME = 'bg-muted text-muted-foreground';
+
 /**
  * Notes Widget Component
  *
@@ -172,7 +175,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
   // Generate the linear gradient for the lined paper effect
   const getLinedPaperBackground = () => {
     const lineHeight = localConfig.lineHeight || defaultConfig.lineHeight || 26;
-    const isDarkMode = document.documentElement.classList.contains('dark');
+    const isDarkMode = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
     const lineColor = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : (localConfig.lineColor || defaultConfig.lineColor || '#E6E6E6');
 
     return `repeating-linear-gradient(
@@ -226,7 +229,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
     const { words } = textStats;
     return (
       <div className="flex h-full flex-col items-center justify-center gap-0.5 text-center">
-        <StickyNote size={22} className="text-amber-500 dark:text-amber-400" />
+        <StickyNote size={22} className={NOTES_ICON_CLASS_NAME} />
         {words > 0 && (
           <span className="text-[10px] font-medium leading-none text-muted-foreground">
             {words}
@@ -244,8 +247,8 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
     return (
       <div className="flex h-full items-center gap-2 overflow-x-auto px-1">
         {/* Icon badge */}
-        <div className="flex shrink-0 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20 px-2 py-1">
-          <StickyNote size={16} className="text-amber-500 dark:text-amber-400" />
+        <div className={`flex shrink-0 items-center justify-center rounded-lg px-2 py-1 ${NOTES_BADGE_CLASS_NAME}`}>
+          <StickyNote size={16} className={NOTES_ICON_CLASS_NAME} />
         </div>
 
         {/* First line preview */}
@@ -261,7 +264,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
 
         {/* Word count badge */}
         {words > 0 && (
-          <span className="shrink-0 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${NOTES_BADGE_CLASS_NAME}`}>
             {words}w
           </span>
         )}
@@ -290,7 +293,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
         {/* Top toolbar */}
         <div className="flex items-center justify-between border-b border-border px-4 py-2 widget-drag-handle cursor-move">
           <div className="flex items-center gap-2">
-            <FileText size={18} className="text-amber-500 dark:text-amber-400" />
+            <FileText size={18} className={NOTES_ICON_CLASS_NAME} />
             <h2 className="text-sm font-semibold text-foreground truncate">
               {localConfig.title || 'Notes'}
             </h2>
