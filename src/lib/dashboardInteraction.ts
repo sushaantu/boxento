@@ -1,7 +1,6 @@
 type ClosestCapableTarget = EventTarget & {
   closest?: (selector: string) => Element | null;
   parentElement?: Element | null;
-  parentNode?: ParentNode | null;
 };
 
 type DashboardInteractionEvent = {
@@ -40,7 +39,7 @@ const resolveClosestCapableTarget = (
     return closestTarget;
   }
 
-  const parentTarget = (closestTarget.parentElement ?? closestTarget.parentNode) as ClosestCapableTarget | null;
+  const parentTarget = closestTarget.parentElement as ClosestCapableTarget | null;
   if (parentTarget && typeof parentTarget.closest === 'function') {
     return parentTarget;
   }
