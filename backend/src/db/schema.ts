@@ -92,7 +92,7 @@ export function initializeSchema(db: Database.Database): void {
   }
 }
 
-export function runMigrations(db: Database.Database): void {
+export function runMigrations(_db: Database.Database): void {
   // Future migrations can be added here
   // Example:
   // if (currentVersion < 2) {

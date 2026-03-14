@@ -105,7 +105,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
     const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
     if (sortedDates[0] !== today && sortedDates[0] !== yesterday) return 0;
     let streak = 0;
-    let checkDate = new Date(sortedDates[0]);
+    const checkDate = new Date(sortedDates[0]);
     for (const dateStr of sortedDates) {
       const expectedDate = checkDate.toISOString().split('T')[0];
       if (dateStr === expectedDate) {
@@ -950,7 +950,11 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
               onChange={(e) => setHabitName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  editingHabit ? handleEditHabit() : handleAddHabit();
+                  if (editingHabit) {
+                    handleEditHabit();
+                  } else {
+                    handleAddHabit();
+                  }
                 }
               }}
               autoFocus
