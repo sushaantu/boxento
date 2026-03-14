@@ -576,11 +576,6 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   bottom: 9px;
 }
 
-.react-grid-item > .dashboard-resize-handle.react-resizable-handle.react-resizable-handle-se {
-  right: 6px;
-  bottom: 6px;
-}
-
 .dark .dashboard-resize-handle__visual::before,
 .dark .dashboard-resize-handle__visual::after {
   background: rgba(226, 232, 240, 0.72);
