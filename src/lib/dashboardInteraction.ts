@@ -40,14 +40,9 @@ const resolveClosestCapableTarget = (
     return closestTarget;
   }
 
-  const parentElement = closestTarget.parentElement;
-  if (parentElement && typeof parentElement.closest === 'function') {
-    return parentElement as ClosestCapableTarget;
-  }
-
-  const parentNode = closestTarget.parentNode as ClosestCapableTarget | null;
-  if (parentNode && typeof parentNode.closest === 'function') {
-    return parentNode;
+  const parentTarget = (closestTarget.parentElement ?? closestTarget.parentNode) as ClosestCapableTarget | null;
+  if (parentTarget && typeof parentTarget.closest === 'function') {
+    return parentTarget;
   }
 
   return null;
