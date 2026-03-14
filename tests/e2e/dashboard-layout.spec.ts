@@ -117,6 +117,45 @@ const dragFromTextNodeWithoutStartingWidgetInteraction = async (
   await expect.poll(async () => readStoredLayoutX(page, widgetId)).toBe(expectedLayoutX);
 };
 
+const readOverflowingLeafNodes = async (page: Page, widgetId: string) => (
+  page.locator(`.react-grid-item[data-widget-id="${widgetId}"]`).evaluate((element) => {
+    const widgetRect = element.getBoundingClientRect();
+
+    return Array.from(element.querySelectorAll<HTMLElement>('*'))
+      .map((node) => {
+        const text = node.textContent?.trim();
+        if (!text || node.children.length > 0) {
+          return null;
+        }
+
+        const rect = node.getBoundingClientRect();
+        const exceedsBounds = (
+          rect.left < widgetRect.left - 1
+          || rect.right > widgetRect.right + 1
+          || rect.top < widgetRect.top - 1
+          || rect.bottom > widgetRect.bottom + 1
+        );
+        const hasScrollOverflow = (
+          node.scrollWidth > node.clientWidth + 1
+          || node.scrollHeight > node.clientHeight + 1
+        );
+
+        if (!exceedsBounds && !hasScrollOverflow) {
+          return null;
+        }
+
+        return {
+          text,
+          className: String(node.className),
+          clientHeight: node.clientHeight,
+          clientWidth: node.clientWidth,
+          scrollHeight: node.scrollHeight,
+          scrollWidth: node.scrollWidth,
+        };
+      })
+      .filter(Boolean);
+  })
+);
 test('persists quick links drag and resize changes across reloads', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
   await seedDashboard(page, {
@@ -793,7 +832,7 @@ test('renders audited 1x1 widgets without header chrome', async ({ page }) => {
         id: 'world-clocks-1',
         type: 'world-clocks',
         config: {
-          timezones: [{ id: 1, name: 'Tokyo, Japan', timezone: 'Asia/Tokyo' }],
+          timezones: [{ id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' }],
         },
       },
       {
@@ -816,10 +855,73 @@ test('renders audited 1x1 widgets without header chrome', async ({ page }) => {
   const clocksWidget = page.locator('.react-grid-item[data-widget-id="world-clocks-1"]');
   await expect(clocksWidget).toBeVisible();
   await expect(clocksWidget.getByRole('heading', { name: 'World Clocks' })).toHaveCount(0);
-  await expect(clocksWidget).toContainText('Tokyo');
+  await expect(clocksWidget).toContainText('Mexico');
+  expect(await readOverflowingLeafNodes(page, 'world-clocks-1')).toEqual([]);
 
   const yearProgressWidget = page.locator('.react-grid-item[data-widget-id="year-progress-1"]');
   await expect(yearProgressWidget).toBeVisible();
   await expect(yearProgressWidget.getByRole('heading', { name: 'Year Progress' })).toHaveCount(0);
   await expect(yearProgressWidget.getByText(/\d+%/)).toBeVisible();
+});
+
+test('keeps world clock audit layouts within bounds from 1x1 through 4x4', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1200 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'world-clocks-1',
+        type: 'world-clocks',
+        config: {
+          timezones: [{ id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' }],
+        },
+      },
+      {
+        id: 'world-clocks-2',
+        type: 'world-clocks',
+        config: {
+          timezones: [
+            { id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' },
+            { id: 2, name: 'San Francisco, USA', timezone: 'America/Los_Angeles' },
+          ],
+        },
+      },
+      {
+        id: 'world-clocks-3',
+        type: 'world-clocks',
+        config: {
+          timezones: [
+            { id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' },
+            { id: 2, name: 'San Francisco, USA', timezone: 'America/Los_Angeles' },
+            { id: 3, name: 'New York, USA', timezone: 'America/New_York' },
+          ],
+        },
+      },
+      {
+        id: 'world-clocks-4',
+        type: 'world-clocks',
+        config: {
+          timezones: [
+            { id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' },
+            { id: 2, name: 'San Francisco, USA', timezone: 'America/Los_Angeles' },
+            { id: 3, name: 'New York, USA', timezone: 'America/New_York' },
+            { id: 4, name: 'Los Angeles, USA', timezone: 'America/Los_Angeles' },
+          ],
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'world-clocks-1', x: 0, y: 0, w: 1, h: 1, minW: 1, minH: 1 },
+        { i: 'world-clocks-2', x: 1, y: 0, w: 2, h: 2, minW: 1, minH: 1 },
+        { i: 'world-clocks-3', x: 3, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+        { i: 'world-clocks-4', x: 6, y: 0, w: 4, h: 4, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  for (const widgetId of ['world-clocks-1', 'world-clocks-2', 'world-clocks-3', 'world-clocks-4']) {
+    const widget = page.locator(`.react-grid-item[data-widget-id="${widgetId}"]`);
+    await expect(widget).toBeVisible();
+    expect(await readOverflowingLeafNodes(page, widgetId)).toEqual([]);
+  }
 });

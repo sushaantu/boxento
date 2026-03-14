@@ -45,6 +45,22 @@ const PRESET_TEMPLATES = [
   { label: 'SMS', prefix: 'sms:', placeholder: '+1234567890?body=Hello' },
 ];
 
+const COMPACT_QR_SIZES = {
+  constrainedSide1: 80,
+  constrainedSide2: 108,
+  constrainedSide3: 124,
+  constrainedSide4Plus: 136,
+} as const;
+
+const getCompactQrSize = (width: number, height: number) => {
+  const constrainedSide = Math.min(width, height);
+
+  if (constrainedSide <= 1) return COMPACT_QR_SIZES.constrainedSide1;
+  if (constrainedSide === 2) return COMPACT_QR_SIZES.constrainedSide2;
+  if (constrainedSide === 3) return COMPACT_QR_SIZES.constrainedSide3;
+  return COMPACT_QR_SIZES.constrainedSide4Plus;
+};
+
 const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) => {
   // --- Size detection (icon -> widget -> app spectrum) ---
   const isTiny = width === 1 && height === 1;
@@ -186,12 +202,29 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
   }, [width, height]);
 
   // --- Setup prompt when no content ---
-  const renderSetup = () => (
-    <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-      <Settings className="h-8 w-8" />
-      <p className="text-sm">Configure this widget to get started</p>
+  const renderSetup = (compactLayout = false) => (
+    <div
+      className={cn(
+        'flex flex-1 flex-col items-center justify-center text-muted-foreground',
+        compactLayout ? 'gap-1.5 px-2 text-center' : 'gap-2'
+      )}
+    >
+      <Settings className={cn(compactLayout ? 'h-5 w-5' : 'h-8 w-8')} />
+      <p
+        className={cn(
+          'text-center',
+          compactLayout ? 'max-w-[10rem] text-xs leading-tight' : 'text-sm'
+        )}
+      >
+        Configure this widget to get started
+      </p>
       {!readOnly && (
-        <Button variant="outline" size="sm" onClick={openSettings}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={openSettings}
+          className={cn(compactLayout && 'h-7 px-2 text-xs')}
+        >
           Open Settings
         </Button>
       )}
@@ -267,14 +300,16 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
 
   const renderCompact = () => {
     // 2x2 MICRO-WIDGET: QR code centered, no actions
-    if (!localConfig.content) return renderSetup();
+    if (!localConfig.content) return renderSetup(true);
+
+    const qrSize = getCompactQrSize(width, height);
 
     return (
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div ref={qrRef} className="bg-white p-1.5 rounded-lg">
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-1 pb-1">
+        <div ref={qrRef} className="bg-white p-2 rounded-lg shadow-sm">
           <QRCodeSVG
             value={localConfig.content}
-            size={80}
+            size={qrSize}
             level={localConfig.errorLevel || 'M'}
             fgColor={localConfig.fgColor || '#000000'}
             bgColor={localConfig.bgColor || '#ffffff'}
@@ -791,16 +826,21 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
   );
 
   return (
-    <div className={cn('widget-container h-full flex flex-col', isTiny ? 'widget-drag-handle' : 'p-2 md:p-3')}>
+    <div
+      className={cn(
+        'widget-container h-full flex flex-col',
+        isTiny ? 'widget-drag-handle' : isCompact ? 'p-1.5 md:p-2' : 'p-2 md:p-3'
+      )}
+    >
       {!isTiny && (
         <WidgetHeader
           title={localConfig.title || 'QR Code'}
           onSettingsClick={readOnly ? undefined : openSettings}
-          compact={isShort}
+          compact={isShort || isCompact}
         />
       )}
 
-      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-1' : isShort ? 'px-1' : ''}`}>
+      <div className={cn('flex-1 overflow-hidden min-h-0', isTiny ? 'p-1' : isShort ? 'px-1' : '')}>
         {/* Size-branching render (most specific first) */}
         {isTiny ? renderTiny()
           : isShort ? renderShort()
