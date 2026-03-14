@@ -204,9 +204,17 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
 
   const getCityLabel = (name: string): string => name.split(',')[0].trim();
 
-  const abbreviateWord = (word: string, maxLength: number): string => (
-    word.length <= maxLength ? word : `${word.slice(0, Math.max(maxLength - 1, 1))}.`
-  );
+  const abbreviateWord = (word: string, maxLength: number): string => {
+    if (word.length <= maxLength) {
+      return word;
+    }
+
+    if (maxLength <= 1) {
+      return word.slice(0, Math.max(maxLength, 0));
+    }
+
+    return `${word.slice(0, maxLength - 1)}.`;
+  };
 
   const getTinyLabelLines = (name: string): string[] => {
     const city = getCityLabel(name);
