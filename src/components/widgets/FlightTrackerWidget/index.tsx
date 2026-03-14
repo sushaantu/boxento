@@ -28,6 +28,11 @@ import type {
   FlightTrackerWidgetConfig,
   TrackedFlight,
 } from './types';
+import {
+  readFlightTrackerSetupProbe,
+  resolveFlightTrackerSetupState,
+  type FlightTrackerSetupState,
+} from './setup';
 import { cn } from '@/lib/utils';
 
 // Flight data interface from API
@@ -94,6 +99,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
   const [errorMap, setErrorMap] = useState<Record<string, string>>({});
   const [selectedFlightId, setSelectedFlightId] = useState<string | null>(null);
+  const [setupState, setSetupState] =
+    useState<FlightTrackerSetupState>('checking');
 
   // Settings modal snapshot/revert
   const [configSnapshot, setConfigSnapshot] =
@@ -191,6 +198,36 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
       fetchFlight(flight);
     });
   }, [trackedFlights, fetchFlight]);
+
+  const checkFlightTrackerSetup = useCallback(async (signal?: AbortSignal) => {
+    setSetupState('checking');
+
+    try {
+      const response = await fetch('/api/flights', { signal });
+      const payload = await readFlightTrackerSetupProbe(response);
+
+      setSetupState(
+        resolveFlightTrackerSetupState({
+          status: response.status,
+          error: payload.error,
+          message: payload.message,
+        })
+      );
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+
+      setSetupState('unconfigured');
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void checkFlightTrackerSetup(controller.signal);
+
+    return () => controller.abort();
+  }, [checkFlightTrackerSetup]);
 
   // Auto-refresh
   useEffect(() => {
@@ -347,22 +384,79 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
     setLocalConfig((prev) => ({ ...prev, trackedFlights: flights }));
   };
 
+  const setupBlocked = setupState === 'unconfigured';
+
   // --- Setup prompt when no flights configured ---
-  const renderSetup = () => (
-    <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-      <Plane className="h-8 w-8" />
-      <p className="text-sm">Track your flights</p>
-      {!readOnly && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowSettings(true)}
-        >
-          Add Flight
-        </Button>
-      )}
-    </div>
-  );
+  const renderSetup = () => {
+    if (setupState === 'checking') {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+          <RefreshCw className="h-8 w-8 animate-spin" />
+          <p className="text-sm">Checking flight data setup</p>
+        </div>
+      );
+    }
+
+    if (setupBlocked) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4 text-center">
+          <Plane className="h-8 w-8 text-amber-600" />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">
+              Finish flight data setup first
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Flight Tracker needs Boxento&apos;s AirLabs integration before it
+              can look up flights. Configure the `/api/flights` proxy with an
+              `AIRLABS_API_KEY` secret, then return here to add flights.
+            </p>
+          </div>
+          {!readOnly && (
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(true)}
+              >
+                View Setup Requirements
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void checkFlightTrackerSetup()}
+              >
+                Recheck Setup
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4 text-center">
+        <Plane className="h-8 w-8 text-muted-foreground" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-foreground">
+            No flights tracked yet
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Flight data is ready. Add a flight number and date to start
+            tracking it here.
+          </p>
+        </div>
+        {!readOnly && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowSettings(true)}
+          >
+            Add Flight
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   // --- Tiny (1x1): plane icon + status dot ---
   const renderTiny = () => {
@@ -1177,6 +1271,28 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+          {setupBlocked && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-left">
+              <div className="flex gap-2">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-amber-950">
+                    Flight data setup required
+                  </p>
+                  <p className="text-sm text-amber-900/90">
+                    This widget can&apos;t fetch live flights until Boxento&apos;s
+                    `/api/flights` proxy is connected to AirLabs with an
+                    `AIRLABS_API_KEY` secret.
+                  </p>
+                  <p className="text-xs text-amber-900/80">
+                    Once that integration is ready, reopen this dialog to add
+                    flights.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Widget title */}
           <div>
             <Label htmlFor="ft-title">Title</Label>
@@ -1258,7 +1374,12 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
           </div>
 
           {/* Add new flight */}
-          <div className="space-y-2">
+          <div
+            className={cn(
+              'space-y-2',
+              setupBlocked && 'pointer-events-none opacity-60'
+            )}
+          >
             <Label>Add Flight</Label>
             <div className="flex gap-2">
               <Input
@@ -1268,6 +1389,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
                   setAddFlightNumber(e.target.value.toUpperCase())
                 }
                 className="flex-1"
+                disabled={setupBlocked}
               />
             </div>
             <Popover>
@@ -1276,6 +1398,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
                   variant="outline"
                   className="w-full justify-start text-left font-normal"
                   size="sm"
+                  disabled={setupBlocked}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {addFlightDate
@@ -1307,10 +1430,16 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
               variant="outline"
               className="w-full"
               onClick={addTrackedFlight}
-              disabled={!addFlightNumber.trim()}
+              disabled={setupBlocked || !addFlightNumber.trim()}
             >
               <Plus className="h-4 w-4 mr-2" /> Add Flight
             </Button>
+            {setupBlocked && (
+              <p className="text-xs text-muted-foreground">
+                Add-flight controls unlock after the flight-data integration is
+                configured.
+              </p>
+            )}
           </div>
         </div>
 
