@@ -23,6 +23,12 @@ import {
 import { Skeleton } from '../../ui/skeleton';
 import WidgetHeader from '../common/WidgetHeader';
 import { cn } from '@/lib/utils';
+import {
+  formatMonitoringItemLimitPlaceholder,
+  getAutomaticMonitoringItemLimit,
+  getMonitoringItemLimit,
+  parseMonitoringItemLimit,
+} from '../common/monitoringItemLimit';
 import { KumaMonitor, KumaMonitorStatus, KumaWidgetConfig, KumaWidgetData } from './types';
 
 const SQLITE_API_URL = import.meta.env.VITE_SQLITE_API_URL || '';
@@ -33,7 +39,6 @@ const DEFAULT_CONFIG: KumaWidgetConfig = {
   apiUrl: DEFAULT_API_URL,
   statusPageUrl: '',
   refreshInterval: 60,
-  maxItems: 6,
   groupFilter: '',
   statusFilter: 'all',
   showGroups: true,
@@ -135,6 +140,7 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
   const readOnly = config?.readOnly ?? false;
 
   const mergedConfig = useMemo(() => mergeConfig(config), [config]);
+  const automaticMaxItems = useMemo(() => getAutomaticMonitoringItemLimit(width, height), [width, height]);
   const [localConfig, setLocalConfig] = useState<KumaWidgetConfig>(mergedConfig);
   const [showSettings, setShowSettings] = useState(false);
   const [data, setData] = useState<KumaWidgetData | null>(null);
@@ -217,10 +223,18 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
     [monitors, selectedMonitorId],
   );
 
-  const visibleMonitors = useMemo(
-    () => monitors.slice(0, Math.max(1, localConfig.maxItems || DEFAULT_CONFIG.maxItems || 6)),
-    [localConfig.maxItems, monitors],
+  const resolvedMaxItems = useMemo(
+    () => getMonitoringItemLimit(width, height, localConfig.maxItems),
+    [height, localConfig.maxItems, width],
   );
+
+  const visibleMonitors = useMemo(() => {
+    if (typeof resolvedMaxItems !== 'number') {
+      return monitors;
+    }
+
+    return monitors.slice(0, resolvedMaxItems);
+  }, [monitors, resolvedMaxItems]);
 
   const summary = useMemo(() => {
     const all = data?.monitors ?? [];
@@ -639,14 +653,21 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="kuma-max-items">Max items</Label>
+                  <Label htmlFor="kuma-max-items">Item limit</Label>
                   <Input
                     id="kuma-max-items"
                     type="number"
                     min={1}
-                    value={localConfig.maxItems || DEFAULT_CONFIG.maxItems || 6}
-                    onChange={(event) => setLocalConfig((prev) => ({ ...prev, maxItems: Number(event.target.value) || 6 }))}
+                    value={localConfig.maxItems?.toString() ?? ''}
+                    placeholder={formatMonitoringItemLimitPlaceholder(automaticMaxItems)}
+                    onChange={(event) => setLocalConfig((prev) => ({
+                      ...prev,
+                      maxItems: parseMonitoringItemLimit(event.target.value),
+                    }))}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Optional. Leave blank to use the size-aware default for this widget.
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">

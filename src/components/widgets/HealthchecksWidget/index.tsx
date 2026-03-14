@@ -26,6 +26,12 @@ import {
 import { Skeleton } from '../../ui/skeleton';
 import WidgetHeader from '../common/WidgetHeader';
 import { cn } from '@/lib/utils';
+import {
+  formatMonitoringItemLimitPlaceholder,
+  getAutomaticMonitoringItemLimit,
+  getMonitoringItemLimit,
+  parseMonitoringItemLimit,
+} from '../common/monitoringItemLimit';
 import { HealthchecksCheck, HealthchecksStatus, HealthchecksWidgetConfig, HealthchecksWidgetData } from './types';
 
 const SQLITE_API_URL = import.meta.env.VITE_SQLITE_API_URL || '';
@@ -37,7 +43,6 @@ const DEFAULT_CONFIG: HealthchecksWidgetConfig = {
   baseUrl: '',
   apiKey: '',
   refreshInterval: 60,
-  maxItems: 6,
   tagFilter: '',
   statusFilter: 'all',
   showTags: true,
@@ -145,6 +150,7 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
   const readOnly = config?.readOnly ?? false;
 
   const mergedConfig = useMemo(() => mergeConfig(config), [config]);
+  const automaticMaxItems = useMemo(() => getAutomaticMonitoringItemLimit(width, height), [width, height]);
   const [localConfig, setLocalConfig] = useState<HealthchecksWidgetConfig>(mergedConfig);
   const [showSettings, setShowSettings] = useState(false);
   const [data, setData] = useState<HealthchecksWidgetData | null>(null);
@@ -230,10 +236,18 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
     [checks, selectedCheckSlug],
   );
 
-  const visibleChecks = useMemo(
-    () => checks.slice(0, Math.max(1, localConfig.maxItems || DEFAULT_CONFIG.maxItems || 6)),
-    [checks, localConfig.maxItems],
+  const resolvedMaxItems = useMemo(
+    () => getMonitoringItemLimit(width, height, localConfig.maxItems),
+    [height, localConfig.maxItems, width],
   );
+
+  const visibleChecks = useMemo(() => {
+    if (typeof resolvedMaxItems !== 'number') {
+      return checks;
+    }
+
+    return checks.slice(0, resolvedMaxItems);
+  }, [checks, resolvedMaxItems]);
 
   const summary = useMemo(() => {
     const all = data?.checks ?? [];
@@ -672,14 +686,21 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="health-max-items">Max items</Label>
+                  <Label htmlFor="health-max-items">Item limit</Label>
                   <Input
                     id="health-max-items"
                     type="number"
                     min={1}
-                    value={localConfig.maxItems || DEFAULT_CONFIG.maxItems || 6}
-                    onChange={(event) => setLocalConfig((prev) => ({ ...prev, maxItems: Number(event.target.value) || 6 }))}
+                    value={localConfig.maxItems?.toString() ?? ''}
+                    placeholder={formatMonitoringItemLimitPlaceholder(automaticMaxItems)}
+                    onChange={(event) => setLocalConfig((prev) => ({
+                      ...prev,
+                      maxItems: parseMonitoringItemLimit(event.target.value),
+                    }))}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Optional. Leave blank to use the size-aware default for this widget.
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">

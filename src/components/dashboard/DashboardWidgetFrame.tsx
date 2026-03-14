@@ -7,6 +7,7 @@ import {
   areDashboardWidgetFramePropsEqual,
   type DashboardWidgetFrameComparisonProps,
 } from '@/components/dashboard/dashboardWidgetFrameComparator';
+import { stopDashboardInteractionPropagation } from '@/lib/dashboardInteraction';
 
 type DashboardWidgetFrameProps = DashboardWidgetFrameComparisonProps & {
   onDeleteWidget: (widgetId: string) => Promise<void>;
@@ -52,15 +53,22 @@ const DashboardWidgetFrameComponent: React.FC<DashboardWidgetFrameProps> = ({
   }
 
   return (
-    <WidgetErrorBoundary>
-      <Suspense fallback={<DashboardWidgetLoadingFallback />}>
-        <WidgetComponent
-          width={width}
-          height={height}
-          config={widgetConfig}
-        />
-      </Suspense>
-    </WidgetErrorBoundary>
+    <div
+      className="h-full"
+      onMouseDownCapture={stopDashboardInteractionPropagation}
+      onTouchStartCapture={stopDashboardInteractionPropagation}
+      onClick={stopDashboardInteractionPropagation}
+    >
+      <WidgetErrorBoundary>
+        <Suspense fallback={<DashboardWidgetLoadingFallback />}>
+          <WidgetComponent
+            width={width}
+            height={height}
+            config={widgetConfig}
+          />
+        </Suspense>
+      </WidgetErrorBoundary>
+    </div>
   );
 };
 

@@ -235,6 +235,8 @@ export function SharedDashboardView() {
             compactType="vertical"
             style={{
               width: '100%',
+              maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH,
+              margin: '0 auto',
             }}
           >
             {dashboard.widgets.map((widget) => (

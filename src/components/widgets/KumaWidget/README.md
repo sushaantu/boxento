@@ -16,7 +16,7 @@ Display service monitor status from an Uptime Kuma instance inside Boxento.
 - `API URL`: advanced override for the Boxento backend endpoint
 - `Open URL`: optional override for the external-link button
 - `Refresh (s)`: polling interval, minimum practical value is 15 seconds
-- `Max items`: number of monitors shown in standard layouts
+- `Item limit`: optional cap on monitors shown in standard layouts; leave blank for the size-aware default
 - `Group filter`: optional text match against Kuma groups
 - `Status filter`: show all monitors, only issues, or only healthy monitors
 - `Show groups`: toggle group labels in each row

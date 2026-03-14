@@ -543,6 +543,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Clear search"
                 onClick={() => setAppSearchQuery('')}
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6"
               >

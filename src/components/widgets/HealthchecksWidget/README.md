@@ -17,7 +17,7 @@ Display scheduled job and dead-man-switch status from Healthchecks inside Boxent
 - `API URL`: advanced override for the Boxento backend endpoint
 - `Open URL`: optional override for the external-link button
 - `Refresh (s)`: polling interval, minimum practical value is 15 seconds
-- `Max items`: number of checks shown in standard layouts
+- `Item limit`: optional cap on checks shown in standard layouts; leave blank for the size-aware default
 - `Tag filter`: optional text match against Healthchecks tags
 - `Status filter`: show all checks, only checks needing attention, or only healthy checks
 - `Show tags`: toggle tag labels in each row

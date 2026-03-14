@@ -56,6 +56,7 @@ import { useNetworkStatus } from '@/lib/useNetworkStatus'
 import { AppFooter } from '@/components/AppFooter'
 import { useStorage } from '@/lib/storage/StorageContext'
 import { getStorageProvider } from '@/lib/storage'
+import { DASHBOARD_INTERACTIVE_CHILD_SELECTOR } from '@/lib/dashboardInteraction'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -1877,7 +1878,7 @@ function App() {
                         margin={[GRID.ITEM_MARGIN, GRID.ITEM_MARGIN]}
                         containerPadding={[GRID.CONTAINER_PADDING, GRID.CONTAINER_PADDING]}
                         draggableHandle=".widget-drag-handle"
-                        draggableCancel=".settings-button"
+                        draggableCancel={DASHBOARD_INTERACTIVE_CHILD_SELECTOR}
                         useCSSTransforms={true}
                         measureBeforeMount={false}
                         compactType="vertical"
@@ -1890,6 +1891,8 @@ function App() {
                         transformScale={1}
                         style={{
                           width: '100%',
+                          maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH,
+                          margin: '0 auto',
                           minHeight: '100%',
                         }}
                       >

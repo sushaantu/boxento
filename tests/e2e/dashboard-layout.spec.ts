@@ -163,6 +163,79 @@ test('keeps widget geometry stable when switching from laptop to 4K-class viewpo
   expect(storedAfter).toEqual(storedBefore);
 });
 
+test('keeps quick links app header controls from dragging the widget', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 1000 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'quick-links-app',
+        type: 'quick-links',
+        config: {
+          customTitle: 'Quick Links',
+          links: [
+            { id: 1, title: 'Boxento', url: 'https://boxento.test', favicon: '', category: 'Utilities' },
+            { id: 2, title: 'Paisa', url: 'https://paisa.test', favicon: '', category: 'Finance' },
+          ],
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'quick-links-app', x: 0, y: 0, w: 6, h: 6, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="quick-links-app"]');
+  await expect(widget).toBeVisible();
+
+  const searchInput = widget.getByPlaceholder('Search links...');
+  await expect(searchInput).toBeVisible();
+
+  const searchBox = await searchInput.boundingBox();
+  if (!searchBox) {
+    throw new Error('Quick Links app search input is not available');
+  }
+
+  await page.mouse.move(searchBox.x + searchBox.width / 2, searchBox.y + searchBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(searchBox.x + searchBox.width / 2 + 160, searchBox.y + searchBox.height / 2 + 12, { steps: 12 });
+  await page.mouse.up();
+
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
+      return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-app')?.x ?? -1;
+    });
+  }).toBe(0);
+
+  await searchInput.fill('box');
+  await expect(searchInput).toHaveValue('box');
+
+  const clearSearchButton = widget.getByRole('button', { name: 'Clear search' });
+  await expect(clearSearchButton).toBeVisible();
+
+  const clearBox = await clearSearchButton.boundingBox();
+  if (!clearBox) {
+    throw new Error('Quick Links clear-search button is not available');
+  }
+
+  await page.mouse.move(clearBox.x + clearBox.width / 2, clearBox.y + clearBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(clearBox.x + clearBox.width / 2 + 160, clearBox.y + clearBox.height / 2 + 12, { steps: 12 });
+  await page.mouse.up();
+
+  await expect.poll(async () => {
+    return page.evaluate(() => {
+      const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
+      return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-app')?.x ?? -1;
+    });
+  }).toBe(0);
+
+  await clearSearchButton.click();
+  await expect(searchInput).toHaveValue('');
+});
+
 test('preserves drag persistence on dashboards with more than five widgets', async ({ page }) => {
   await page.setViewportSize({ width: 1512, height: 982 });
 
