@@ -1890,8 +1890,6 @@ function App() {
                         transformScale={1}
                         style={{
                           width: '100%',
-                          maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH,
-                          margin: '0 auto',
                           minHeight: '100%',
                         }}
                       >
