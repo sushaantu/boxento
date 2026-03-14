@@ -21,7 +21,8 @@ describe('NotesWidget icon styling', () => {
     const ribbonHtml = renderNotesWidget(3, 1, 'First line\nSecond line');
 
     expect(tinyHtml).toMatch(/lucide-sticky-note[^"]*text-muted-foreground/);
-    expect(ribbonHtml).toMatch(/lucide-sticky-note[^"]*text-muted-foreground/);
+    expect(ribbonHtml).toContain('bg-muted text-muted-foreground');
+    expect(ribbonHtml).toContain('lucide-sticky-note');
     expect(ribbonHtml).toContain('bg-muted');
     expect(tinyHtml).not.toContain('amber');
     expect(ribbonHtml).not.toContain('amber');

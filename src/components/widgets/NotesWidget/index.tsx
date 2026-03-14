@@ -248,7 +248,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
       <div className="flex h-full items-center gap-2 overflow-x-auto px-1">
         {/* Icon badge */}
         <div className={`flex shrink-0 items-center justify-center rounded-lg px-2 py-1 ${NOTES_BADGE_CLASS_NAME}`}>
-          <StickyNote size={16} className={NOTES_ICON_CLASS_NAME} />
+          <StickyNote size={16} />
         </div>
 
         {/* First line preview */}
