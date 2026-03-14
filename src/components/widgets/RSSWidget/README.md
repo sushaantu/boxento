@@ -55,9 +55,9 @@ The widget automatically adapts to different sizes:
 You can use these example feeds to test the widget:
 
 - Hacker News: `https://news.ycombinator.com/rss`
-- New York Times: `https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml`
-- Wired: `https://www.wired.com/feed/rss`
+- Cloudflare Blog: `https://blog.cloudflare.com/rss/`
+- Krebs on Security: `https://krebsonsecurity.com/feed/`
 
 ## Technical Details
 
-The widget uses a CORS proxy to fetch RSS feeds from any source, parses the XML, and extracts all relevant information. It handles various RSS formats and looks for images in different tags including media:content, enclosure, and embedded images in content. 
+The widget uses a CORS proxy to fetch RSS feeds from any source, parses the XML, and extracts all relevant information. For link-only feeds, the same proxy can fetch the original article and run a reader-mode extraction pass so the app view can render readable inline content instead of an empty pane.
