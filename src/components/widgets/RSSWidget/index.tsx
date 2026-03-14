@@ -449,10 +449,12 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
               },
           }));
         });
-      } catch {
+      } catch (error) {
         if (controller.signal.aborted) {
           return;
         }
+
+        console.error('Error fetching reader content:', error);
 
         startTransition(() => {
             setReaderContentByLink((current) => ({

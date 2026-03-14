@@ -47,6 +47,19 @@ const isPrivateIpv4Address = (hostname: string): boolean => {
     (parts[0] === 192 && parts[1] === 168);
 };
 
+const isPrivateIpv6Address = (hostname: string): boolean => {
+  const normalizedHost = hostname.replace(/^\[(.*)\]$/, "$1").toLowerCase();
+
+  if (!normalizedHost.includes(":")) {
+    return false;
+  }
+
+  return normalizedHost === "::1" ||
+    normalizedHost.startsWith("fc") ||
+    normalizedHost.startsWith("fd") ||
+    normalizedHost.startsWith("fe80:");
+};
+
 const isDisallowedHostname = (hostname: string): boolean => {
   const normalizedHost = hostname.toLowerCase();
 
@@ -55,10 +68,8 @@ const isDisallowedHostname = (hostname: string): boolean => {
     normalizedHost === "::1" ||
     normalizedHost === "[::1]" ||
     normalizedHost.endsWith(".local") ||
-    normalizedHost.startsWith("fc") ||
-    normalizedHost.startsWith("fd") ||
-    normalizedHost.startsWith("fe80:") ||
-    isPrivateIpv4Address(normalizedHost);
+    isPrivateIpv4Address(normalizedHost) ||
+    isPrivateIpv6Address(normalizedHost);
 };
 
 const getSafeRemoteUrl = (rawUrl: unknown): URL | null => {
