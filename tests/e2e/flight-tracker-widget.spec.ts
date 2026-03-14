@@ -87,3 +87,27 @@ test('keeps the add-flight onboarding path for configured widgets without flight
   await flightNumberInput.fill('LA621');
   await expect(dialog.getByRole('button', { name: 'Add Flight' })).toBeEnabled();
 });
+
+test('shows a retry state when setup status cannot be checked', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.route('**/api/flights', async (route) => {
+    await route.abort('failed');
+  });
+
+  await seedDashboard(page, {
+    widgets: [FLIGHT_TRACKER_WIDGET],
+    layouts: FLIGHT_TRACKER_LAYOUT,
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="flight-tracker-1"]');
+  await expect(widget).toContainText("Couldn't verify flight data setup");
+  await expect(widget.getByRole('button', { name: 'Retry Check' })).toBeVisible();
+
+  await widget.getByRole('button', { name: 'Open Settings' }).click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('Setup status unavailable');
+  await expect(dialog.getByPlaceholder('e.g. AA100, LA621')).toBeDisabled();
+});

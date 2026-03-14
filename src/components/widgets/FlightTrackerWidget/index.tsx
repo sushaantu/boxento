@@ -218,7 +218,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
         return;
       }
 
-      setSetupState('unconfigured');
+      setSetupState('error');
     }
   }, []);
 
@@ -384,7 +384,8 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
     setLocalConfig((prev) => ({ ...prev, trackedFlights: flights }));
   };
 
-  const setupBlocked = setupState === 'unconfigured';
+  const setupBlocked =
+    setupState === 'unconfigured' || setupState === 'error';
 
   // --- Setup prompt when no flights configured ---
   const renderSetup = () => {
@@ -398,6 +399,42 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
     }
 
     if (setupBlocked) {
+      if (setupState === 'error') {
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4 text-center">
+            <AlertCircle className="h-8 w-8 text-amber-600" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                Couldn&apos;t verify flight data setup
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Boxento couldn&apos;t reach the flight data proxy just now.
+                Check your connection or proxy status, then retry the setup
+                check before adding flights.
+              </p>
+            </div>
+            {!readOnly && (
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void checkFlightTrackerSetup()}
+                >
+                  Retry Check
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSettings(true)}
+                >
+                  Open Settings
+                </Button>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       return (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4 text-center">
           <Plane className="h-8 w-8 text-amber-600" />
@@ -1276,18 +1313,37 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
               <div className="flex gap-2">
                 <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-amber-950">
-                    Flight data setup required
-                  </p>
-                  <p className="text-sm text-amber-900/90">
-                    This widget can&apos;t fetch live flights until Boxento&apos;s
-                    `/api/flights` proxy is connected to AirLabs with an
-                    `AIRLABS_API_KEY` secret.
-                  </p>
-                  <p className="text-xs text-amber-900/80">
-                    Once that integration is ready, reopen this dialog to add
-                    flights.
-                  </p>
+                  {setupState === 'error' ? (
+                    <>
+                      <p className="text-sm font-medium text-amber-950">
+                        Setup status unavailable
+                      </p>
+                      <p className="text-sm text-amber-900/90">
+                        Boxento couldn&apos;t verify whether the flight data proxy
+                        is reachable. Retry the check once the connection or
+                        proxy is healthy.
+                      </p>
+                      <p className="text-xs text-amber-900/80">
+                        Add-flight controls stay disabled until setup can be
+                        verified.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-amber-950">
+                        Flight data setup required
+                      </p>
+                      <p className="text-sm text-amber-900/90">
+                        This widget can&apos;t fetch live flights until
+                        Boxento&apos;s `/api/flights` proxy is connected to
+                        AirLabs with an `AIRLABS_API_KEY` secret.
+                      </p>
+                      <p className="text-xs text-amber-900/80">
+                        Once that integration is ready, reopen this dialog to
+                        add flights.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,7 +1,8 @@
 export type FlightTrackerSetupState =
   | 'checking'
   | 'configured'
-  | 'unconfigured';
+  | 'unconfigured'
+  | 'error';
 
 type FlightTrackerSetupProbe = {
   status: number;
@@ -30,7 +31,7 @@ export function resolveFlightTrackerSetupState({
     return 'unconfigured';
   }
 
-  return 'unconfigured';
+  return 'error';
 }
 
 export async function readFlightTrackerSetupProbe(
@@ -41,7 +42,7 @@ export async function readFlightTrackerSetupProbe(
   if (contentType.includes('application/json')) {
     try {
       const payload = await response.json();
-      if (payload && typeof payload === 'object') {
+      if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
         return payload as { error?: string; message?: string };
       }
     } catch {
