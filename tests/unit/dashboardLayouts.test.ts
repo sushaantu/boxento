@@ -136,4 +136,53 @@ describe('dashboardLayouts', () => {
     expect(validated.xxl).toEqual([]);
     expect(validated.xxxl).toEqual([]);
   });
+
+  it('keeps laptop-only saved layouts stable across repeated validation passes', () => {
+    const savedLayouts = {
+      lg: [
+        createLayoutItem({ i: 'a', x: 0, y: 0, w: 3, h: 3 }),
+        createLayoutItem({ i: 'b', x: 3, y: 0, w: 2, h: 2 }),
+        createLayoutItem({ i: 'c', x: 5, y: 0, w: 3, h: 2 }),
+        createLayoutItem({ i: 'd', x: 8, y: 0, w: 3, h: 3 }),
+      ],
+    };
+    const originalLayouts = JSON.parse(JSON.stringify(savedLayouts));
+
+    const firstPass = validateLayouts(savedLayouts, { rebalanceWideSparse: true });
+    const secondPass = validateLayouts(firstPass, { rebalanceWideSparse: true });
+
+    expect(savedLayouts).toEqual(originalLayouts);
+    expect(firstPass.lg).toEqual(
+      originalLayouts.lg.map((item: LayoutItem) => ({
+        ...item,
+        maxW: undefined,
+      }))
+    );
+    expect(secondPass).toEqual(firstPass);
+    expect(firstPass.md).toEqual([]);
+    expect(firstPass.sm).toEqual([]);
+    expect(secondPass.xl).toEqual([]);
+    expect(secondPass.xxl).toEqual([]);
+    expect(secondPass.xxxl).toEqual([]);
+  });
+
+  it('preserves authored wide-screen layouts instead of rescaling them from laptop layouts', () => {
+    const savedLayouts = {
+      lg: [
+        createLayoutItem({ i: 'a', x: 0, y: 0, w: 3, h: 3 }),
+        createLayoutItem({ i: 'b', x: 3, y: 0, w: 2, h: 2 }),
+      ],
+      xxl: [
+        createLayoutItem({ i: 'a', x: 0, y: 0, w: 8, h: 3 }),
+        createLayoutItem({ i: 'b', x: 8, y: 0, w: 10, h: 3 }),
+      ],
+    };
+    const originalLayouts = JSON.parse(JSON.stringify(savedLayouts));
+
+    const validated = validateLayouts(savedLayouts, { rebalanceWideSparse: true });
+
+    expect(validated.lg).toEqual(originalLayouts.lg);
+    expect(validated.xxl).toEqual(originalLayouts.xxl);
+    expect(savedLayouts).toEqual(originalLayouts);
+  });
 });
