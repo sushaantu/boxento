@@ -542,7 +542,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
       <div className="flex h-full flex-col items-center justify-between px-1 py-0.5 text-center">
         <div
           className="font-semibold text-foreground"
-          style={{ fontSize: '1.72rem', lineHeight: 0.96, letterSpacing: '-0.055em' }}
+          style={{ fontSize: '1.64rem', lineHeight: 1.06, letterSpacing: '-0.045em' }}
         >
           {time}
         </div>
