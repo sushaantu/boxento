@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { seedDashboard } from './helpers/dashboardSeed';
 
@@ -10,6 +10,23 @@ type StoredLayoutItem = {
   h: number;
 };
 
+type StoredWidget = {
+  id: string;
+  type: string;
+  config: Record<string, unknown>;
+};
+
+type StoredWidgetConfig = {
+  customTitle?: string;
+  links?: Array<Record<string, unknown>>;
+};
+
+const PERSONAL_DASHBOARD_STORAGE_KEYS = {
+  layouts: 'boxento-layouts-personal',
+  widgetConfigs: 'boxento-widget-configs',
+  widgets: 'boxento-widgets-personal',
+} as const;
+
 const SERVICES = [
   { id: 'boxento', name: 'Boxento', url: 'https://boxento.test', icon: 'LayoutGrid', description: 'Dashboard', category: 'Utilities' },
   { id: 'paisa', name: 'Paisa', url: 'https://paisa.test', icon: 'PiggyBank', description: 'Personal Finance', category: 'Finance' },
@@ -18,6 +35,18 @@ const SERVICES = [
   { id: 'riven', name: 'Riven', url: 'https://riven.test', icon: 'Film', description: 'Media Requests', category: 'Media' },
   { id: 'open-webui', name: 'Open WebUI', url: 'https://open-webui.test', icon: 'Bot', description: 'Local AI Chat', category: 'AI' },
 ];
+
+const readStoredWidgets = async (page: Page) => (
+  page.evaluate<StoredWidget[], string>((storageKey) => JSON.parse(localStorage.getItem(storageKey) || '[]'), PERSONAL_DASHBOARD_STORAGE_KEYS.widgets)
+);
+
+const readStoredLayouts = async (page: Page) => (
+  page.evaluate<Record<string, StoredLayoutItem[]>, string>((storageKey) => JSON.parse(localStorage.getItem(storageKey) || '{}'), PERSONAL_DASHBOARD_STORAGE_KEYS.layouts)
+);
+
+const readStoredWidgetConfigs = async (page: Page) => (
+  page.evaluate<Record<string, StoredWidgetConfig>, string>((storageKey) => JSON.parse(localStorage.getItem(storageKey) || '{}'), PERSONAL_DASHBOARD_STORAGE_KEYS.widgetConfigs)
+);
 
 test('persists quick links drag and resize changes across reloads', async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 900 });
@@ -47,10 +76,8 @@ test('persists quick links drag and resize changes across reloads', async ({ pag
   await page.mouse.up();
 
   await expect.poll(async () => {
-    return page.evaluate(() => {
-      const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-      return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-1')?.x ?? -1;
-    });
+    const layouts = await readStoredLayouts(page);
+    return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-1')?.x ?? -1;
   }).toBeGreaterThan(0);
 
   const resizeHandle = widget.locator('.react-resizable-handle-se');
@@ -65,17 +92,13 @@ test('persists quick links drag and resize changes across reloads', async ({ pag
   await page.mouse.up();
 
   await expect.poll(async () => {
-    return page.evaluate(() => {
-      const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-      const item = layouts.lg?.find((entry: { i: string; w: number; h: number }) => entry.i === 'quick-links-1');
-      return item ? `${item.w}x${item.h}` : 'missing';
-    });
+    const layouts = await readStoredLayouts(page);
+    const item = layouts.lg?.find((entry: { i: string; w: number; h: number }) => entry.i === 'quick-links-1');
+    return item ? `${item.w}x${item.h}` : 'missing';
   }).not.toBe('2x2');
 
-  const persistedLayout = await page.evaluate<StoredLayoutItem | null>(() => {
-    const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-    return layouts.lg?.find((item: { i: string }) => item.i === 'quick-links-1') ?? null;
-  });
+  const persistedLayouts = await readStoredLayouts(page);
+  const persistedLayout = persistedLayouts.lg?.find((item: { i: string }) => item.i === 'quick-links-1') ?? null;
 
   expect(persistedLayout).not.toBeNull();
   if (!persistedLayout) {
@@ -88,10 +111,8 @@ test('persists quick links drag and resize changes across reloads', async ({ pag
   await page.reload();
   await expect(widget).toBeVisible();
 
-  const reloadedLayout = await page.evaluate<StoredLayoutItem | null>(() => {
-    const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-    return layouts.lg?.find((item: { i: string }) => item.i === 'quick-links-1') ?? null;
-  });
+  const reloadedLayouts = await readStoredLayouts(page);
+  const reloadedLayout = reloadedLayouts.lg?.find((item: { i: string }) => item.i === 'quick-links-1') ?? null;
 
   expect(reloadedLayout).toEqual(persistedLayout);
 });
@@ -136,10 +157,8 @@ test('keeps quick links app header controls from dragging the widget', async ({ 
   await page.mouse.up();
 
   await expect.poll(async () => {
-    return page.evaluate(() => {
-      const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-      return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-app')?.x ?? -1;
-    });
+    const layouts = await readStoredLayouts(page);
+    return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-app')?.x ?? -1;
   }).toBe(0);
 
   await searchInput.fill('box');
@@ -159,10 +178,8 @@ test('keeps quick links app header controls from dragging the widget', async ({ 
   await page.mouse.up();
 
   await expect.poll(async () => {
-    return page.evaluate(() => {
-      const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-      return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-app')?.x ?? -1;
-    });
+    const layouts = await readStoredLayouts(page);
+    return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-app')?.x ?? -1;
   }).toBe(0);
 
   await clearSearchButton.click();
@@ -213,18 +230,14 @@ test('preserves drag persistence on dashboards with more than five widgets', asy
   await page.mouse.up();
 
   await expect.poll(async () => {
-    return page.evaluate(() => {
-      const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-      return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-1')?.x ?? -1;
-    });
+    const layouts = await readStoredLayouts(page);
+    return layouts.lg?.find((item: { i: string; x: number }) => item.i === 'quick-links-1')?.x ?? -1;
   }).toBeGreaterThan(0);
 
   await page.reload();
 
-  const reloadedLayout = await page.evaluate<StoredLayoutItem | null>(() => {
-    const layouts = JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}');
-    return layouts.lg?.find((item: { i: string }) => item.i === 'quick-links-1') ?? null;
-  });
+  const reloadedLayouts = await readStoredLayouts(page);
+  const reloadedLayout = reloadedLayouts.lg?.find((item: { i: string }) => item.i === 'quick-links-1') ?? null;
 
   expect(reloadedLayout).not.toBeNull();
   expect(reloadedLayout?.x).toBeGreaterThan(0);
@@ -275,15 +288,93 @@ test('uses an on-demand dialog for large quick links layouts and persists added 
   await expect(widget.locator('[role="button"]').filter({ hasText: 'Docs' }).first()).toBeVisible();
 
   await expect.poll(async () => {
-    return page.evaluate(() => {
-      const configs = JSON.parse(localStorage.getItem('boxento-widget-configs') || '{}');
-      const quickLinks = configs['quick-links-1'];
-      return quickLinks?.links?.map((link: { title: string; url: string }) => `${link.title}:${link.url}`).join(',') ?? '';
-    });
+    const configs = await readStoredWidgetConfigs(page);
+    const quickLinks = configs['quick-links-1'];
+    return quickLinks?.links?.map((link: { title?: string; url?: string }) => `${link.title}:${link.url}`).join(',') ?? '';
   }).toContain('Docs:https://docs.boxento.test');
 
   await page.reload();
   await expect(widget.locator('[role="button"]').filter({ hasText: 'Docs' }).first()).toBeVisible();
+});
+
+test('adds, configures, and removes a quick links widget with persisted config', async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'year-progress-1',
+        type: 'year-progress',
+        config: {
+          showPercentage: true,
+          showDaysLeft: true,
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'year-progress-1', x: 0, y: 0, w: 1, h: 1, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  await page.getByRole('button', { name: /add widget/i }).click();
+  await page.getByRole('textbox', { name: /search widgets/i }).fill('Quick Links');
+  await page.getByRole('button', { name: /add quick links widget/i }).click();
+
+  const widget = page.locator('.react-grid-item[data-widget-id^="quick-links-"]');
+  await expect(widget).toHaveCount(1);
+  await expect(widget.getByRole('heading', { name: 'Quick Links' })).toBeVisible();
+
+  const widgetId = await widget.getAttribute('data-widget-id');
+  expect(widgetId).toBeTruthy();
+  const currentWidgetId = widgetId!;
+
+  await expect.poll(async () => {
+    const widgets = await readStoredWidgets(page);
+    return widgets.some((entry) => entry.id === currentWidgetId && entry.type === 'quick-links');
+  }).toBe(true);
+
+  await widget.locator('.settings-button').click();
+  await expect(page.getByRole('dialog')).toContainText('Quick Links Settings');
+  await page.locator('#widget-title').fill('Team Bookmarks');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await expect(widget.getByRole('heading', { name: 'Team Bookmarks' })).toBeVisible();
+  await expect.poll(async () => {
+    const configs = await readStoredWidgetConfigs(page);
+    return configs[currentWidgetId]?.customTitle ?? null;
+  }).toBe('Team Bookmarks');
+
+  await widget.getByRole('button', { name: /add link/i }).click();
+  await page.getByLabel('URL').fill('docs.boxento.test');
+  await page.getByLabel('Display Title').fill('Docs');
+  await page.getByRole('button', { name: 'Add' }).click();
+
+  await expect(widget).toContainText('Docs');
+  await expect.poll(async () => {
+    const configs = await readStoredWidgetConfigs(page);
+    return configs[currentWidgetId]?.links?.length ?? 0;
+  }).toBe(1);
+
+  await page.reload();
+
+  const reloadedWidget = page.locator(`.react-grid-item[data-widget-id="${currentWidgetId}"]`);
+  await expect(reloadedWidget).toBeVisible();
+  await expect(reloadedWidget.getByRole('heading', { name: 'Team Bookmarks' })).toBeVisible();
+  await expect(reloadedWidget).toContainText('Docs');
+
+  await reloadedWidget.locator('.settings-button').click();
+  await page.getByRole('button', { name: 'Delete' }).click();
+
+  await expect(page.locator(`.react-grid-item[data-widget-id="${currentWidgetId}"]`)).toHaveCount(0);
+  await expect.poll(async () => {
+    const widgets = await readStoredWidgets(page);
+    return widgets.some((entry) => entry.id === currentWidgetId);
+  }).toBe(false);
+  await expect.poll(async () => {
+    const configs = await readStoredWidgetConfigs(page);
+    return Object.prototype.hasOwnProperty.call(configs, currentWidgetId);
+  }).toBe(false);
 });
 
 test('keeps the dashboard visible at the 768px tablet boundary', async ({ page }) => {
