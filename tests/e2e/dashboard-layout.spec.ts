@@ -154,8 +154,7 @@ test('shows clearer drag and resize affordances during dashboard interactions', 
   expect(idleOpacity).toBeGreaterThan(0.3);
 
   await widget.hover();
-  const hoverOpacity = await readResizeHandleOpacity();
-  expect(hoverOpacity).toBeGreaterThan(idleOpacity);
+  await expect.poll(readResizeHandleOpacity).toBeGreaterThan(idleOpacity);
 
   const dragBox = await dragHandle.boundingBox();
   if (!dragBox) {
