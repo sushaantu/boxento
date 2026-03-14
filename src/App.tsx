@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, Moon, Sun, Cloud, CloudOff, Loader2 } from 'lucide-react'
 // Import GridLayout components - direct imports to avoid runtime issues
 
@@ -57,10 +57,6 @@ import { AppFooter } from '@/components/AppFooter'
 import { useStorage } from '@/lib/storage/StorageContext'
 import { getStorageProvider } from '@/lib/storage'
 import { DASHBOARD_INTERACTIVE_CHILD_SELECTOR } from '@/lib/dashboardInteraction'
-import {
-  DashboardResizeHandle,
-  type DashboardResizeHandleAxis,
-} from '@/components/dashboard/DashboardResizeHandle'
 
 interface WidgetCategory {
   [category: string]: WidgetConfig[];
@@ -92,11 +88,6 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
   
   return defaultValue;
 };
-
-type WidgetInteractionMode = 'dragging' | 'resizing';
-
-const WIDGET_INTERACTION_COMPLETION_DURATION_MS = 240;
-const REDUCED_MOTION_WIDGET_INTERACTION_COMPLETION_DURATION_MS = 140;
 
 const cloneLayoutsByBreakpoint = (sourceLayouts: LayoutsByBreakpoint): LayoutsByBreakpoint => (
   Object.fromEntries(
@@ -975,52 +966,6 @@ function App() {
   } | null>(null);
   const draggedWidgetIdRef = useRef<string | null>(null);
   const resizingWidgetIdRef = useRef<string | null>(null);
-  const lastResizeSize = useRef<{ w: number; h: number } | null>(null);
-  const interactionCompletionTimeoutRef = useRef<number | null>(null);
-  const [activeWidgetInteraction, setActiveWidgetInteraction] = useState<{
-    widgetId: string;
-    mode: WidgetInteractionMode;
-  } | null>(null);
-  const [completedWidgetId, setCompletedWidgetId] = useState<string | null>(null);
-
-  const clearInteractionCompletionTimeout = useCallback((): void => {
-    if (interactionCompletionTimeoutRef.current !== null) {
-      window.clearTimeout(interactionCompletionTimeoutRef.current);
-      interactionCompletionTimeoutRef.current = null;
-    }
-  }, []);
-
-  const clearWidgetInteractionCompletion = useCallback((): void => {
-    clearInteractionCompletionTimeout();
-    setCompletedWidgetId(null);
-  }, [clearInteractionCompletionTimeout]);
-
-  const startWidgetInteraction = useCallback((widgetId: string, mode: WidgetInteractionMode): void => {
-    clearWidgetInteractionCompletion();
-    setActiveWidgetInteraction({ widgetId, mode });
-  }, [clearWidgetInteractionCompletion]);
-
-  const finishWidgetInteraction = useCallback((widgetId: string | null): void => {
-    setActiveWidgetInteraction(null);
-
-    if (!widgetId) {
-      clearWidgetInteractionCompletion();
-      return;
-    }
-
-    const prefersReducedMotion = typeof window.matchMedia === 'function'
-      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    clearInteractionCompletionTimeout();
-    setCompletedWidgetId(widgetId);
-    interactionCompletionTimeoutRef.current = window.setTimeout(() => {
-      setCompletedWidgetId(currentWidgetId => (
-        currentWidgetId === widgetId ? null : currentWidgetId
-      ));
-      interactionCompletionTimeoutRef.current = null;
-    }, prefersReducedMotion
-      ? REDUCED_MOTION_WIDGET_INTERACTION_COMPLETION_DURATION_MS
-      : WIDGET_INTERACTION_COMPLETION_DURATION_MS);
-  }, [clearInteractionCompletionTimeout, clearWidgetInteractionCompletion]);
 
   const getWidgetDimensions = useCallback((widgetId: string, isMobileView = false) => {
     if (!isLayoutReady) {
@@ -1057,14 +1002,12 @@ function App() {
   const handleDragStart = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
     document.body.classList.add('react-grid-layout--dragging');
     draggedWidgetIdRef.current = newItem.i;
-    startWidgetInteraction(newItem.i, 'dragging');
   };
 
   const handleDragStop = (currentLayout: LayoutItem[]): void => {
     const activeDraggedWidgetId = draggedWidgetIdRef.current;
     draggedWidgetIdRef.current = null;
     document.body.classList.remove('react-grid-layout--dragging');
-    finishWidgetInteraction(activeDraggedWidgetId);
 
     if (!activeDraggedWidgetId) {
       return;
@@ -1078,45 +1021,21 @@ function App() {
 
   useEffect(() => {
     return () => {
-      clearInteractionCompletionTimeout();
       document.body.classList.remove(
         'react-grid-layout--dragging',
         'react-grid-layout--resizing'
       );
     };
-  }, [clearInteractionCompletionTimeout]);
+  }, []);
 
   const handleResizeStart = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
     document.body.classList.add('react-grid-layout--resizing');
     resizingWidgetIdRef.current = newItem.i;
-    lastResizeSize.current = { w: newItem.w, h: newItem.h };
     setLiveResizeDimensions({ id: newItem.i, width: newItem.w, height: newItem.h });
-    startWidgetInteraction(newItem.i, 'resizing');
   };
 
   const handleResize = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
-    if (!resizingWidgetIdRef.current || !lastResizeSize.current) return;
-
-    const widgetElement = document.querySelector(`.react-grid-item[data-widget-id="${newItem.i}"]`) as HTMLElement;
-    if (!widgetElement) return;
-
-    const isAtMinWidth = newItem.w === (newItem.minW || 2);
-    const isAtMinHeight = newItem.h === (newItem.minH || 2);
-    const wasLarger = lastResizeSize.current.w > newItem.w || lastResizeSize.current.h > newItem.h;
-
-    const isAtMaxWidth = newItem.maxW && newItem.w === newItem.maxW;
-    const isAtMaxHeight = newItem.maxH && newItem.h === newItem.maxH;
-    const wasSmaller = lastResizeSize.current.w < newItem.w || lastResizeSize.current.h < newItem.h;
-
-    if ((isAtMinWidth || isAtMinHeight) && wasLarger) {
-      widgetElement.classList.remove('at-max-size');
-      widgetElement.classList.add('at-min-size');
-      setTimeout(() => widgetElement.classList.remove('at-min-size'), 300);
-    } else if ((isAtMaxWidth || isAtMaxHeight) && wasSmaller) {
-      widgetElement.classList.remove('at-min-size');
-      widgetElement.classList.add('at-max-size');
-      setTimeout(() => widgetElement.classList.remove('at-max-size'), 300);
-    }
+    if (resizingWidgetIdRef.current !== newItem.i) return;
 
     setLiveResizeDimensions(previousValue => (
       previousValue?.id === newItem.i
@@ -1125,22 +1044,17 @@ function App() {
         ? previousValue
         : { id: newItem.i, width: newItem.w, height: newItem.h }
     ));
-    lastResizeSize.current = { w: newItem.w, h: newItem.h };
   };
 
   const handleResizeStop = (currentLayout: LayoutItem[]): void => {
     document.body.classList.remove('react-grid-layout--resizing');
     const activeResizingWidgetId = resizingWidgetIdRef.current;
+    resizingWidgetIdRef.current = null;
+    setLiveResizeDimensions(null);
 
     if (!activeResizingWidgetId) {
-      finishWidgetInteraction(null);
       return;
     }
-
-    resizingWidgetIdRef.current = null;
-    lastResizeSize.current = null;
-    setLiveResizeDimensions(null);
-    finishWidgetInteraction(activeResizingWidgetId);
 
     void saveLayouts(
       applyValidatedBreakpointLayout(layoutsRef.current, currentBreakpoint, currentLayout),
@@ -1159,10 +1073,6 @@ function App() {
 
     return widgets.map(widget => {
       const { width, height } = getWidgetDimensions(widget.id, isMobileViewport);
-      const widgetInteractionMode = activeWidgetInteraction?.widgetId === widget.id
-        ? activeWidgetInteraction.mode
-        : undefined;
-      const isInteractionComplete = completedWidgetId === widget.id;
 
       return (
         <div 
@@ -1170,8 +1080,6 @@ function App() {
           className={`widget-wrapper ${sizeClass} app-widget`} 
           data-widget-id={widget.id}
           data-breakpoint={currentBreakpoint}
-          data-widget-interaction={widgetInteractionMode}
-          data-widget-complete={isInteractionComplete ? 'true' : undefined}
           style={isMobileViewport ? { marginBottom: '16px', height: 'auto' } : undefined}
         >
           <DashboardWidgetFrame
@@ -1944,9 +1852,6 @@ function App() {
                         onResizeStart={handleResizeStart}
                         onResize={handleResize}
                         onResizeStop={handleResizeStop}
-                        resizeHandle={(axis: DashboardResizeHandleAxis, ref: Ref<HTMLElement>) => (
-                          <DashboardResizeHandle ref={ref} handleAxis={axis} />
-                        )}
                         margin={[GRID.ITEM_MARGIN, GRID.ITEM_MARGIN]}
                         containerPadding={[GRID.CONTAINER_PADDING, GRID.CONTAINER_PADDING]}
                         draggableHandle=".widget-drag-handle"
