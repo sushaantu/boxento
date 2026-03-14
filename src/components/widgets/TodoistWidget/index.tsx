@@ -55,6 +55,7 @@ const getPriorityBorder = (priority: number) => {
 };
 
 const COMPLETED_TASK_CHROME_CLASS = 'bg-foreground border-foreground';
+const COMPLETED_TASK_ICON_CLASS = 'text-background';
 
 const getPriorityLabel = (priority: number) => {
   switch (priority) {
@@ -151,13 +152,17 @@ const Task = memo(({
         >
           {task.completed && (
             <Check
-              className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-white ${isPending ? 'opacity-50' : ''}`}
+              className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} ${COMPLETED_TASK_ICON_CLASS} ${isPending ? 'opacity-50' : ''}`}
               strokeWidth={3}
             />
           )}
           {isPending && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Loader2 className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} animate-spin text-foreground`} />
+              <Loader2
+                className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} animate-spin ${
+                  task.completed ? COMPLETED_TASK_ICON_CLASS : 'text-foreground'
+                }`}
+              />
             </div>
           )}
         </button>
@@ -167,7 +172,10 @@ const Task = memo(({
           task.completed ? COMPLETED_TASK_CHROME_CLASS : getPriorityBorder(task.priority)
         } flex items-center justify-center`}>
           {task.completed && (
-            <Check className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} text-white`} strokeWidth={3} />
+            <Check
+              className={`${compact ? 'w-2.5 h-2.5' : 'w-3 h-3'} ${COMPLETED_TASK_ICON_CLASS}`}
+              strokeWidth={3}
+            />
           )}
         </div>
       )}

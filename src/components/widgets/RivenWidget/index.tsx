@@ -957,17 +957,17 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
           {stats ? (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] p-4 text-center">
+                <div className="rounded-xl bg-muted p-4 text-center">
                   <div className="text-3xl font-bold text-foreground">{stats.total_items}</div>
                   <div className="text-xs text-muted-foreground mt-1">Total Items</div>
                 </div>
-                <div className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] p-4 text-center">
+                <div className="rounded-xl bg-muted p-4 text-center">
                   <div className="text-3xl font-bold text-foreground">
                     {stats.total_movies}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">Movies</div>
                 </div>
-                <div className="rounded-xl bg-black/[0.02] dark:bg-white/[0.03] p-4 text-center">
+                <div className="rounded-xl bg-muted p-4 text-center">
                   <div className="text-3xl font-bold text-foreground">
                     {stats.total_shows}
                   </div>
