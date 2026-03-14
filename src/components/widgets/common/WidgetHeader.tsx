@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { GripVertical, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 interface WidgetHeaderProps {
   title?: string;
@@ -25,12 +25,6 @@ const WidgetHeader = ({
   return (
     <div className={`widget-drag-handle flex cursor-move items-center justify-between ${compact ? 'p-1.5' : 'p-2 md:p-2'}`}>
       <div className={`flex min-w-0 items-center ${compact ? 'gap-1' : 'gap-1.5 md:gap-2'}`}>
-        <span
-          aria-hidden="true"
-          className={`widget-drag-affordance ${compact ? 'h-5 w-5' : 'h-6 w-6'}`}
-        >
-          <GripVertical size={compact ? 11 : 13} strokeWidth={1.9} />
-        </span>
         {icon && (
           <div className={`text-gray-500 dark:text-slate-400 ${compact ? 'text-[11px]' : 'text-xs md:text-sm'}`}>
             {icon}

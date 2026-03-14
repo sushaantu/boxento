@@ -1,9 +1,193 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
+import { Readability } from "@mozilla/readability";
+import { JSDOM } from "jsdom";
 import { exchangeToken, refreshToken, googleClientId, googleClientSecret } from "./oauth";
 
 // Define secrets for API keys
 const airLabsApiKey = defineSecret("AIRLABS_API_KEY");
+
+type ReaderExtractResponse =
+  | {
+      ok: true;
+      article: {
+        title: string;
+        content: string;
+        excerpt?: string;
+        byline?: string;
+        siteName?: string;
+        image?: string;
+      };
+    }
+  | {
+      ok: false;
+      reason: string;
+    };
+
+type ReaderCacheEntry = {
+  expiresAt: number;
+  payload: ReaderExtractResponse;
+};
+
+const READER_CACHE_TTL_MS = 15 * 60 * 1000;
+const READER_CACHE_MAX_ENTRIES = 100;
+const readerArticleCache = new Map<string, ReaderCacheEntry>();
+
+const isPrivateIpv4Address = (hostname: string): boolean => {
+  const parts = hostname.split(".").map((part) => Number(part));
+
+  if (parts.length !== 4 || parts.some(Number.isNaN)) {
+    return false;
+  }
+
+  return parts[0] === 10 ||
+    parts[0] === 127 ||
+    (parts[0] === 169 && parts[1] === 254) ||
+    (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
+    (parts[0] === 192 && parts[1] === 168);
+};
+
+const isPrivateIpv6Address = (hostname: string): boolean => {
+  const normalizedHost = hostname.replace(/^\[(.*)\]$/, "$1").toLowerCase();
+
+  if (!normalizedHost.includes(":")) {
+    return false;
+  }
+
+  return normalizedHost === "::1" ||
+    normalizedHost.startsWith("fc") ||
+    normalizedHost.startsWith("fd") ||
+    normalizedHost.startsWith("fe80:");
+};
+
+const isDisallowedHostname = (hostname: string): boolean => {
+  const normalizedHost = hostname.toLowerCase();
+
+  return normalizedHost === "localhost" ||
+    normalizedHost === "0.0.0.0" ||
+    normalizedHost === "::1" ||
+    normalizedHost === "[::1]" ||
+    normalizedHost.endsWith(".local") ||
+    isPrivateIpv4Address(normalizedHost) ||
+    isPrivateIpv6Address(normalizedHost);
+};
+
+const getSafeRemoteUrl = (rawUrl: unknown): URL | null => {
+  if (typeof rawUrl !== "string" || rawUrl.trim().length === 0) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(rawUrl);
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return null;
+    }
+
+    if (isDisallowedHostname(parsedUrl.hostname)) {
+      return null;
+    }
+
+    return parsedUrl;
+  } catch {
+    return null;
+  }
+};
+
+const getCachedReaderArticle = (articleUrl: string): ReaderExtractResponse | null => {
+  const cacheEntry = readerArticleCache.get(articleUrl);
+
+  if (!cacheEntry) {
+    return null;
+  }
+
+  if (cacheEntry.expiresAt <= Date.now()) {
+    readerArticleCache.delete(articleUrl);
+    return null;
+  }
+
+  return cacheEntry.payload;
+};
+
+const setCachedReaderArticle = (articleUrl: string, payload: ReaderExtractResponse): void => {
+  if (readerArticleCache.size >= READER_CACHE_MAX_ENTRIES) {
+    const oldestKey = readerArticleCache.keys().next().value;
+    if (oldestKey) {
+      readerArticleCache.delete(oldestKey);
+    }
+  }
+
+  readerArticleCache.set(articleUrl, {
+    expiresAt: Date.now() + READER_CACHE_TTL_MS,
+    payload,
+  });
+};
+
+const extractReadableArticle = async (articleUrl: URL): Promise<ReaderExtractResponse> => {
+  try {
+    const response = await fetch(articleUrl.toString(), {
+      headers: {
+        "Accept": "text/html,application/xhtml+xml",
+        "User-Agent": "Boxento RSS Reader/1.0"
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        reason: `The original article returned ${response.status}.`
+      };
+    }
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("text/html") && !contentType.includes("application/xhtml+xml")) {
+      return {
+        ok: false,
+        reason: "The linked page did not return HTML that Boxento can read inline."
+      };
+    }
+
+    const html = await response.text();
+    const dom = new JSDOM(html, { url: articleUrl.toString() });
+
+    try {
+      const image = dom.window.document
+        .querySelector('meta[property="og:image"], meta[name="twitter:image"]')
+        ?.getAttribute("content") || undefined;
+      const article = new Readability(dom.window.document).parse();
+      const textContent = article?.textContent?.replace(/\s+/g, " ").trim() || "";
+
+      if (!article?.content || textContent.length < 30) {
+        return {
+          ok: false,
+          reason: "The original page did not expose enough readable article content for reader mode."
+        };
+      }
+
+      return {
+        ok: true,
+        article: {
+          title: article.title?.trim() || articleUrl.hostname,
+          content: article.content,
+          excerpt: article.excerpt?.trim() || undefined,
+          byline: article.byline?.trim() || undefined,
+          siteName: article.siteName?.trim() || undefined,
+          image,
+        }
+      };
+    } finally {
+      dom.window.close();
+    }
+  } catch (error) {
+    console.error("Error extracting article content:", error);
+    return {
+      ok: false,
+      reason: "Boxento could not extract reader mode from the original page."
+    };
+  }
+};
 
 // Proxy for mindicador.cl API (Chilean economic indicators)
 export const mindicadorProxy = onRequest(
@@ -218,25 +402,43 @@ export const rssProxy = onRequest(
         return;
       }
 
-      const feedUrl = req.query.url as string;
-      if (!feedUrl) {
-        res.status(400).json({ error: "Feed URL is required" });
+      const articleUrl = getSafeRemoteUrl(req.query.articleUrl);
+      if (req.query.articleUrl) {
+        if (!articleUrl) {
+          res.status(400).json({ error: "Invalid article URL format" });
+          return;
+        }
+
+        const cacheKey = articleUrl.toString();
+        const cachedPayload = getCachedReaderArticle(cacheKey);
+        if (cachedPayload) {
+          res.set("Content-Type", "application/json; charset=utf-8");
+          res.set("Cache-Control", "public, max-age=900");
+          res.json(cachedPayload);
+          return;
+        }
+
+        const payload = await extractReadableArticle(articleUrl);
+        setCachedReaderArticle(cacheKey, payload);
+
+        res.set("Content-Type", "application/json; charset=utf-8");
+        res.set("Cache-Control", payload.ok ? "public, max-age=900" : "public, max-age=300");
+        res.json(payload);
         return;
       }
 
-      // Validate URL
-      try {
-        new URL(feedUrl);
-      } catch {
+      const feedUrl = getSafeRemoteUrl(req.query.url);
+      if (!feedUrl) {
         res.status(400).json({ error: "Invalid URL format" });
         return;
       }
 
-      const response = await fetch(feedUrl, {
+      const response = await fetch(feedUrl.toString(), {
         headers: {
           "Accept": "application/rss+xml, application/xml, text/xml, application/atom+xml",
           "User-Agent": "Boxento RSS Reader/1.0"
-        }
+        },
+        signal: AbortSignal.timeout(10000)
       });
 
       if (!response.ok) {

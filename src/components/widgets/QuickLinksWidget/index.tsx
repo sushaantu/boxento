@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react'
-import { ExternalLink, Plus, Trash, Edit, Search, Globe, X, Pencil, Trash2, FolderOpen, GripVertical } from 'lucide-react'
+import { ExternalLink, Plus, Trash, Edit, Search, Globe, X, Pencil, Trash2, FolderOpen } from 'lucide-react'
 import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/common/WidgetSettingsDialog'
 import { WidgetShell } from '../../widgets/common/WidgetShell'
 import {
@@ -533,9 +533,6 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
         {/* Top bar */}
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <div className="widget-drag-handle flex shrink-0 cursor-move items-center gap-2 rounded-md px-1 py-0.5">
-            <span aria-hidden="true" className="widget-drag-affordance h-6 w-6">
-              <GripVertical size={13} strokeWidth={1.9} />
-            </span>
             <h2 className="text-lg font-semibold text-foreground">
               {customTitle}
             </h2>

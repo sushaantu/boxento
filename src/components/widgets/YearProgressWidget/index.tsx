@@ -130,8 +130,8 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
 
   // Get colors based on theme only - simplified to just handle light/dark mode
   const colors = useMemo(() => ({
-    passed: theme === 'dark' ? '#3b82f6' : '#3b82f6', // blue-500
-    future: theme === 'dark' ? '#334155' : '#e2e8f0', // dark: slate-700, light: slate-200
+    passed: theme === 'dark' ? '#cbd5e1' : '#334155',
+    future: theme === 'dark' ? '#334155' : '#e2e8f0',
   }), [theme]);
 
   // Calculate optimal grid layout - memoized on width and total days
@@ -385,7 +385,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
       <div className="flex h-full items-center gap-2.5 overflow-hidden px-1">
         {/* Percentage badge */}
         <div className="flex shrink-0 items-center gap-1.5">
-          <div className="flex flex-col items-center rounded-lg bg-blue-50 dark:bg-blue-900/20 px-2.5 py-0.5">
+          <div className="flex flex-col items-center rounded-lg bg-muted px-2.5 py-0.5">
             <span className="text-lg font-bold leading-tight text-foreground">{percentage}%</span>
             <span className="text-[9px] text-muted-foreground">done</span>
           </div>
@@ -399,8 +399,11 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
           </div>
           <div className="h-2.5 w-full rounded-full bg-secondary overflow-hidden">
             <div
-              className="h-full rounded-full bg-blue-500 transition-all duration-500"
-              style={{ width: `${Math.min(100, percentage)}%` }}
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${Math.min(100, percentage)}%`,
+                backgroundColor: colors.passed,
+              }}
             />
           </div>
           <div className="flex items-center justify-between text-[9px] text-muted-foreground">
@@ -410,7 +413,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
         </div>
       </div>
     );
-  }, [progress]);
+  }, [colors.passed, progress]);
 
   // ─── Extended progress data for App view ─────────────────────────────
   const extendedProgress = useMemo(() => {
@@ -588,24 +591,24 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
               size={140}
               label="Year Progress"
               sublabel={`${progress.passed} of ${progress.total} days`}
-              color="#3b82f6"
+              color={colors.passed}
             />
             {/* Key stats */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 p-3 text-center min-w-[90px]">
-                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{daysLeft}</div>
+              <div className="rounded-xl bg-muted p-3 text-center min-w-[90px]">
+                <div className="text-2xl font-bold text-foreground">{daysLeft}</div>
                 <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Days Left</div>
               </div>
-              <div className="rounded-xl bg-purple-50 dark:bg-purple-900/20 p-3 text-center min-w-[90px]">
-                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">Q{ep.quarter.number}</div>
+              <div className="rounded-xl bg-muted p-3 text-center min-w-[90px]">
+                <div className="text-2xl font-bold text-foreground">Q{ep.quarter.number}</div>
                 <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Quarter</div>
               </div>
-              <div className="rounded-xl bg-green-50 dark:bg-green-900/20 p-3 text-center min-w-[90px]">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">W{ep.weekNumber}</div>
+              <div className="rounded-xl bg-muted p-3 text-center min-w-[90px]">
+                <div className="text-2xl font-bold text-foreground">W{ep.weekNumber}</div>
                 <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Week</div>
               </div>
-              <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 p-3 text-center min-w-[90px]">
-                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{Math.round(yearPct)}%</div>
+              <div className="rounded-xl bg-muted p-3 text-center min-w-[90px]">
+                <div className="text-2xl font-bold text-foreground">{Math.round(yearPct)}%</div>
                 <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Complete</div>
               </div>
             </div>
@@ -624,7 +627,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
               elapsed={ep.quarter.elapsed}
               total={ep.quarter.total}
               remaining={ep.quarter.remaining}
-              color="#8b5cf6"
+              color={colors.passed}
             />
 
             <ProgressBar
@@ -633,7 +636,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
               elapsed={ep.month.elapsed}
               total={ep.month.total}
               remaining={ep.month.remaining}
-              color="#10b981"
+              color={colors.passed}
             />
 
             <ProgressBar
@@ -642,7 +645,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
               elapsed={ep.week.elapsed}
               total={ep.week.total}
               remaining={ep.week.remaining}
-              color="#f59e0b"
+              color={colors.passed}
             />
 
             <ProgressBar
@@ -651,7 +654,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
               elapsed={ep.day.elapsed}
               total={ep.day.total}
               remaining={ep.day.remaining}
-              color="#ef4444"
+              color={colors.passed}
             />
           </div>
 
@@ -680,7 +683,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
         </div>
       </div>
     );
-  }, [progress, extendedProgress, theme, gridLayout, dots, handleSvgMouseMove, handleSvgMouseLeave, readOnly, handleSettingsOpen]);
+  }, [colors.passed, progress, extendedProgress, theme, gridLayout, dots, handleSvgMouseMove, handleSvgMouseLeave, readOnly, handleSettingsOpen]);
 
   // ─── Existing default view (dot grid + stats) ───────────────────────
   const renderDefaultView = useCallback(() => (

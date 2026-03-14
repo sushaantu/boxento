@@ -11,6 +11,7 @@ import { WidgetProps } from '@/types';
  * @property {string} [pubDate] - Publication date
  * @property {string} [author] - Author of the article
  * @property {string} [image] - Featured image URL
+ * @property {string} [commentsLink] - Optional discussion/comments URL
  * @property {string} [feedTitle] - Title of the feed the item came from
  */
 export interface RSSFeedItem {
@@ -21,6 +22,7 @@ export interface RSSFeedItem {
   pubDate?: string;
   author?: string;
   image?: string;
+  commentsLink?: string;
   feedTitle?: string;
 }
 

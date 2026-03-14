@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import {
@@ -17,8 +17,16 @@ import { Button } from '../../ui/button';
 import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
-import { Rss, AlertCircle, Upload, ExternalLink, ChevronDown } from 'lucide-react';
+import { Rss, AlertCircle, Upload, ChevronDown } from 'lucide-react';
 import { Skeleton } from '../../ui/skeleton';
+import {
+  getInlineReaderContent,
+  sanitizeReaderHtml,
+  shouldExtractReaderContent,
+  type RSSArticleExtractionResponse,
+  type RSSExtractedArticle,
+} from './reader';
+import { RSSReaderDetailPane, type RSSReaderContentState } from './RSSReaderDetailPane';
 
 /**
  * Size categories for widget content rendering
@@ -87,10 +95,12 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   const [selectedArticleIndex, setSelectedArticleIndex] = useState<number | null>(null);
   const [appFeedFilter, setAppFeedFilter] = useState<string>('all');
   const [showFeedFilterDropdown, setShowFeedFilterDropdown] = useState(false);
+  const [readerContentByLink, setReaderContentByLink] = useState<Record<string, RSSReaderContentState>>({});
 
   // Refs for the widget container
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const feedFilterRef = useRef<HTMLDivElement | null>(null);
+  const readerContentByLinkRef = useRef<Record<string, RSSReaderContentState>>({});
 
 
   // Move fetchSingleFeed before fetchAllFeeds
@@ -113,7 +123,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
       content: item.querySelector('content\\:encoded, encoded')?.textContent || '',
       pubDate: item.querySelector('pubDate')?.textContent || '',
       author: item.querySelector('author, dc\\:creator')?.textContent || '',
-      image: extractImageFromItem(item)
+      image: extractImageFromItem(item),
+      commentsLink: item.querySelector('comments')?.textContent || ''
     }));
   }, []);
 
@@ -170,7 +181,9 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
         return dateB - dateA;
       });
 
-      setFeedItems(sortedItems);
+      startTransition(() => {
+        setFeedItems(sortedItems);
+      });
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching feeds:', error);
@@ -237,6 +250,10 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showFeedFilterDropdown]);
+
+  useEffect(() => {
+    readerContentByLinkRef.current = readerContentByLink;
+  }, [readerContentByLink]);
 
   /**
    * Format publication date
@@ -329,6 +346,14 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     return feedItems.filter(item => item.feedTitle === appFeedFilter);
   }, [feedItems, appFeedFilter]);
 
+  useEffect(() => {
+    if (selectedArticleIndex === null) return;
+
+    if (selectedArticleIndex >= filteredFeedItems.length) {
+      setSelectedArticleIndex(filteredFeedItems.length > 0 ? 0 : null);
+    }
+  }, [filteredFeedItems.length, selectedArticleIndex]);
+
   /**
    * Get unique feed titles for the filter dropdown
    */
@@ -340,6 +365,118 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     return Array.from(titles);
   }, [feedItems]);
 
+  const selectedArticle = useMemo(
+    () => (selectedArticleIndex !== null ? filteredFeedItems[selectedArticleIndex] ?? null : null),
+    [filteredFeedItems, selectedArticleIndex]
+  );
+
+  const selectedInlineReaderContent = useMemo(
+    () => (selectedArticle ? getInlineReaderContent(selectedArticle) : null),
+    [selectedArticle]
+  );
+
+  const selectedReaderContentState = selectedArticle?.link ? readerContentByLink[selectedArticle.link] : undefined;
+
+  const selectedSanitizedReaderHtml = useMemo(() => {
+    if (selectedInlineReaderContent) {
+      return sanitizeReaderHtml(selectedInlineReaderContent.html);
+    }
+
+    if (selectedReaderContentState?.status === 'ready') {
+      return sanitizeReaderHtml(selectedReaderContentState.article.content);
+    }
+
+    return '';
+  }, [selectedInlineReaderContent, selectedReaderContentState]);
+
+  const selectedArticleLink = selectedArticle?.link || '';
+  const selectedArticleContent = selectedArticle?.content || '';
+  const selectedArticleDescription = selectedArticle?.description || '';
+  const selectedArticleNeedsReaderExtraction = Boolean(selectedArticleLink) && shouldExtractReaderContent({
+    link: selectedArticleLink,
+    content: selectedArticleContent,
+    description: selectedArticleDescription,
+  });
+
+  useEffect(() => {
+    if (!isApp || !selectedArticleLink || !selectedArticleNeedsReaderExtraction) {
+      return;
+    }
+
+    if (readerContentByLinkRef.current[selectedArticleLink]) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    startTransition(() => {
+      setReaderContentByLink((current) => ({
+        ...current,
+        [selectedArticleLink]: { status: 'loading' },
+      }));
+    });
+
+    void (async () => {
+      try {
+        const response = await fetch(`/api/rss?articleUrl=${encodeURIComponent(selectedArticleLink)}`, {
+          signal: controller.signal,
+        });
+        const payload = await response.json() as RSSArticleExtractionResponse;
+
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        if (response.ok && payload.ok && payload.article?.content) {
+          startTransition(() => {
+            setReaderContentByLink((current) => ({
+              ...current,
+              [selectedArticleLink]: {
+                status: 'ready',
+                article: payload.article as RSSExtractedArticle,
+              },
+            }));
+          });
+          return;
+        }
+
+        startTransition(() => {
+            setReaderContentByLink((current) => ({
+              ...current,
+              [selectedArticleLink]: {
+                status: 'unavailable',
+                reason: payload.reason || 'This feed links to the original article, but Boxento could not extract readable content for it.',
+              },
+          }));
+        });
+      } catch (error) {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        console.error('Error fetching reader content:', error);
+
+        startTransition(() => {
+            setReaderContentByLink((current) => ({
+              ...current,
+              [selectedArticleLink]: {
+                status: 'unavailable',
+                reason: 'This feed links to the original article. Boxento could not load reader mode right now.',
+              },
+          }));
+        });
+      }
+    })();
+
+    return () => controller.abort();
+  }, [
+    isApp,
+    selectedArticleLink,
+    selectedArticleContent,
+    selectedArticleDescription,
+    selectedArticleNeedsReaderExtraction,
+  ]);
+
   // -------------------------------------------------------
   // 1x1 TINY VIEW: Article count icon
   // -------------------------------------------------------
@@ -348,14 +485,14 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-0.5 text-center">
-        <Rss size={18} className="text-orange-500" strokeWidth={1.5} />
+        <Rss size={18} className="text-muted-foreground" strokeWidth={1.5} />
         {hasFeeds && !isLoading && (
           <div className="text-[1.5rem] font-bold leading-none text-foreground">
             {count}
           </div>
         )}
         {isLoading && hasFeeds && (
-          <div className="mt-1 h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400" />
+          <div className="mt-1 h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/50" />
         )}
       </div>
     );
@@ -373,8 +510,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
       <div className="flex h-full items-center gap-2 overflow-x-auto px-1">
         {/* Count badge */}
         <div className="flex shrink-0 items-center gap-1.5">
-          <div className="flex flex-col items-center rounded-lg bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5">
-            <Rss size={12} className="text-orange-500" strokeWidth={2} />
+          <div className="flex flex-col items-center rounded-lg bg-muted px-2 py-0.5">
+            <Rss size={12} className="text-muted-foreground" strokeWidth={2} />
             <span className="text-lg font-bold leading-tight text-foreground">
               {isLoading ? '-' : count}
             </span>
@@ -458,7 +595,21 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   // 6x6+ APP VIEW: Full news reader application
   // -------------------------------------------------------
   const renderAppView = () => {
-    const selectedArticle = selectedArticleIndex !== null ? filteredFeedItems[selectedArticleIndex] : null;
+    const needsReaderExtraction = selectedArticle ? shouldExtractReaderContent(selectedArticle) : false;
+    const extractedArticle = selectedReaderContentState?.status === 'ready'
+      ? selectedReaderContentState.article
+      : null;
+    const readerByline = selectedArticle?.author || extractedArticle?.byline || '';
+    const readerImage = selectedArticle?.image || extractedArticle?.image || '';
+    const readerSourceLabel = selectedInlineReaderContent
+      ? selectedInlineReaderContent.source === 'content'
+        ? 'Full article from feed'
+        : 'Feed summary from feed'
+      : extractedArticle
+        ? 'Reader mode extracted from original article'
+        : needsReaderExtraction
+          ? 'Link-only feed'
+          : '';
 
     if (isLoading) {
       return (
@@ -498,7 +649,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
         {/* Top bar */}
         <div className="flex items-center justify-between border-b border-border px-4 py-2 widget-drag-handle cursor-move">
           <div className="flex items-center gap-3">
-            <Rss size={16} className="text-orange-500" />
+            <Rss size={16} className="text-muted-foreground" />
             <span className="text-sm font-semibold text-foreground">
               {localConfig.title || 'RSS Reader'}
             </span>
@@ -519,7 +670,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                 <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-md border border-border bg-background shadow-lg py-1">
                   <button
                     onClick={() => { setAppFeedFilter('all'); setShowFeedFilterDropdown(false); setSelectedArticleIndex(null); }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${appFeedFilter === 'all' ? 'font-semibold text-orange-600 dark:text-orange-400' : 'text-foreground'}`}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${appFeedFilter === 'all' ? 'font-semibold text-foreground' : 'text-foreground'}`}
                   >
                     All Feeds
                   </button>
@@ -527,7 +678,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                     <button
                       key={title}
                       onClick={() => { setAppFeedFilter(title); setShowFeedFilterDropdown(false); setSelectedArticleIndex(null); }}
-                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors truncate ${appFeedFilter === title ? 'font-semibold text-orange-600 dark:text-orange-400' : 'text-foreground'}`}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors truncate ${appFeedFilter === title ? 'font-semibold text-foreground' : 'text-foreground'}`}
                     >
                       {title}
                     </button>
@@ -561,13 +712,13 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar: Article list */}
           <div className="w-1/3 border-r border-border overflow-y-auto">
-            {filteredFeedItems.map((item, index) => (
+	            {filteredFeedItems.map((item, index) => (
               <button
                 key={`${item.link}-${index}`}
                 onClick={() => setSelectedArticleIndex(index)}
                 className={`w-full text-left px-3 py-2.5 border-b border-border transition-colors ${
                   selectedArticleIndex === index
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-l-blue-500'
+                    ? 'bg-accent border-l-2 border-l-border'
                     : 'hover:bg-accent'
                 }`}
               >
@@ -590,107 +741,25 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
             ))}
           </div>
 
-          {/* Right pane: Article reader */}
-          <div className="flex-1 overflow-y-auto">
-            {selectedArticle ? (
-              <div className="p-6">
-                {/* Article title */}
-                <h1 className="text-xl font-bold text-foreground leading-tight">
-                  {selectedArticle.title}
-                </h1>
-                {/* Meta line */}
-                <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
-                  {selectedArticle.feedTitle && (
-                    <span className="font-medium text-muted-foreground">
-                      {selectedArticle.feedTitle}
-                    </span>
-                  )}
-                  {selectedArticle.feedTitle && selectedArticle.pubDate && (
-                    <span className="text-muted-foreground/40">|</span>
-                  )}
-                  {selectedArticle.pubDate && (
-                    <span>{formatDate(selectedArticle.pubDate)}</span>
-                  )}
-                  {selectedArticle.author && (
-                    <>
-                      <span className="text-muted-foreground/40">|</span>
-                      <span>{selectedArticle.author}</span>
-                    </>
-                  )}
-                </div>
-                {/* Open in browser link */}
-                <a
-                  href={selectedArticle.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  <ExternalLink size={14} />
-                  Open in browser
-                </a>
-                {/* Article image */}
-                {selectedArticle.image && (
-                  <div className="mt-4 rounded-lg overflow-hidden">
-                    <img
-                      src={selectedArticle.image}
-                      alt={selectedArticle.title}
-                      className="w-full max-h-64 object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-                {/* Article content */}
-                <div className="mt-4 prose prose-sm dark:prose-invert max-w-none">
-                  {selectedArticle.content ? (
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(selectedArticle.content, {
-                          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-                          allowedAttributes: {
-                            ...sanitizeHtml.defaults.allowedAttributes,
-                            img: ['src', 'alt', 'width', 'height']
-                          }
-                        })
-                      }}
-                    />
-                  ) : selectedArticle.description ? (
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html: sanitizeHtml(selectedArticle.description, {
-                          allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
-                          allowedAttributes: {
-                            ...sanitizeHtml.defaults.allowedAttributes,
-                            img: ['src', 'alt', 'width', 'height']
-                          }
-                        })
-                      }}
-                    />
-                  ) : (
-                    <p className="text-muted-foreground italic">
-                      No content available. Open in browser to read the full article.
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* Empty state: no article selected */
-              <div className="flex h-full flex-col items-center justify-center text-center p-6">
-                <Rss size={32} className="text-muted-foreground/40 mb-3" strokeWidth={1.5} />
-                <p className="text-sm text-muted-foreground">
-                  Select an article to read
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {filteredFeedItems.length} article{filteredFeedItems.length !== 1 ? 's' : ''} available
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
+	          {/* Right pane: Article reader */}
+	          <div className="flex-1 overflow-y-auto">
+	            <RSSReaderDetailPane
+	              article={selectedArticle}
+	              articleCount={filteredFeedItems.length}
+	              formattedDate={selectedArticle?.pubDate ? formatDate(selectedArticle.pubDate) : ''}
+	              readerByline={readerByline}
+	              readerImage={readerImage}
+	              readerSourceLabel={readerSourceLabel}
+	              extractedArticle={extractedArticle}
+	              inlineReaderContent={selectedInlineReaderContent}
+	              readerState={selectedReaderContentState}
+	              sanitizedReaderHtml={selectedSanitizedReaderHtml}
+	            />
+	          </div>
+	        </div>
+	      </div>
+	    );
+	  };
 
   /**
    * Render feed item
@@ -1326,7 +1395,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
               <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
                 <div className="space-y-4 px-1">
                   <div className="text-sm text-muted-foreground">
-                    Select from popular RSS feeds to get started:
+                    Select from feeds that demonstrate both inline full-text reading and link-only reader extraction:
                   </div>
                   <div className="space-y-2">
                     {/* Example Feed Item: Hacker News */}
@@ -1334,48 +1403,48 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                       className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors"
                       onClick={() => setExampleFeed('https://news.ycombinator.com/rss', 'Hacker News')}
                     >
-                      <div className="flex-shrink-0 rounded-md bg-orange-100 dark:bg-orange-900/20 p-2 text-orange-600 dark:text-orange-400">
+                      <div className="flex-shrink-0 rounded-md bg-muted p-2 text-muted-foreground">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M12 2L2 19.7778H22L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm">Hacker News</div>
-                        <div className="text-xs text-muted-foreground truncate">Tech news and discussions</div>
+                        <div className="text-xs text-muted-foreground truncate">Link-only stories with reader extraction fallback</div>
                       </div>
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
 
-                    {/* Example Feed Item: New York Times */}
+                    {/* Example Feed Item: Cloudflare Blog */}
                     <div
                       className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => setExampleFeed('https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', 'New York Times')}
+                      onClick={() => setExampleFeed('https://blog.cloudflare.com/rss/', 'Cloudflare Blog')}
                     >
                       <div className="flex-shrink-0 rounded-md bg-muted p-2 text-muted-foreground">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M4 7H20M4 12H20M4 17H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                          <path d="M6 15.5C5.17157 15.5 4.5 14.8284 4.5 14C4.5 13.1716 5.17157 12.5 6 12.5C6.23652 12.5 6.46026 12.5553 6.65901 12.6537C7.10891 11.0206 8.60564 9.83333 10.375 9.83333C12.4971 9.83333 14.2164 11.5526 14.2164 13.6747C14.2164 13.7383 14.2147 13.8016 14.2114 13.8644C14.6023 13.625 15.0619 13.4872 15.5536 13.4872C16.9582 13.4872 18.0969 14.6259 18.0969 16.0306C18.0969 17.4352 16.9582 18.5739 15.5536 18.5739H6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">New York Times</div>
-                        <div className="text-xs text-muted-foreground truncate">Breaking news and opinion</div>
+                        <div className="font-medium text-sm">Cloudflare Blog</div>
+                        <div className="text-xs text-muted-foreground truncate">Full-text engineering, security, and product posts</div>
                       </div>
                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
 
-                    {/* Example Feed Item: Wired */}
-                     <div
+                    {/* Example Feed Item: Krebs on Security */}
+                    <div
                       className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors"
-                      onClick={() => setExampleFeed('https://www.wired.com/feed/rss', 'Wired')}
+                      onClick={() => setExampleFeed('https://krebsonsecurity.com/feed/', 'Krebs on Security')}
                     >
-                      <div className="flex-shrink-0 rounded-md bg-purple-100 dark:bg-purple-900/20 p-2 text-purple-600 dark:text-purple-400">
+                      <div className="flex-shrink-0 rounded-md bg-muted p-2 text-muted-foreground">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 3V21M21 12H3M18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                          <path d="M12 3L5 6V11C5 15.55 8 19.74 12 21C16 19.74 19 15.55 19 11V6L12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-medium text-sm">Wired</div>
-                        <div className="text-xs text-muted-foreground truncate">Latest technology news and features</div>
+                        <div className="font-medium text-sm">Krebs on Security</div>
+                        <div className="text-xs text-muted-foreground truncate">Full-text security reporting and long-form investigations</div>
                       </div>
                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>

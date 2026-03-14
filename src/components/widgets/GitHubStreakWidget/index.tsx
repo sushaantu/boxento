@@ -370,12 +370,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
   };
 
   // Streak flame color based on count
-  const streakFlameColor = useMemo(() => {
-    if (githubData.currentStreak >= 30) return 'text-orange-500';
-    if (githubData.currentStreak >= 7) return 'text-yellow-500';
-    if (githubData.currentStreak >= 1) return 'text-green-500';
-    return 'text-muted-foreground';
-  }, [githubData.currentStreak]);
+  const streakFlameColor = 'text-muted-foreground';
 
   // Weekly aggregation for charts
   const weeklyData = useMemo(() => {
@@ -532,7 +527,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
           <Flame className={`h-3 w-3 ${streakFlameColor}`} />
           {githubData.currentStreak}d streak
         </span>
-        <span className="shrink-0 rounded-full bg-green-500/10 px-2 py-1 text-green-700 dark:text-green-300">
+        <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-foreground">
           {githubData.todayContributions} today
         </span>
         {width >= 3 && (
@@ -562,7 +557,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
         <div className="text-center">
           <div className="flex items-center justify-center gap-1">
             <Flame className={`h-4 w-4 ${streakFlameColor}`} />
-            <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <span className="text-2xl font-bold text-foreground">
               {githubData.currentStreak}
             </span>
           </div>
@@ -604,7 +599,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
           <div>
             <div className="flex items-center gap-1.5">
               <Flame className={`h-5 w-5 ${streakFlameColor}`} />
-              <span className="text-3xl font-bold text-green-600 dark:text-green-400">
+              <span className="text-3xl font-bold text-foreground">
                 {githubData.currentStreak}
               </span>
             </div>
@@ -658,7 +653,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
             <div className="flex items-center gap-2">
               <Flame className={`h-6 w-6 ${streakFlameColor}`} />
               <div>
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400 leading-none">
+                <div className="text-3xl font-bold text-foreground leading-none">
                   {githubData.currentStreak}
                 </div>
                 <div className="text-xs text-muted-foreground">day streak</div>
@@ -748,7 +743,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
             <div className="flex items-center gap-2">
               <Flame className={`h-8 w-8 ${streakFlameColor}`} />
               <div>
-                <div className="text-4xl font-bold text-green-600 dark:text-green-400 leading-none">
+                <div className="text-4xl font-bold text-foreground leading-none">
                   {githubData.currentStreak}
                 </div>
                 <div className="text-sm text-muted-foreground">day streak</div>

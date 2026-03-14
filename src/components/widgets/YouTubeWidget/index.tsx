@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Play, Youtube, ExternalLink, Settings } from 'lucide-react';
 
+const PLAY_BUTTON_CHROME_CLASS = 'rounded-full bg-black/75 text-white shadow-lg';
+
 const defaultConfig: YouTubeWidgetConfig = {
   title: 'YouTube',
   videoId: '',
@@ -166,7 +168,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
     if (!localConfig.videoId) {
       return (
         <div className="flex-1 flex items-center justify-center">
-          <Youtube className="h-5 w-5 text-red-500" />
+          <Youtube className="h-5 w-5 text-muted-foreground" />
         </div>
       );
     }
@@ -181,7 +183,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
           alt=""
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="relative z-10 bg-red-600 rounded-full p-1 shadow">
+        <div className={`relative z-10 p-1 ${PLAY_BUTTON_CHROME_CLASS}`}>
           <Play className="h-3 w-3 text-white fill-white" />
         </div>
       </button>
@@ -193,7 +195,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
     if (!localConfig.videoId) {
       return (
         <div className="flex-1 flex items-center gap-2 px-1 text-xs text-muted-foreground">
-          <Youtube className="h-4 w-4 shrink-0 text-red-500" />
+          <Youtube className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="truncate">No video configured</span>
         </div>
       );
@@ -211,7 +213,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="bg-red-600 rounded-full p-0.5">
+            <div className={`p-0.5 ${PLAY_BUTTON_CHROME_CLASS}`}>
               <Play className="h-3 w-3 text-white fill-white" />
             </div>
           </div>
@@ -264,7 +266,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-            <div className="bg-red-600 rounded-full p-2 shadow-lg">
+            <div className={`p-2 ${PLAY_BUTTON_CHROME_CLASS}`}>
               <Play className="h-5 w-5 text-white fill-white" />
             </div>
           </div>
@@ -313,7 +315,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-            <div className="bg-red-600 rounded-full p-3 shadow-lg">
+            <div className={`p-3 ${PLAY_BUTTON_CHROME_CLASS}`}>
               <Play className="h-6 w-6 text-white fill-white" />
             </div>
           </div>
@@ -489,7 +491,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
             />
           </div>
           {localConfig.autoplay && (
-            <p className="text-xs text-amber-600 dark:text-amber-400 -mt-2 ml-1">
+            <p className="text-xs text-muted-foreground -mt-2 ml-1">
               Most browsers require mute for autoplay to work
             </p>
           )}

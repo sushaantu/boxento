@@ -544,16 +544,16 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     if (isTiny) {
       return (
         <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
-          <Info className="text-amber-500" size={18} />
-          <p className="text-[10px] text-amber-500">Weather unavailable</p>
+          <Info className="text-muted-foreground" size={18} />
+          <p className="text-[10px] text-muted-foreground">Weather unavailable</p>
         </div>
       );
     }
 
     return (
       <div className="flex flex-col items-center justify-center h-full p-3 text-center">
-        <Info className="text-amber-500 mb-2" size={24} />
-        <p className="text-sm text-amber-500 mb-1">{error}</p>
+        <Info className="text-muted-foreground mb-2" size={24} />
+        <p className="text-sm text-muted-foreground mb-1">{error}</p>
         <p className="text-xs text-muted-foreground">
           Check your location or try again later.
         </p>
@@ -887,7 +887,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
         {/* Humidity chip (shown when space allows) */}
         {width >= 3 && (
           <div className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 shrink-0">
-            <Droplets size={10} className="text-blue-400" />
+            <Droplets size={10} className="text-muted-foreground" />
             <span className="text-[11px] text-muted-foreground">
               {weather.humidity}%
             </span>
@@ -1013,33 +1013,33 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
           <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Weather Details</h3>
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-xl bg-muted p-3 flex flex-col items-center">
-              <Droplets size={18} className="text-blue-400 mb-1" />
+              <Droplets size={18} className="text-muted-foreground mb-1" />
               <span className="text-xs text-muted-foreground">Humidity</span>
               <span className="text-lg font-semibold text-foreground">{weather.humidity}%</span>
             </div>
             <div className="rounded-xl bg-muted p-3 flex flex-col items-center">
-              <Wind size={18} className="text-sky-500 mb-1" />
+              <Wind size={18} className="text-muted-foreground mb-1" />
               <span className="text-xs text-muted-foreground">Wind</span>
               <span className="text-lg font-semibold text-foreground">{weather.windSpeed}</span>
               <span className="text-[10px] text-muted-foreground">{unit === 'celsius' ? 'm/s' : 'mph'} {windDirectionLabel}</span>
             </div>
             <div className="rounded-xl bg-muted p-3 flex flex-col items-center">
-              <Thermometer size={18} className="text-red-400 mb-1" />
+              <Thermometer size={18} className="text-muted-foreground mb-1" />
               <span className="text-xs text-muted-foreground">Feels Like</span>
               <span className="text-lg font-semibold text-foreground">{formatTemperature(weather.feelsLike)}</span>
             </div>
             <div className="rounded-xl bg-muted p-3 flex flex-col items-center">
-              <Sunrise size={18} className="text-amber-400 mb-1" />
+              <Sunrise size={18} className="text-muted-foreground mb-1" />
               <span className="text-xs text-muted-foreground">Sunrise</span>
               <span className="text-sm font-semibold text-foreground">{sunriseTime}</span>
             </div>
             <div className="rounded-xl bg-muted p-3 flex flex-col items-center">
-              <Sunset size={18} className="text-orange-400 mb-1" />
+              <Sunset size={18} className="text-muted-foreground mb-1" />
               <span className="text-xs text-muted-foreground">Sunset</span>
               <span className="text-sm font-semibold text-foreground">{sunsetTime}</span>
             </div>
             <div className="rounded-xl bg-muted p-3 flex flex-col items-center">
-              <Gauge size={18} className="text-purple-400 mb-1" />
+              <Gauge size={18} className="text-muted-foreground mb-1" />
               <span className="text-xs text-muted-foreground">Pressure</span>
               <span className="text-sm font-semibold text-foreground">--</span>
               <span className="text-[10px] text-muted-foreground">hPa</span>
