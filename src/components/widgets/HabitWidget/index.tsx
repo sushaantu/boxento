@@ -251,8 +251,8 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
         </div>
         {maxStreak > 0 && (
           <div className="mt-0.5 flex items-center gap-0.5">
-            <Flame className="h-2.5 w-2.5 text-orange-500" />
-            <span className="text-[9px] text-orange-500 font-medium">{maxStreak}</span>
+            <Flame className="h-2.5 w-2.5 text-muted-foreground" />
+            <span className="text-[9px] text-muted-foreground font-medium">{maxStreak}</span>
           </div>
         )}
       </div>
@@ -344,7 +344,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                   {habit.name}
                 </span>
                 {streak > 0 && (
-                  <span className="text-[10px] text-orange-500 font-medium shrink-0">
+                  <span className="text-[10px] text-muted-foreground font-medium shrink-0">
                     {streak}
                   </span>
                 )}
@@ -408,7 +408,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                     )}
                   </div>
                   {streak > 0 && (
-                    <span className="text-xs font-medium text-orange-500 shrink-0 flex items-center gap-0.5">
+                    <span className="text-xs font-medium text-muted-foreground shrink-0 flex items-center gap-0.5">
                       <Flame className="h-3 w-3" />
                       {streak}
                     </span>
@@ -483,14 +483,14 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
             </div>
             {maxStreak > 0 && (
               <div className="flex items-center gap-1">
-                <Flame className="h-3.5 w-3.5 text-orange-500" />
+                <Flame className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">
                   {maxStreak}d streak
                 </span>
               </div>
             )}
             <div className="flex items-center gap-1">
-              <TrendingUp className="h-3.5 w-3.5 text-blue-500" />
+              <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
                 {weeklyCompletionRate}% week
               </span>
@@ -532,7 +532,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     {streak > 0 && (
-                      <span className="text-xs text-orange-500 font-medium flex items-center gap-0.5">
+                      <span className="text-xs text-muted-foreground font-medium flex items-center gap-0.5">
                         <Flame className="h-3 w-3" />{streak}
                       </span>
                     )}
@@ -611,7 +611,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                 </span>
               </div>
               {streak > 0 && (
-                <div className="flex items-center gap-1 shrink-0 text-orange-500">
+                <div className="flex items-center gap-1 shrink-0 text-muted-foreground">
                   <Flame className="h-4 w-4" />
                   <span className="text-sm font-semibold">{streak}d</span>
                 </div>
@@ -653,7 +653,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                 <div className="w-[130px] shrink-0 flex items-center gap-1.5 min-w-0">
                   <span className="text-sm font-medium truncate">{habit.name}</span>
                   {streak > 0 && (
-                    <span className="text-[10px] text-orange-500 font-semibold shrink-0">{streak}</span>
+                    <span className="text-[10px] text-muted-foreground font-semibold shrink-0">{streak}</span>
                   )}
                 </div>
                 <div className="flex-1 flex gap-1">
@@ -699,11 +699,11 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
           </div>
           <div className="rounded-lg border p-3">
             <div className="text-xs text-muted-foreground mb-1">7-day Rate</div>
-            <div className="text-2xl font-bold text-blue-600">{weeklyCompletionRate}%</div>
+            <div className="text-2xl font-bold text-foreground">{weeklyCompletionRate}%</div>
           </div>
           <div className="rounded-lg border p-3">
             <div className="text-xs text-muted-foreground mb-1">30-day Rate</div>
-            <div className="text-2xl font-bold text-purple-600">{monthlyCompletionRate}%</div>
+            <div className="text-2xl font-bold text-foreground">{monthlyCompletionRate}%</div>
           </div>
         </div>
 
@@ -721,7 +721,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{totalDone} total</span>
                     {streak > 0 && (
-                      <span className="text-orange-500 font-medium flex items-center gap-0.5">
+                      <span className="text-muted-foreground font-medium flex items-center gap-0.5">
                         <Flame className="h-3 w-3" />{streak}d
                       </span>
                     )}
@@ -783,7 +783,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-lg border p-2 text-center">
               <div className="text-xs text-muted-foreground">Streak</div>
-              <div className="text-xl font-bold text-orange-500">{streak}d</div>
+              <div className="text-xl font-bold text-foreground">{streak}d</div>
             </div>
             <div className="rounded-lg border p-2 text-center">
               <div className="text-xs text-muted-foreground">Total</div>

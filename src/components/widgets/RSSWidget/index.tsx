@@ -348,14 +348,14 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-0.5 text-center">
-        <Rss size={18} className="text-orange-500" strokeWidth={1.5} />
+        <Rss size={18} className="text-muted-foreground" strokeWidth={1.5} />
         {hasFeeds && !isLoading && (
           <div className="text-[1.5rem] font-bold leading-none text-foreground">
             {count}
           </div>
         )}
         {isLoading && hasFeeds && (
-          <div className="mt-1 h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400" />
+          <div className="mt-1 h-1.5 w-1.5 animate-pulse rounded-full bg-muted-foreground/50" />
         )}
       </div>
     );
@@ -373,8 +373,8 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
       <div className="flex h-full items-center gap-2 overflow-x-auto px-1">
         {/* Count badge */}
         <div className="flex shrink-0 items-center gap-1.5">
-          <div className="flex flex-col items-center rounded-lg bg-orange-50 dark:bg-orange-900/20 px-2 py-0.5">
-            <Rss size={12} className="text-orange-500" strokeWidth={2} />
+          <div className="flex flex-col items-center rounded-lg bg-muted px-2 py-0.5">
+            <Rss size={12} className="text-muted-foreground" strokeWidth={2} />
             <span className="text-lg font-bold leading-tight text-foreground">
               {isLoading ? '-' : count}
             </span>
@@ -498,7 +498,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
         {/* Top bar */}
         <div className="flex items-center justify-between border-b border-border px-4 py-2 widget-drag-handle cursor-move">
           <div className="flex items-center gap-3">
-            <Rss size={16} className="text-orange-500" />
+            <Rss size={16} className="text-muted-foreground" />
             <span className="text-sm font-semibold text-foreground">
               {localConfig.title || 'RSS Reader'}
             </span>
@@ -519,7 +519,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                 <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-md border border-border bg-background shadow-lg py-1">
                   <button
                     onClick={() => { setAppFeedFilter('all'); setShowFeedFilterDropdown(false); setSelectedArticleIndex(null); }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${appFeedFilter === 'all' ? 'font-semibold text-orange-600 dark:text-orange-400' : 'text-foreground'}`}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${appFeedFilter === 'all' ? 'font-semibold text-foreground' : 'text-foreground'}`}
                   >
                     All Feeds
                   </button>
@@ -527,7 +527,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                     <button
                       key={title}
                       onClick={() => { setAppFeedFilter(title); setShowFeedFilterDropdown(false); setSelectedArticleIndex(null); }}
-                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors truncate ${appFeedFilter === title ? 'font-semibold text-orange-600 dark:text-orange-400' : 'text-foreground'}`}
+                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors truncate ${appFeedFilter === title ? 'font-semibold text-foreground' : 'text-foreground'}`}
                     >
                       {title}
                     </button>
@@ -567,7 +567,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                 onClick={() => setSelectedArticleIndex(index)}
                 className={`w-full text-left px-3 py-2.5 border-b border-border transition-colors ${
                   selectedArticleIndex === index
-                    ? 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-l-blue-500'
+                    ? 'bg-accent border-l-2 border-l-border'
                     : 'hover:bg-accent'
                 }`}
               >
@@ -1334,7 +1334,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                       className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors"
                       onClick={() => setExampleFeed('https://news.ycombinator.com/rss', 'Hacker News')}
                     >
-                      <div className="flex-shrink-0 rounded-md bg-orange-100 dark:bg-orange-900/20 p-2 text-orange-600 dark:text-orange-400">
+                      <div className="flex-shrink-0 rounded-md bg-muted p-2 text-muted-foreground">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M12 2L2 19.7778H22L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
@@ -1368,7 +1368,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                       className="flex items-center gap-3 p-2 rounded-md cursor-pointer hover:bg-accent transition-colors"
                       onClick={() => setExampleFeed('https://www.wired.com/feed/rss', 'Wired')}
                     >
-                      <div className="flex-shrink-0 rounded-md bg-purple-100 dark:bg-purple-900/20 p-2 text-purple-600 dark:text-purple-400">
+                      <div className="flex-shrink-0 rounded-md bg-muted p-2 text-muted-foreground">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M12 3V21M21 12H3M18 12C18 8.68629 15.3137 6 12 6C8.68629 6 6 8.68629 6 12C6 15.3137 8.68629 18 12 18C15.3137 18 18 15.3137 18 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                         </svg>

@@ -402,7 +402,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
       if (setupState === 'error') {
         return (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4 text-center">
-            <AlertCircle className="h-8 w-8 text-amber-600" />
+            <AlertCircle className="h-8 w-8 text-muted-foreground" />
             <div className="space-y-1">
               <p className="text-sm font-medium text-foreground">
                 Couldn&apos;t verify flight data setup
@@ -437,7 +437,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
 
       return (
         <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4 text-center">
-          <Plane className="h-8 w-8 text-amber-600" />
+          <Plane className="h-8 w-8 text-muted-foreground" />
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">
               Finish flight data setup first
@@ -1309,36 +1309,36 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
           {setupBlocked && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-left">
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-left">
               <div className="flex gap-2">
-                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-700" />
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
                 <div className="space-y-1">
                   {setupState === 'error' ? (
                     <>
-                      <p className="text-sm font-medium text-amber-950">
+                      <p className="text-sm font-medium text-foreground">
                         Setup status unavailable
                       </p>
-                      <p className="text-sm text-amber-900/90">
+                      <p className="text-sm text-muted-foreground">
                         Boxento couldn&apos;t verify whether the flight data proxy
                         is reachable. Retry the check once the connection or
                         proxy is healthy.
                       </p>
-                      <p className="text-xs text-amber-900/80">
+                      <p className="text-xs text-muted-foreground">
                         Add-flight controls stay disabled until setup can be
                         verified.
                       </p>
                     </>
                   ) : (
                     <>
-                      <p className="text-sm font-medium text-amber-950">
+                      <p className="text-sm font-medium text-foreground">
                         Flight data setup required
                       </p>
-                      <p className="text-sm text-amber-900/90">
+                      <p className="text-sm text-muted-foreground">
                         This widget can&apos;t fetch live flights until
                         Boxento&apos;s `/api/flights` proxy is connected to
                         AirLabs with an `AIRLABS_API_KEY` secret.
                       </p>
-                      <p className="text-xs text-amber-900/80">
+                      <p className="text-xs text-muted-foreground">
                         Once that integration is ready, reopen this dialog to
                         add flights.
                       </p>
