@@ -829,7 +829,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
     <div
       className={cn(
         'widget-container h-full flex flex-col',
-        isTiny ? 'widget-drag-handle' : isCompact ? 'p-1.5 md:p-2' : 'p-2 md:p-3'
+        isTiny ? 'widget-drag-handle' : 'p-2 md:p-3'
       )}
     >
       {!isTiny && (

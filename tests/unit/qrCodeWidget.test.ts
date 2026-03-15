@@ -22,7 +22,8 @@ describe('QRCodeWidget compact layout', () => {
     const html = renderCompactWidget({ title: 'QR Code' });
 
     expect(html).toContain('Configure this widget to get started');
-    expect(html).toContain('p-1.5 md:p-2');
+    expect(html).toContain('p-2 md:p-3');
+    expect(html).toContain('px-0 py-1.5');
     expect(html).toContain('text-[11px]');
     expect(html).toContain('h-7');
   });

@@ -1299,7 +1299,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
       hideHeader={isApp}
       compactHeader={isShort || width === 1 || height === 1}
       onSettingsClick={readOnly ? undefined : () => setIsSettingsOpen(true)}
-      contentClassName={isTiny ? 'rounded-md p-2' : isApp ? '' : 'rounded-md m-1'}
+      contentClassName={isTiny ? 'rounded-md p-2' : isApp ? '' : 'rounded-md'}
     >
       {renderContent()}
       
