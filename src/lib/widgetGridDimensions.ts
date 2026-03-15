@@ -28,12 +28,12 @@ export const getWidgetGridDimensions = ({
   isMobileView = false,
   widgetId,
 }: ResolveWidgetGridDimensionsOptions): WidgetGridDimensions => {
-  if (!isLayoutReady) {
-    return isMobileView ? DEFAULT_MOBILE_WIDGET_DIMENSIONS : DEFAULT_DESKTOP_WIDGET_DIMENSIONS;
-  }
-
   if (isMobileView) {
     return DEFAULT_MOBILE_WIDGET_DIMENSIONS;
+  }
+
+  if (!isLayoutReady) {
+    return DEFAULT_DESKTOP_WIDGET_DIMENSIONS;
   }
 
   const layoutItem = currentLayoutById.get(widgetId);
