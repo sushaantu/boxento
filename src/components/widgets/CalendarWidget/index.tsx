@@ -1681,7 +1681,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       };
 
       return (
-        <div className="flex items-center justify-between border-b border-border px-4 py-2 widget-drag-handle cursor-move">
+        <div className="flex items-center justify-between px-4 py-2 widget-drag-handle cursor-move">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"

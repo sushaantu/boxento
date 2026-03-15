@@ -50,7 +50,7 @@ export const WidgetShell = React.forwardRef<HTMLDivElement, WidgetShellProps>(
         {showHeader ? (
           <CardHeader
             className={cn(
-              'widget-header widget-drag-handle flex flex-row items-center justify-between gap-3 border-b border-border/60 px-0',
+              'widget-header widget-drag-handle flex flex-row items-center justify-between gap-3 px-0',
               compactHeader ? 'pb-2' : 'pb-3'
             )}
           >
