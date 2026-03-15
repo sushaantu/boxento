@@ -532,7 +532,10 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
       <div className="flex h-full flex-col">
         {/* Top bar */}
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="widget-drag-handle flex shrink-0 cursor-move items-center gap-2 rounded-md px-1 py-0.5">
+          <div
+            data-testid="quick-links-header"
+            className="widget-drag-handle flex shrink-0 cursor-move items-center gap-2 rounded-md px-1 py-0.5"
+          >
             <h2 className="text-lg font-semibold text-foreground">
               {customTitle}
             </h2>

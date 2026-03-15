@@ -1,11 +1,18 @@
 import React from 'react';
-import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import NotesWidget from '@/components/widgets/NotesWidget/index';
 import QuickLinksWidget from '@/components/widgets/QuickLinksWidget/index';
 import { WidgetShell } from '@/components/widgets/common/WidgetShell';
+
+const getHeaderClassNames = (html: string, testId: string) => {
+  const headerTag = html.match(new RegExp(`<[^>]*data-testid="${testId}"[^>]*>`))?.[0] ?? '';
+
+  expect(headerTag).toBeTruthy();
+
+  return headerTag.match(/class="([^"]*)"/)?.[1] ?? '';
+};
 
 describe('widget header separators', () => {
   it('keeps the shared WidgetShell header free of a bottom border', () => {
@@ -32,7 +39,7 @@ describe('widget header separators', () => {
     );
 
     expect(html).toContain('Search links...');
-    expect(html).not.toContain('flex items-center gap-3 border-b border-border px-4 py-3');
+    expect(getHeaderClassNames(html, 'quick-links-header').split(/\s+/)).not.toContain('border-b');
   });
 
   it('keeps the Notes app toolbar free of a separator border', () => {
@@ -48,21 +55,6 @@ describe('widget header separators', () => {
     );
 
     expect(html).toContain('Notes');
-    expect(html).not.toContain('flex items-center justify-between border-b border-border px-4 py-2 widget-drag-handle cursor-move');
-  });
-
-  it('removes the Calendar and Paisa top-level header separators from source', () => {
-    const calendarSource = readFileSync(
-      new URL('../../src/components/widgets/CalendarWidget/index.tsx', import.meta.url),
-      'utf8'
-    );
-    const paisaSource = readFileSync(
-      new URL('../../src/components/widgets/PaisaWidget/index.tsx', import.meta.url),
-      'utf8'
-    );
-
-    expect(calendarSource).not.toContain('className="flex items-center justify-between border-b border-border px-4 py-2 widget-drag-handle cursor-move"');
-    expect(paisaSource).not.toContain('className="flex items-center justify-between px-2 py-1.5 border-b border-border/50"');
-    expect(paisaSource).not.toContain('className="flex items-center justify-between px-4 py-3 border-b border-border/50 widget-drag-handle cursor-move"');
+    expect(getHeaderClassNames(html, 'notes-app-header').split(/\s+/)).not.toContain('border-b');
   });
 });

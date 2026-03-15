@@ -460,7 +460,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
       <div className="flex h-full">
         {/* Left panel: history + presets */}
         <div className="w-1/3 border-r flex flex-col overflow-hidden">
-          <div className="p-2 border-b widget-drag-handle cursor-move">
+          <div className="p-2 widget-drag-handle cursor-move">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Quick Templates</p>
             <div className="flex flex-wrap gap-1">
               {PRESET_TEMPLATES.map(preset => (

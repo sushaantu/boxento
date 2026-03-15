@@ -285,7 +285,10 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
     return (
       <div className="flex h-full flex-col">
         {/* Top toolbar */}
-        <div className="flex items-center justify-between px-4 py-2 widget-drag-handle cursor-move">
+        <div
+          data-testid="notes-app-header"
+          className="flex items-center justify-between px-4 py-2 widget-drag-handle cursor-move"
+        >
           <div className="flex items-center gap-2">
             <FileText size={18} className={NOTES_ICON_CLASS_NAME} />
             <h2 className="text-sm font-semibold text-foreground truncate">

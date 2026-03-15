@@ -647,7 +647,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     return (
       <div className="flex h-full flex-col">
         {/* Top bar */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-2 widget-drag-handle cursor-move">
+        <div className="flex items-center justify-between px-4 py-2 widget-drag-handle cursor-move">
           <div className="flex items-center gap-3">
             <Rss size={16} className="text-muted-foreground" />
             <span className="text-sm font-semibold text-foreground">

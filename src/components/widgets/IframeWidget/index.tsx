@@ -351,7 +351,7 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ width, height, config }) =>
     return (
       <div className="flex flex-col h-full">
         {/* URL bar and controls */}
-        <div className="flex items-center gap-1 px-2 py-1.5 border-b bg-muted/30 widget-drag-handle cursor-move">
+        <div className="flex items-center gap-1 px-2 py-1.5 bg-muted/30 widget-drag-handle cursor-move">
           {/* Navigation controls */}
           <Button
             variant="ghost"

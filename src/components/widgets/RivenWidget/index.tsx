@@ -696,7 +696,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
   const renderApp = () => (
     <div className="flex flex-col h-full">
       {/* Tab navigation */}
-      <div className="flex items-center border-b border-border/50 px-1 mb-2 widget-drag-handle cursor-move">
+      <div className="flex items-center px-1 mb-2 widget-drag-handle cursor-move">
         {(
           [
             { key: 'search' as const, label: 'Search', icon: Search },

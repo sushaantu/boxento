@@ -523,7 +523,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
     return (
       <div className="flex flex-col h-full overflow-hidden">
         {/* Summary bar */}
-        <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/50">
+        <div className="flex items-center justify-between px-2 py-1.5">
           <div className="flex items-center gap-3 text-sm">
             <span className="font-semibold text-foreground">{formatCurrency(netWorth)}</span>
             <span className={`flex items-center text-xs ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500'}`}>
@@ -662,7 +662,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
     return (
       <div className="flex flex-col h-full overflow-hidden">
         {/* Top bar: summary + tabs */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border/50 widget-drag-handle cursor-move">
+        <div className="flex items-center justify-between px-3 py-2 widget-drag-handle cursor-move">
           <div className="flex items-center gap-4">
             <div>
               <div className="text-2xl font-bold text-foreground">{formatCurrency(netWorth)}</div>

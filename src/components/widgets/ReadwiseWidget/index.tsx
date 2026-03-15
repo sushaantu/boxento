@@ -626,7 +626,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
       <div className="flex h-full overflow-hidden">
         {/* Left sidebar: books/sources */}
         <div className="w-1/4 border-r border-border flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-border widget-drag-handle cursor-move">
+          <div className="p-3 widget-drag-handle cursor-move">
             <h3 className="text-sm font-semibold text-foreground mb-2">Sources</h3>
             <div className="text-xs text-muted-foreground">
               {books.length > 0 ? `${books.length} books` : `${bookList.length} sources`}

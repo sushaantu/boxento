@@ -622,7 +622,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
         {/* Master list -- 1/3 width */}
         <div className="w-1/3 border-r flex flex-col overflow-hidden">
           {/* Search + filter */}
-          <div className="p-2 border-b space-y-1.5 flex-shrink-0 widget-drag-handle cursor-move">
+          <div className="p-2 space-y-1.5 flex-shrink-0 widget-drag-handle cursor-move">
             <div className="relative">
               <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input

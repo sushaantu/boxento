@@ -543,7 +543,7 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
 
   const renderApp = () => (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border px-4 py-2 widget-drag-handle cursor-move">
+      <div className="px-4 py-2 widget-drag-handle cursor-move">
         <div>
           <h2 className="text-base font-semibold text-foreground">{localConfig.title || DEFAULT_CONFIG.title}</h2>
           <div className="mt-1 flex items-start justify-between gap-3">
