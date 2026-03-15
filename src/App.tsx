@@ -60,6 +60,7 @@ import {
   calculateDashboardRowHeight,
   getDashboardBreakpointForWidth,
 } from '@/lib/dashboardViewport'
+import { getWidgetGridDimensions } from '@/lib/widgetGridDimensions'
 import { useNetworkStatus } from '@/lib/useNetworkStatus'
 import { AppFooter } from '@/components/AppFooter'
 import { useStorage } from '@/lib/storage/StorageContext'
@@ -934,34 +935,18 @@ function App() {
     }
   }, [isAuthenticated]);
 
-  const [liveResizeDimensions, setLiveResizeDimensions] = useState<{
-    id: string;
-    width: number;
-    height: number;
-  } | null>(null);
   const draggedWidgetIdRef = useRef<string | null>(null);
   const resizingWidgetIdRef = useRef<string | null>(null);
 
-  const getWidgetDimensions = useCallback((widgetId: string, isMobileView = false) => {
-    if (!isLayoutReady) {
-      return { width: isMobileView ? 2 : 3, height: isMobileView ? 2 : 3 };
-    }
-
-    if (isMobileView) {
-      return { width: 2, height: 2 };
-    }
-
-    if (liveResizeDimensions?.id === widgetId) {
-      return { width: liveResizeDimensions.width, height: liveResizeDimensions.height };
-    }
-
-    const layoutItem = currentLayoutById.get(widgetId);
-    if (!layoutItem) {
-      return { width: 3, height: 3 };
-    }
-
-    return { width: layoutItem.w, height: layoutItem.h };
-  }, [currentLayoutById, isLayoutReady, liveResizeDimensions]);
+  const getWidgetDimensions = useCallback((widgetId: string, isMobileView = false) => (
+    // Keep widget branch selection pinned to persisted grid units during resize.
+    getWidgetGridDimensions({
+      currentLayoutById,
+      isLayoutReady,
+      isMobileView,
+      widgetId,
+    })
+  ), [currentLayoutById, isLayoutReady]);
   const isMobileViewport = windowWidth < breakpoints.sm;
   const isTabletBreakpoint = !isMobileViewport && currentBreakpoint === 'sm';
 
@@ -1006,26 +991,12 @@ function App() {
   const handleResizeStart = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
     document.body.classList.add('react-grid-layout--resizing');
     resizingWidgetIdRef.current = newItem.i;
-    setLiveResizeDimensions({ id: newItem.i, width: newItem.w, height: newItem.h });
-  };
-
-  const handleResize = (_layout: LayoutItem[], _oldItem: LayoutItem, newItem: LayoutItem): void => {
-    if (resizingWidgetIdRef.current !== newItem.i) return;
-
-    setLiveResizeDimensions(previousValue => (
-      previousValue?.id === newItem.i
-      && previousValue.width === newItem.w
-      && previousValue.height === newItem.h
-        ? previousValue
-        : { id: newItem.i, width: newItem.w, height: newItem.h }
-    ));
   };
 
   const handleResizeStop = (currentLayout: LayoutItem[]): void => {
     document.body.classList.remove('react-grid-layout--resizing');
     const activeResizingWidgetId = resizingWidgetIdRef.current;
     resizingWidgetIdRef.current = null;
-    setLiveResizeDimensions(null);
 
     if (!activeResizingWidgetId) {
       return;
@@ -1825,7 +1796,6 @@ function App() {
                         onDragStart={handleDragStart}
                         onDragStop={handleDragStop}
                         onResizeStart={handleResizeStart}
-                        onResize={handleResize}
                         onResizeStop={handleResizeStop}
                         margin={[GRID.ITEM_MARGIN, GRID.ITEM_MARGIN]}
                         containerPadding={[GRID.CONTAINER_PADDING, GRID.CONTAINER_PADDING]}

@@ -225,6 +225,124 @@ test('persists quick links drag and resize changes across reloads', async ({ pag
   expect(reloadedLayout).toEqual(persistedLayout);
 });
 
+test('keeps the weather resize preview from jumping to a layout branch that will not persist', async ({ page }) => {
+  await page.route('https://geocoding-api.open-meteo.com/**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        results: [
+          {
+            id: 5128581,
+            name: 'New York',
+            country: 'United States',
+            latitude: 40.7128,
+            longitude: -74.006,
+          },
+        ],
+      }),
+    });
+  });
+  await page.route('https://api.open-meteo.com/**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        current: {
+          temperature_2m: 22,
+          relative_humidity_2m: 65,
+          apparent_temperature: 24,
+          weather_code: 0,
+          wind_speed_10m: 5.2,
+          wind_direction_10m: 120,
+        },
+        daily: {
+          time: [
+            '2026-03-16',
+            '2026-03-17',
+            '2026-03-18',
+            '2026-03-19',
+            '2026-03-20',
+          ],
+          weather_code: [0, 2, 3, 61, 80],
+          temperature_2m_max: [24, 26, 28, 27, 25],
+          temperature_2m_min: [18, 17, 19, 20, 18],
+          sunrise: [
+            '2026-03-16T06:30:00-04:00',
+            '2026-03-17T06:29:00-04:00',
+            '2026-03-18T06:27:00-04:00',
+            '2026-03-19T06:26:00-04:00',
+            '2026-03-20T06:24:00-04:00',
+          ],
+          sunset: [
+            '2026-03-16T19:08:00-04:00',
+            '2026-03-17T19:09:00-04:00',
+            '2026-03-18T19:10:00-04:00',
+            '2026-03-19T19:11:00-04:00',
+            '2026-03-20T19:12:00-04:00',
+          ],
+        },
+      }),
+    });
+  });
+
+  await page.setViewportSize({ width: 1512, height: 982 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'weather-preview',
+        type: 'weather',
+        config: {
+          location: 'New York',
+          units: 'metric',
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'weather-preview', x: 0, y: 0, w: 4, h: 2, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="weather-preview"]');
+  await expect(widget).toBeVisible();
+  await expect(widget.getByText('New York')).toBeVisible();
+  await expect(widget.getByText('Sunrise', { exact: true })).toHaveCount(0);
+  await expect(widget.getByText('Sunset', { exact: true })).toHaveCount(0);
+  await expect(widget.getByText('Sunrise/Sunset', { exact: true })).toHaveCount(0);
+
+  const resizeHandle = widget.locator('.react-resizable-handle-se');
+  const resizeBox = await resizeHandle.boundingBox();
+  if (!resizeBox) {
+    throw new Error('Weather resize handle is not available');
+  }
+
+  const handleCenterX = resizeBox.x + resizeBox.width / 2;
+  const handleCenterY = resizeBox.y + resizeBox.height / 2;
+
+  await page.mouse.move(handleCenterX, handleCenterY);
+  await page.mouse.down();
+  await page.mouse.move(handleCenterX, handleCenterY + 140, { steps: 12 });
+
+  await expect(widget.getByText('Sunrise', { exact: true })).toHaveCount(0);
+  await expect(widget.getByText('Sunset', { exact: true })).toHaveCount(0);
+  await expect(widget.getByText('Sunrise/Sunset', { exact: true })).toHaveCount(0);
+
+  await page.mouse.move(handleCenterX, handleCenterY + 90, { steps: 8 });
+  await page.mouse.up();
+
+  await expect.poll(async () => {
+    const layouts = await readStoredLayouts(page);
+    const item = layouts.lg?.find((entry: { i: string; w: number; h: number }) => entry.i === 'weather-preview');
+    return item ? `${item.w}x${item.h}` : 'missing';
+  }).toBe('4x3');
+
+  await expect(widget.getByText('Sunrise/Sunset', { exact: true })).toBeVisible();
+  await expect(widget.getByText('Sunrise', { exact: true })).toHaveCount(0);
+  await expect(widget.getByText('Sunset', { exact: true })).toHaveCount(0);
+});
+
 test('keeps widget geometry stable when switching from laptop to 4K-class viewports', async ({ page }) => {
   await page.setViewportSize({ width: 1512, height: 982 });
 
