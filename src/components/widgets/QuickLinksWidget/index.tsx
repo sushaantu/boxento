@@ -531,7 +531,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
     return (
       <div className="flex h-full flex-col">
         {/* Top bar */}
-        <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+        <div className="flex items-center gap-3 py-2">
           <div className="widget-drag-handle flex shrink-0 cursor-move items-center gap-2 rounded-md px-1 py-0.5">
             <h2 className="text-lg font-semibold text-foreground">
               {customTitle}
@@ -573,7 +573,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto pt-2">
           {filteredLinks.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
               <Globe size={32} className="mb-2 opacity-60" />
@@ -1067,7 +1067,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
       hideHeader={isApp}
       compactHeader={width === 1 || height === 1}
       onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-      contentClassName={isTiny ? 'p-2' : isApp ? '' : width === 1 || height === 1 ? 'p-1.5' : 'p-3'}
+      contentClassName={isTiny ? 'p-2' : isApp ? '' : 'pt-1'}
     >
       {renderContent()}
 

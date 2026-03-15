@@ -130,7 +130,7 @@
 /* Widget Container */
 .widget-container {
   border-radius: var(--border-radius-standard);
-  @apply p-4 overflow-hidden h-full w-full flex flex-col relative break-words;
+  @apply p-2 md:p-3 overflow-hidden h-full w-full flex flex-col relative break-words;
   background-color: var(--card);
   color: var(--card-foreground);
   border: 1px solid var(--border);

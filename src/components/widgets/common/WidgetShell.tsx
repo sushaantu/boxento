@@ -4,6 +4,11 @@ import { Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import {
+  getWidgetHeaderClassName,
+  getWidgetHeaderContentClassName,
+  getWidgetHeaderTitleClassName,
+} from './widgetHeaderStyles';
 
 type WidgetShellProps = React.ComponentProps<'div'> & {
   title?: string;
@@ -50,11 +55,11 @@ export const WidgetShell = React.forwardRef<HTMLDivElement, WidgetShellProps>(
         {showHeader ? (
           <CardHeader
             className={cn(
-              'widget-header widget-drag-handle flex flex-row items-center justify-between gap-3 border-b border-border/60 px-0',
-              compactHeader ? 'pb-2' : 'pb-3'
+              getWidgetHeaderClassName(compactHeader),
+              'flex-row'
             )}
           >
-            <div className="flex min-w-0 items-center gap-2">
+            <div className={getWidgetHeaderContentClassName(compactHeader)}>
               {icon ? (
                 <span className="shrink-0 text-muted-foreground">{icon}</span>
               ) : null}
@@ -62,10 +67,7 @@ export const WidgetShell = React.forwardRef<HTMLDivElement, WidgetShellProps>(
                 <CardTitle
                   role="heading"
                   aria-level={3}
-                  className={cn(
-                    'truncate text-sm font-medium',
-                    compactHeader && 'text-xs'
-                  )}
+                  className={getWidgetHeaderTitleClassName(compactHeader)}
                 >
                   {title}
                 </CardTitle>

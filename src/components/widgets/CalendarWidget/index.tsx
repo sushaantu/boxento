@@ -2238,7 +2238,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
       hideHeader={isApp}
       compactHeader={isShort}
       onSettingsClick={readOnly ? undefined : () => setIsSettingsOpen(true)}
-      contentClassName={isTiny ? 'p-1' : isApp ? '' : 'p-2'}
+      contentClassName={isTiny ? 'p-1' : isApp ? '' : 'pt-1'}
     >
       {renderContent()}
 

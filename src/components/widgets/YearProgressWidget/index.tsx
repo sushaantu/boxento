@@ -825,7 +825,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
         />
       )}
 
-      <div className={`flex-grow overflow-hidden ${isTiny ? 'p-2' : isApp ? '' : 'p-1'}`}>
+      <div className={`flex-grow overflow-hidden ${isTiny ? 'p-2' : ''}`}>
         {renderContent()}
       </div>
 
