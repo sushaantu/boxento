@@ -140,7 +140,7 @@ const Task = memo(({
   return (
     <div className={`flex items-center ${compact ? 'gap-2 py-1 px-1' : 'gap-3 p-2'} hover:bg-accent rounded-lg group`}>
       {!readOnly && (
-        <button
+        <Button type="button" variant="ghost" size="none"
           onClick={() => onToggle(task.id, !task.completed)}
           className={`flex-shrink-0 ${compact ? 'w-4 h-4' : 'w-[18px] h-[18px]'} rounded-full border-2 ${
             task.completed
@@ -165,7 +165,7 @@ const Task = memo(({
               />
             </div>
           )}
-        </button>
+        </Button>
       )}
       {readOnly && (
         <div className={`flex-shrink-0 ${compact ? 'w-4 h-4' : 'w-[18px] h-[18px]'} rounded-full border-2 ${
@@ -702,7 +702,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
           </div>
 
           <div className="flex-1 overflow-y-auto py-1">
-            <button
+            <Button type="button" variant="ghost" size="none"
               onClick={() => setSelectedProjectId(null)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
                 !selectedProjectId
@@ -713,13 +713,13 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
               <Inbox className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">All Tasks</span>
               <span className="ml-auto text-xs text-muted-foreground">{tasks.length}</span>
-            </button>
+            </Button>
 
             {projects.map(project => {
               const projectTaskCount = tasks.filter(t => t.project_id === project.id).length;
               if (projectTaskCount === 0) return null;
               return (
-                <button
+                <Button type="button" variant="ghost" size="none"
                   key={project.id}
                   onClick={() => setSelectedProjectId(project.id === selectedProjectId ? null : project.id)}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
@@ -731,7 +731,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
                   <FolderOpen className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate">{project.name}</span>
                   <span className="ml-auto text-xs text-muted-foreground">{projectTaskCount}</span>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -782,7 +782,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
                       >
                         <div className="flex items-center gap-3 px-3 py-2 hover:bg-accent rounded-lg group">
                           {!readOnly ? (
-                            <button
+                            <Button type="button" variant="ghost" size="none"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleTask(task.id, !task.completed);
@@ -797,7 +797,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
                               {pendingTasks.has(task.id) && (
                                 <Loader2 className="w-3 h-3 animate-spin text-foreground" />
                               )}
-                            </button>
+                            </Button>
                           ) : (
                             <div className={`flex-shrink-0 w-[18px] h-[18px] rounded-full border-2 ${getPriorityBorder(task.priority)} flex items-center justify-center`} />
                           )}

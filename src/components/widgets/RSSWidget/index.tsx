@@ -14,6 +14,14 @@ import type { RSSWidgetProps } from './types';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Button } from '../../ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '../../ui/dropdown-menu';
 import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
@@ -94,12 +102,10 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   // App mode state
   const [selectedArticleIndex, setSelectedArticleIndex] = useState<number | null>(null);
   const [appFeedFilter, setAppFeedFilter] = useState<string>('all');
-  const [showFeedFilterDropdown, setShowFeedFilterDropdown] = useState(false);
   const [readerContentByLink, setReaderContentByLink] = useState<Record<string, RSSReaderContentState>>({});
 
   // Refs for the widget container
   const widgetRef = useRef<HTMLDivElement | null>(null);
-  const feedFilterRef = useRef<HTMLDivElement | null>(null);
   const readerContentByLinkRef = useRef<Record<string, RSSReaderContentState>>({});
 
 
@@ -237,19 +243,6 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     refreshInterval: 900000, // Refresh every 15 minutes
     enabled: localConfig.feeds?.some(feed => feed.enabled) ?? false
   });
-
-  // Close feed filter dropdown on outside click
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (feedFilterRef.current && !feedFilterRef.current.contains(event.target as Node)) {
-        setShowFeedFilterDropdown(false);
-      }
-    };
-    if (showFeedFilterDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showFeedFilterDropdown]);
 
   useEffect(() => {
     readerContentByLinkRef.current = readerContentByLink;
@@ -656,36 +649,41 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
           </div>
           <div className="flex items-center gap-3">
             {/* Feed filter dropdown */}
-            <div className="relative" ref={feedFilterRef}>
-              <button
-                onClick={() => setShowFeedFilterDropdown(!showFeedFilterDropdown)}
-                className="flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-accent transition-colors"
-              >
-                <span className="max-w-[140px] truncate">
-                  {appFeedFilter === 'all' ? 'All Feeds' : appFeedFilter}
-                </span>
-                <ChevronDown size={12} />
-              </button>
-              {showFeedFilterDropdown && (
-                <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-md border border-border bg-background shadow-lg py-1">
-                  <button
-                    onClick={() => { setAppFeedFilter('all'); setShowFeedFilterDropdown(false); setSelectedArticleIndex(null); }}
-                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors ${appFeedFilter === 'all' ? 'font-semibold text-foreground' : 'text-foreground'}`}
-                  >
-                    All Feeds
-                  </button>
-                  {uniqueFeedTitles.map(title => (
-                    <button
-                      key={title}
-                      onClick={() => { setAppFeedFilter(title); setShowFeedFilterDropdown(false); setSelectedArticleIndex(null); }}
-                      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-accent transition-colors truncate ${appFeedFilter === title ? 'font-semibold text-foreground' : 'text-foreground'}`}
-                    >
-                      {title}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1.5 px-2.5 text-xs text-muted-foreground"
+                >
+                  <span className="max-w-[140px] truncate">
+                    {appFeedFilter === 'all' ? 'All Feeds' : appFeedFilter}
+                  </span>
+                  <ChevronDown size={12} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuRadioGroup
+                  value={appFeedFilter}
+                  onValueChange={(value) => {
+                    setAppFeedFilter(value);
+                    setSelectedArticleIndex(null);
+                  }}
+                >
+                  <DropdownMenuGroup>
+                    <DropdownMenuRadioItem value="all" className="text-xs">
+                      <span className="truncate">All Feeds</span>
+                    </DropdownMenuRadioItem>
+                    {uniqueFeedTitles.map(title => (
+                      <DropdownMenuRadioItem key={title} value={title} className="text-xs">
+                        <span className="truncate">{title}</span>
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuGroup>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {/* Article count */}
             <span className="text-xs text-muted-foreground">
               {filteredFeedItems.length} article{filteredFeedItems.length !== 1 ? 's' : ''}
@@ -713,10 +711,12 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
           {/* Left sidebar: Article list */}
           <div className="w-1/3 border-r border-border overflow-y-auto">
 	            {filteredFeedItems.map((item, index) => (
-              <button
+              <Button
                 key={`${item.link}-${index}`}
+                type="button"
+                variant="ghost"
                 onClick={() => setSelectedArticleIndex(index)}
-                className={`w-full text-left px-3 py-2.5 border-b border-border transition-colors ${
+                className={`h-auto w-full justify-start rounded-none border-b border-border px-3 py-2.5 text-left transition-colors ${
                   selectedArticleIndex === index
                     ? 'bg-accent border-l-2 border-l-border'
                     : 'hover:bg-accent'
@@ -737,7 +737,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                     </span>
                   )}
                 </div>
-              </button>
+              </Button>
             ))}
           </div>
 

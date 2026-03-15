@@ -405,7 +405,7 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
               >
                 <RotateCcw size={20} />
               </Button>
-              <button
+              <Button type="button" variant="ghost" size="none"
                 className={`rounded-full p-5 text-white transition-colors ${
                   mode === TimerMode.WORK
                     ? 'bg-red-500 hover:bg-red-600'
@@ -417,7 +417,7 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
                 aria-label={isActive ? 'Pause' : 'Start'}
               >
                 {isActive ? <Pause size={28} /> : <Play size={28} />}
-              </button>
+              </Button>
               <Button
                 variant="secondary"
                 size="icon"

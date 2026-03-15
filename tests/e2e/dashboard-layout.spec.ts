@@ -559,21 +559,21 @@ test('keeps app-mode text button controls from triggering widget press or drag v
   const todoWidget = page.locator('.react-grid-item[data-widget-id="todo-app"]');
   const quickLinksWidget = page.locator('.react-grid-item[data-widget-id="quick-links-app"]');
 
-  const weekButton = calendarWidget.getByRole('button', { name: 'Week' });
-  await expect(weekButton).toBeVisible();
+  const weekTab = calendarWidget.getByRole('tab', { name: 'Week' });
+  await expect(weekTab).toBeVisible();
 
   await dragFromTextNodeWithoutStartingWidgetInteraction(
     page,
     calendarWidget,
-    weekButton,
+    weekTab,
     0,
     'calendar-app'
   );
 
-  const weekPoint = await readFirstTextNodeCenter(weekButton);
+  const weekPoint = await readFirstTextNodeCenter(weekTab);
   await page.mouse.click(weekPoint.x, weekPoint.y);
   await assertWidgetInteractionInactive(calendarWidget);
-  await expect.poll(async () => weekButton.getAttribute('class')).toContain('bg-background');
+  await expect.poll(async () => weekTab.getAttribute('class')).toContain('bg-background');
   await expect.poll(async () => readStoredLayoutX(page, 'calendar-app')).toBe(0);
 
   const todoComposer = todoWidget.getByRole('textbox', { name: 'New task' });

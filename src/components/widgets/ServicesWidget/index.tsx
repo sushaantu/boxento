@@ -388,7 +388,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
           const Icon = getIcon(service.icon);
           const status = serviceStatus[service.id];
           return (
-            <button
+            <Button type="button" variant="ghost" size="none"
               key={service.id}
               onClick={() => openService(service.url)}
               className="flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-2.5 py-1.5 text-foreground transition-colors hover:bg-accent"
@@ -398,7 +398,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
               )}
               <Icon className="h-3.5 w-3.5" />
               <span className="max-w-[8rem] truncate">{service.name}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -411,7 +411,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
     const status = serviceStatus[service.id];
 
     return (
-      <button
+      <Button type="button" variant="ghost" size="none"
         key={service.id}
         onClick={() => openService(service.url)}
         className="relative flex flex-col items-center justify-center gap-2 rounded-xl border border-border bg-muted/30 p-2 transition-colors hover:bg-accent"
@@ -422,7 +422,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
         )}
         <Icon className="h-6 w-6 text-foreground" />
         <span className="w-full truncate text-center text-xs font-medium text-foreground">{service.name}</span>
-      </button>
+      </Button>
     );
   };
 
@@ -434,7 +434,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
     const StatusIcon = getStatusIcon(status);
 
     return (
-      <button
+      <Button type="button" variant="ghost" size="none"
         key={service.id}
         onClick={() => openService(service.url)}
         className="group flex h-full min-h-[112px] flex-col justify-between rounded-xl border border-border bg-muted/30 p-4 text-left transition-colors hover:bg-accent"
@@ -480,7 +480,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
           </div>
           <ArrowUpRight className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
         </div>
-      </button>
+      </Button>
     );
   };
 
@@ -573,7 +573,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
         <div className="flex flex-1 overflow-hidden">
           {/* Category sidebar */}
           <div className="w-36 shrink-0 border-r border-border overflow-y-auto">
-            <button
+            <Button type="button" variant="ghost" size="none"
               onClick={() => setSelectedCategory(null)}
               className={cn(
                 'w-full px-3 py-2 text-left text-xs transition-colors hover:bg-accent',
@@ -581,11 +581,11 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
               )}
             >
               All ({localConfig.services.length})
-            </button>
+            </Button>
             {categories.map(cat => {
               const count = localConfig.services.filter(s => s.category === cat).length;
               return (
-                <button
+                <Button type="button" variant="ghost" size="none"
                   key={cat}
                   onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
                   className={cn(
@@ -594,7 +594,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
                   )}
                 >
                   {cat} ({count})
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -642,7 +642,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
 
           {/* Category filter tabs */}
           <div className="flex items-center gap-1 overflow-x-auto px-2 py-1.5 border-b border-border">
-            <button
+            <Button type="button" variant="ghost" size="none"
               onClick={() => setSelectedCategory(null)}
               className={cn(
                 'shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors',
@@ -652,9 +652,9 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
               )}
             >
               All
-            </button>
+            </Button>
             {categories.map(cat => (
-              <button
+              <Button type="button" variant="ghost" size="none"
                 key={cat}
                 onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
                 className={cn(
@@ -665,7 +665,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
                 )}
               >
                 {cat}
-              </button>
+              </Button>
             ))}
           </div>
 

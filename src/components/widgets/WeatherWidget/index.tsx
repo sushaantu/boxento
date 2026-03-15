@@ -10,6 +10,7 @@ import { WidgetShell } from '../../widgets/common/WidgetShell';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
+import { Popover, PopoverAnchor, PopoverContent } from '../../ui/popover';
 import { faviconService } from '@/lib/services/favicon';
 
 interface CitySearchResult {
@@ -151,6 +152,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   const handleCitySearchChange = useCallback((value: string) => {
     setCitySearch(value);
     setLocationError(null);
+    setShowResults(value.trim().length >= 2);
 
     // Clear previous timeout
     if (searchTimeoutRef.current) {
@@ -1131,56 +1133,66 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
     <>
       <div className="space-y-2">
         <Label htmlFor="location-input">Location</Label>
-        <div className="relative">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="location-input"
-              type="text"
-              placeholder="Search for a city..."
-              value={citySearch || localConfig.location || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                handleCitySearchChange(e.target.value);
-              }}
-              onFocus={() => {
-                if (cityResults.length > 0) setShowResults(true);
-              }}
-              className={`pl-9 ${locationError ? 'border-red-500' : ''}`}
-            />
-            {isSearching && (
-              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
+        <Popover
+          open={showResults && citySearch.length >= 2}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShowResults(false);
+            }
+          }}
+        >
+          <PopoverAnchor asChild>
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="location-input"
+                type="text"
+                placeholder="Search for a city..."
+                value={citySearch || localConfig.location || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  handleCitySearchChange(e.target.value);
+                }}
+                onFocus={() => {
+                  if (citySearch.length >= 2 || cityResults.length > 0) {
+                    setShowResults(true);
+                  }
+                }}
+                className={`pl-9 ${locationError ? 'border-red-500' : ''}`}
+              />
+              {isSearching && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+            </div>
+          </PopoverAnchor>
 
-          {/* Search results dropdown */}
-          {showResults && cityResults.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-60 overflow-y-auto">
-              {cityResults.map((city) => (
-                <button
-                  key={city.id}
-                  type="button"
-                  className="w-full px-3 py-2 text-left hover:bg-accent flex items-start gap-2 border-b last:border-b-0"
-                  onClick={() => handleCitySelect(city)}
-                >
-                  <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm truncate">{city.name}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      {city.admin1 ? `${city.admin1}, ` : ''}{city.country}
+          <PopoverContent align="start" className="w-[min(28rem,calc(100vw-4rem))] max-h-60 overflow-y-auto p-1">
+            {cityResults.length > 0 ? (
+              <div className="flex flex-col">
+                {cityResults.map((city) => (
+                  <Button
+                    key={city.id}
+                    type="button"
+                    variant="ghost"
+                    className="h-auto justify-start gap-2 rounded-sm px-3 py-2 text-left"
+                    onClick={() => handleCitySelect(city)}
+                  >
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium">{city.name}</div>
+                      <div className="truncate text-xs text-muted-foreground">
+                        {city.admin1 ? `${city.admin1}, ` : ''}{city.country}
+                      </div>
                     </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* No results message */}
-          {showResults && citySearch.length >= 2 && !isSearching && cityResults.length === 0 && (
-            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg p-3 text-sm text-muted-foreground">
-              No cities found for "{citySearch}"
-            </div>
-          )}
-        </div>
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <p className="px-3 py-2 text-sm text-muted-foreground">
+                No cities found for "{citySearch}"
+              </p>
+            )}
+          </PopoverContent>
+        </Popover>
         {locationError && (
           <p className="text-xs text-red-500">{locationError}</p>
         )}

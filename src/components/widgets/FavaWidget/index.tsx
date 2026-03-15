@@ -292,7 +292,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
 
     return (
       <div key={node.account}>
-        <button
+        <Button type="button" variant="ghost" size="none"
           onClick={() => {
             if (hasChildren && depth < maxDepth) toggleExpanded(node.account);
             setSelectedAccount(node.account);
@@ -317,7 +317,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
           <span className={`shrink-0 ml-2 font-mono text-xs ${total < 0 ? 'text-red-500' : 'text-foreground'}`}>
             {formatCurrency(total)}
           </span>
-        </button>
+        </Button>
         {hasChildren && isExpanded && depth < maxDepth && (
           <div>
             {node.children
@@ -387,14 +387,14 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
           const name = account.account.split(':').pop() || account.account;
           const total = getTotal(account.balance_children);
           return (
-            <button
+            <Button type="button" variant="ghost" size="none"
               key={account.account}
               onClick={() => openFava()}
               className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1.5 text-foreground transition-colors hover:bg-accent"
             >
               <span className="max-w-[6rem] truncate">{name}</span>
               <span className="font-mono text-[11px] text-muted-foreground">{formatCurrency(total, true)}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -591,7 +591,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
                             const name = child.account.split(':').pop() || child.account;
                             const total = getTotal(child.balance_children);
                             return (
-                              <button
+                              <Button type="button" variant="ghost" size="none"
                                 key={child.account}
                                 onClick={() => setSelectedAccount(child.account)}
                                 className="w-full flex items-center justify-between text-xs py-1 px-1.5 rounded hover:bg-accent/50"
@@ -600,7 +600,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
                                 <span className={`shrink-0 ml-2 font-mono ${total < 0 ? 'text-red-500' : ''}`}>
                                   {formatCurrency(total)}
                                 </span>
-                              </button>
+                              </Button>
                             );
                           })}
                       </div>
@@ -687,7 +687,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
         {/* Tab bar */}
         <div className="flex border-b border-border/50 px-2">
           {tabs.map(tab => (
-            <button
+            <Button type="button" variant="ghost" size="none"
               key={tab.id}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm transition-colors ${
                 activeTab === tab.id
@@ -698,7 +698,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
             >
               {tab.icon}
               {tab.label}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -730,7 +730,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
                       const total = getTotal(acctNode.balance_children);
                       const isSelected = selectedAccount === acctNode.account;
                       return (
-                        <button
+                        <Button type="button" variant="ghost" size="none"
                           key={acctNode.account}
                           onClick={() => setSelectedAccount(acctNode.account)}
                           className={`w-full flex items-center justify-between py-1.5 px-3 text-sm hover:bg-accent/50 ${
@@ -744,7 +744,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
                           <span className={`shrink-0 ml-2 font-mono text-xs ${total < 0 ? 'text-red-500' : ''}`}>
                             {formatCurrency(total)}
                           </span>
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -824,7 +824,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
                           const total = getTotal(child.balance_children);
                           const childCount = child.children.length;
                           return (
-                            <button
+                            <Button type="button" variant="ghost" size="none"
                               key={child.account}
                               onClick={() => {
                                 setSelectedAccount(child.account);
@@ -844,7 +844,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
                                 </span>
                                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
                               </div>
-                            </button>
+                            </Button>
                           );
                         })}
                     </div>

@@ -11,6 +11,7 @@ import {
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -428,9 +429,11 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                 </p>
                 <div className="space-y-1">
                   {history.slice(0, 5).map(item => (
-                    <button
+                    <Button
                       key={item.id}
-                      className="w-full text-left text-xs text-muted-foreground hover:text-foreground truncate block py-0.5 hover:bg-accent rounded px-1 transition-colors"
+                      type="button"
+                      variant="ghost"
+                      className="h-auto w-full justify-start truncate px-1 py-0.5 text-xs font-normal text-muted-foreground hover:text-foreground"
                       onClick={() => {
                         if (!readOnly) {
                           updateConfig({ content: item.content });
@@ -439,7 +442,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                       title={item.content}
                     >
                       {item.label || item.content}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
@@ -610,7 +613,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                 {!readOnly && (
                   <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
                     <div className="flex items-center gap-1.5">
-                      <label htmlFor="app-fg" className="cursor-pointer">Color:</label>
+                      <Label htmlFor="app-fg" className="cursor-pointer text-xs text-muted-foreground">Color:</Label>
                       <input
                         id="app-fg"
                         type="color"
@@ -620,7 +623,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                       />
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <label htmlFor="app-bg" className="cursor-pointer">Background:</label>
+                      <Label htmlFor="app-bg" className="cursor-pointer text-xs text-muted-foreground">Background:</Label>
                       <input
                         id="app-bg"
                         type="color"
@@ -690,7 +693,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
 
             <div>
               <Label htmlFor="settings-content">Content (URL or text)</Label>
-              <textarea
+              <Textarea
                 id="settings-content"
                 placeholder="https://example.com or any text"
                 value={localConfig.content || ''}
@@ -698,7 +701,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                   setLocalConfig(prev => ({ ...prev, content: e.target.value }))
                 }
                 rows={4}
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[80px]"
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Enter a URL, text, phone number, or any content to encode

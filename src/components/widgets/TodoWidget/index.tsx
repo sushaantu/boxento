@@ -450,7 +450,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 py-1"
             >
               {!readOnly && (
-                <button
+                <Button type="button" variant="ghost" size="none"
                   onClick={() => toggleTodo(item.id)}
                   className="h-3 w-3 shrink-0 rounded-full border border-border hover:border-green-400 transition-colors"
                   aria-label="Mark as complete"
@@ -499,7 +499,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                   onDrop={(e) => handleDrop(e, item)}
                   className={`flex items-center p-1 rounded-md hover:bg-accent transition-all relative text-foreground group cursor-grab active:cursor-grabbing ${getDropZoneClass(item.id)}`}
                 >
-                  <button
+                  <Button type="button" variant="ghost" size="none"
                     onClick={() => !readOnly && toggleTodo(item.id)}
                     className={`flex-shrink-0 w-3 h-3 rounded-full border ${
                       item.completed
@@ -510,7 +510,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                     disabled={readOnly}
                   >
                     {item.completed && <Check size={8} />}
-                  </button>
+                  </Button>
                   <span className={`text-xs font-medium flex-grow truncate ${
                     item.completed ? 'line-through text-muted-foreground' : ''
                   }`}>
@@ -518,13 +518,13 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                   </span>
                   {!readOnly && (
                     <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity ml-1">
-                      <button
+                      <Button type="button" variant="ghost" size="none"
                         onClick={() => deleteTodo(item.id)}
                         className="p-0.5 text-muted-foreground hover:text-destructive"
                         aria-label="Delete task"
                       >
                         <Trash2 size={10} />
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </li>
@@ -568,7 +568,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
             </div>
           )}
 
-          <button
+          <Button type="button" variant="ghost" size="none"
             onClick={() => !readOnly && toggleTodo(item.id)}
             className={`flex-shrink-0 w-5 h-5 rounded-full border ${
               item.completed
@@ -579,7 +579,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
             disabled={readOnly}
           >
             {item.completed && <Check size={12} />}
-          </button>
+          </Button>
 
           <span
             className={`flex-grow truncate ${
@@ -591,13 +591,13 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
 
           {!readOnly && (
             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
+              <Button type="button" variant="ghost" size="none"
                 onClick={() => deleteTodo(item.id)}
                 className="p-1 text-muted-foreground hover:text-destructive"
                 aria-label="Delete task"
               >
                 <Trash2 size={14} />
-              </button>
+              </Button>
             </div>
           )}
         </li>
@@ -840,7 +840,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           </div>
         )}
 
-        <button
+        <Button type="button" variant="ghost" size="none"
           onClick={() => !readOnly && toggleTodo(item.id)}
           className={`flex-shrink-0 w-5 h-5 rounded-full border-2 transition-colors ${
             item.completed
@@ -851,7 +851,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
           disabled={readOnly}
         >
           {item.completed && <Check size={12} />}
-        </button>
+        </Button>
 
         {editingItemId === item.id ? (
           <form
@@ -891,7 +891,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
 
         {!readOnly && editingItemId !== item.id && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
+            <Button type="button" variant="ghost" size="none"
               onClick={() => {
                 setEditingItemId(item.id);
                 setEditingText(item.text);
@@ -900,14 +900,14 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               aria-label="Edit task"
             >
               <Pencil size={14} />
-            </button>
-            <button
+            </Button>
+            <Button type="button" variant="ghost" size="none"
               onClick={() => deleteTodo(item.id)}
               className="p-1 text-muted-foreground hover:text-destructive"
               aria-label="Delete task"
             >
               <Trash2 size={14} />
-            </button>
+            </Button>
           </div>
         )}
       </li>
@@ -926,7 +926,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
 
           <nav className="space-y-1 flex-grow">
             {filterTabs.map((tab) => (
-              <button
+              <Button type="button" variant="ghost" size="none"
                 key={tab.key}
                 onClick={() => setAppFilter(tab.key)}
                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors ${
@@ -943,7 +943,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                 }`}>
                   {tab.count}
                 </span>
-              </button>
+              </Button>
             ))}
           </nav>
 
@@ -1036,13 +1036,13 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                 {/* Completed items (collapsible) */}
                 {filteredCompleted.length > 0 && appFilter !== 'pending' && (
                   <div className="mt-4">
-                    <button
+                    <Button type="button" variant="ghost" size="none"
                       onClick={() => setShowCompletedSection(!showCompletedSection)}
                       className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-2 transition-colors"
                     >
                       {showCompletedSection ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       <span>Completed ({filteredCompleted.length})</span>
-                    </button>
+                    </Button>
                     {showCompletedSection && (
                       <ul className="space-y-1">
                         {filteredCompleted.map(renderAppTodoItem)}

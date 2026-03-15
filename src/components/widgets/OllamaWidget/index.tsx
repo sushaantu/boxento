@@ -9,6 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
+import { Textarea } from '../../ui/textarea';
 import {
   Select,
   SelectContent,
@@ -597,9 +598,10 @@ const OllamaWidget: React.FC<OllamaWidgetProps> = ({ width, height, config }) =>
           {/* System prompt editor (inline in app mode) */}
           {!readOnly && (
             <div className="p-3 border-b space-y-2">
-              <label className="text-xs font-medium text-foreground">System Prompt</label>
-              <textarea
-                className="w-full h-20 px-2 py-1.5 text-xs border rounded-md resize-none bg-transparent focus:outline-none focus:ring-2 focus:ring-ring"
+              <Label htmlFor="ollama-system-prompt-inline" className="text-xs">System Prompt</Label>
+              <Textarea
+                id="ollama-system-prompt-inline"
+                className="h-20 resize-none px-2 py-1.5 text-xs"
                 value={localConfig.systemPrompt || ''}
                 onChange={(e) => {
                   const updated = { ...localConfig, systemPrompt: e.target.value };
@@ -797,9 +799,9 @@ const OllamaWidget: React.FC<OllamaWidgetProps> = ({ width, height, config }) =>
 
             <div>
               <Label htmlFor="system-prompt">System Prompt (optional)</Label>
-              <textarea
+              <Textarea
                 id="system-prompt"
-                className="w-full h-24 px-3 py-2 text-sm border rounded-md resize-none bg-transparent focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-24 resize-none"
                 value={localConfig.systemPrompt || ''}
                 onChange={(e) =>
                   setLocalConfig(prev => ({ ...prev, systemPrompt: e.target.value }))

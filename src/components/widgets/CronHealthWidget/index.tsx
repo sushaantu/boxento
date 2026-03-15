@@ -509,13 +509,13 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
           {/* Filter tabs */}
           <div className="flex border-b border-border/50 px-2 overflow-x-auto">
             {filterTabs.map(tab => (
-              <button
+              <Button type="button" variant="ghost" size="none"
                 key={tab.key}
                 className={`px-3 py-2 text-xs whitespace-nowrap ${filterStatus === tab.key ? 'border-b-2 border-primary font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                 onClick={() => setFilterStatus(tab.key)}
               >
                 {tab.label} ({tab.count})
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -527,7 +527,7 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
               const isSelected = selectedJobId === job.id;
 
               return (
-                <button
+                <Button type="button" variant="ghost" size="none"
                   key={job.id}
                   onClick={() => setSelectedJobId(job.id)}
                   className={`w-full text-left flex items-center gap-3 p-3 border-b border-border/30 transition-colors hover:bg-accent ${isSelected ? 'bg-accent' : ''}`}
@@ -544,7 +544,7 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
                       {job.message || statusDisplay.label}
                     </div>
                   </div>
-                </button>
+                </Button>
               );
             })}
             {filteredJobs.length === 0 && (

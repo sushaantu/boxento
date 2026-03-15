@@ -810,7 +810,7 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
               <Label>Color</Label>
               <div className="flex gap-2 mt-1">
                 {DEFAULT_COLORS.map((color) => (
-                  <button
+                  <Button type="button" variant="ghost" size="none"
                     key={color}
                     className={`h-6 w-6 rounded-full border-2 transition-all ${
                       editingEvent.color === color

@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { Settings } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface WidgetHeaderProps {
   title?: string;
@@ -38,17 +39,19 @@ const WidgetHeader = ({
         {children}
       </div>
       {onSettingsClick && (
-        <button 
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           aria-label={title ? `Open ${title} settings` : 'Open widget settings'}
-          className={`settings-button hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full ${compact ? 'p-0.5' : 'p-0.5 md:p-1'}`}
+          className={`settings-button rounded-full ${compact ? 'size-6 p-0.5' : 'size-7 p-0.5 md:size-8 md:p-1'}`}
           onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             onSettingsClick();
           }}
         >
           <Settings size={compact ? 12 : 14} className="text-gray-500 dark:text-slate-400" />
-        </button>
+        </Button>
       )}
     </div>
   );

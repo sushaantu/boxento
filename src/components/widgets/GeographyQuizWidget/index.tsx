@@ -281,7 +281,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
 
   // Shared: answer option button
   const renderOption = (option: string, compact = false) => (
-    <button
+    <Button type="button" variant="ghost" size="none"
       key={option}
       onClick={() => handleAnswerSelect(option)}
       disabled={selectedAnswer !== null || readOnly}
@@ -300,7 +300,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
         )}
         <span className="truncate">{option}</span>
       </div>
-    </button>
+    </Button>
   );
 
   // Shared: idle state (no quiz active)
@@ -665,7 +665,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
         </div>
         <div className="grid grid-cols-2 gap-3">
           {currentQuestion?.options.map(opt => (
-            <button
+            <Button type="button" variant="ghost" size="none"
               key={opt}
               onClick={() => handleAnswerSelect(opt)}
               disabled={selectedAnswer !== null || readOnly}
@@ -684,7 +684,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                 )}
                 <span>{opt}</span>
               </div>
-            </button>
+            </Button>
           ))}
         </div>
       </div>

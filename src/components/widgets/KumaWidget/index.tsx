@@ -354,9 +354,8 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
     const StatusIcon = statusStyle.icon;
 
     return (
-      <button
+      <Button type="button" variant="ghost" size="none"
         key={monitor.id}
-        type="button"
         onClick={() => setSelectedMonitorId(monitor.id)}
         className={cn(
           'w-full rounded-lg border border-border/60 bg-background/40 text-left transition-colors hover:bg-accent/50',
@@ -393,7 +392,7 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
             )}
           </div>
         </div>
-      </button>
+      </Button>
     );
   };
 

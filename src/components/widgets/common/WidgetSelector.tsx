@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Calendar, Cloud, Clock, Link, StickyNote, CheckSquare, Timer, DollarSign, BookOpen, Video, Rss, Github, Plane, Globe } from 'lucide-react';
 import { WidgetConfig } from '@/types';
+import { Button } from '@/components/ui/button';
 
 interface WidgetSelectorProps {
   isOpen: boolean;
@@ -64,13 +65,16 @@ const WidgetSelector = ({
       <div className="bg-white dark:bg-black rounded-xl shadow-2xl dark:shadow-xl dark:shadow-black/40 w-full max-w-4xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-gray-200 dark:border-[#1c1c1e]" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
         <div className="flex justify-between items-center p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-[#1c1c1e]">
           <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">Add Widget</h3>
-          <button 
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClose} 
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#1c1c1e] transition-colors duration-200"
+            className="rounded-full transition-colors duration-200"
             aria-label="Close widget selector"
           >
             <X size={20} className="dark:text-white" />
-          </button>
+          </Button>
         </div>
         
         <div className="relative p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-[#1c1c1e]">
@@ -91,9 +95,11 @@ const WidgetSelector = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {filteredWidgets.length > 0 ? (
                 filteredWidgets.map(widget => (
-                  <button
+                  <Button
                     key={widget.type}
-                    className="flex items-center gap-3 p-4 border border-gray-100 dark:border-[#2c2c2e] rounded-lg bg-white dark:bg-[#1c1c1e] transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-[#2c2c2e] hover:border-blue-200 dark:hover:border-[#3c3c3e] hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:focus:ring-blue-400/30"
+                    type="button"
+                    variant="ghost"
+                    className="h-auto justify-start gap-3 border border-gray-100 bg-white p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:border-blue-200 hover:shadow-md dark:border-[#2c2c2e] dark:bg-[#1c1c1e] dark:hover:border-[#3c3c3e] dark:hover:bg-[#2c2c2e] dark:hover:shadow-black/20 dark:hover:shadow-lg"
                     onClick={() => onAddWidget(widget.type)}
                     aria-label={`Add ${widget.name} widget`}
                   >
@@ -124,7 +130,7 @@ const WidgetSelector = ({
                         <div className="text-xs text-gray-500 dark:text-[#8e8e93] mt-0.5">{widget.description}</div>
                       )}
                     </div>
-                  </button>
+                  </Button>
                 ))
               ) : (
                 <div className="col-span-full text-center py-8 text-gray-500 dark:text-[#8e8e93] text-sm">No widgets found matching "{searchQuery}"</div>
@@ -138,9 +144,11 @@ const WidgetSelector = ({
                 <h4 className="text-base font-semibold text-gray-700 dark:text-[#f5f5f7] mb-2">{category}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {widgets.map(widget => (
-                    <button
+                    <Button
                       key={widget.type}
-                      className="flex items-center gap-3 p-4 border border-gray-100 dark:border-[#2c2c2e] rounded-lg bg-white dark:bg-[#1c1c1e] transition-all duration-200 cursor-pointer hover:bg-blue-50 dark:hover:bg-[#2c2c2e] hover:border-blue-200 dark:hover:border-[#3c3c3e] hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-black/20 hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:focus:ring-blue-400/30"
+                      type="button"
+                      variant="ghost"
+                      className="h-auto justify-start gap-3 border border-gray-100 bg-white p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:border-blue-200 hover:shadow-md dark:border-[#2c2c2e] dark:bg-[#1c1c1e] dark:hover:border-[#3c3c3e] dark:hover:bg-[#2c2c2e] dark:hover:shadow-black/20 dark:hover:shadow-lg"
                       onClick={() => onAddWidget(widget.type)}
                       aria-label={`Add ${widget.name} widget`}
                     >
@@ -171,7 +179,7 @@ const WidgetSelector = ({
                           <div className="text-xs text-gray-500 dark:text-[#8e8e93] mt-0.5">{widget.description}</div>
                         )}
                       </div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>

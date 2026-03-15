@@ -376,7 +376,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
           {highlightCount || highlights.length} highlights
         </span>
         {previewHighlights.map(h => (
-          <button
+          <Button type="button" variant="ghost" size="none"
             key={h.id}
             onClick={() => openHighlightInReadwise(h.id)}
             className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1.5 text-foreground transition-colors hover:bg-accent"
@@ -384,7 +384,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
           >
             <Quote className="h-3 w-3 shrink-0 text-muted-foreground" />
             <span className="max-w-[10rem] truncate italic">{h.text}</span>
-          </button>
+          </Button>
         ))}
       </div>
     );
@@ -525,7 +525,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
             )}
           </div>
           {highlights.map(h => (
-            <button
+            <Button type="button" variant="ghost" size="none"
               key={h.id}
               className={`w-full text-left p-2.5 border-b border-border/50 transition-colors hover:bg-accent ${
                 displayHighlight?.id === h.id ? 'bg-accent' : ''
@@ -540,7 +540,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                   {h.book_title}
                 </p>
               )}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -634,17 +634,17 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <button
+            <Button type="button" variant="ghost" size="none"
               className={`w-full text-left px-3 py-2 text-xs transition-colors hover:bg-accent ${
                 selectedBookFilter === null ? 'bg-accent font-medium' : ''
               }`}
               onClick={() => setSelectedBookFilter(null)}
             >
               All highlights ({highlights.length})
-            </button>
+            </Button>
 
             {bookList.map(book => (
-              <button
+              <Button type="button" variant="ghost" size="none"
                 key={book.id}
                 className={`w-full text-left px-3 py-2 text-xs transition-colors hover:bg-accent flex items-center justify-between ${
                   selectedBookFilter === book.id ? 'bg-accent font-medium' : ''
@@ -653,7 +653,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
               >
                 <span className="truncate">{book.title}</span>
                 <span className="shrink-0 ml-2 text-muted-foreground">{book.count}</span>
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -693,7 +693,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
               </div>
             ) : (
               filteredHighlights.map(h => (
-                <button
+                <Button type="button" variant="ghost" size="none"
                   key={h.id}
                   className={`w-full text-left p-3 border-b border-border/50 transition-colors hover:bg-accent ${
                     displayHighlight?.id === h.id ? 'bg-accent' : ''
@@ -716,7 +716,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
                       </div>
                     )}
                   </div>
-                </button>
+                </Button>
               ))
             )}
           </div>

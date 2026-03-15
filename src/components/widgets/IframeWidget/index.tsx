@@ -20,6 +20,7 @@ import {
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
+import { Slider } from '../../ui/slider';
 import WidgetHeader from '../common/WidgetHeader';
 import type { IframeWidgetConfig, IframeWidgetProps } from './types';
 import { cn } from '@/lib/utils';
@@ -545,17 +546,17 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ width, height, config }) =>
                 <Label htmlFor="iframe-scale">
                   Scale ({Math.round((localConfig.scale || 1) * 100)}%)
                 </Label>
-                <input
-                  id="iframe-scale"
-                  type="range"
-                  min="0.5"
-                  max="1.5"
-                  step="0.1"
-                  value={localConfig.scale || 1}
-                  onChange={(e) =>
-                    setLocalConfig(prev => ({ ...prev, scale: parseFloat(e.target.value) }))
-                  }
-                  className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
+                <Slider
+                  min={0.5}
+                  max={1.5}
+                  step={0.1}
+                  value={[localConfig.scale || 1]}
+                  onValueChange={([value]) => {
+                    if (typeof value === 'number') {
+                      setLocalConfig(prev => ({ ...prev, scale: value }));
+                    }
+                  }}
+                  className="mt-3"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   Adjust to fit content within widget

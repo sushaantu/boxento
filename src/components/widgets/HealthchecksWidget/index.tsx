@@ -368,9 +368,8 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
     const StatusIcon = statusStyle.icon;
 
     return (
-      <button
+      <Button type="button" variant="ghost" size="none"
         key={check.slug}
-        type="button"
         onClick={() => setSelectedCheckSlug(check.slug)}
         className={cn(
           'w-full rounded-lg border border-border/60 bg-background/40 text-left transition-colors hover:bg-accent/50',
@@ -407,7 +406,7 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
             )}
           </div>
         </div>
-      </button>
+      </Button>
     );
   };
 

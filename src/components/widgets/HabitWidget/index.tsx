@@ -287,7 +287,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
         {habits.map(habit => {
           const done = isCompletedOn(habit, todayStr);
           return (
-            <button
+            <Button type="button" variant="ghost" size="none"
               key={habit.id}
               onClick={() => !readOnly && toggleCompletion(habit.id, todayStr)}
               className={`flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 transition-colors ${
@@ -304,7 +304,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
               }`}>
                 {habit.name}
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -324,7 +324,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
             const done = isCompletedOn(habit, todayStr);
             const streak = calculateStreak(habit);
             return (
-              <button
+              <Button type="button" variant="ghost" size="none"
                 key={habit.id}
                 onClick={() => !readOnly && toggleCompletion(habit.id, todayStr)}
                 className={`w-full flex items-center gap-1.5 rounded px-1.5 py-1 text-left transition-colors ${
@@ -348,7 +348,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                     {streak}
                   </span>
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -420,7 +420,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                   {weekDays.map(({ dateStr, dayName, isToday }) => {
                     const completed = isCompletedOn(habit, dateStr);
                     return (
-                      <button
+                      <Button type="button" variant="ghost" size="none"
                         key={dateStr}
                         onClick={() => !readOnly && toggleCompletion(habit.id, dateStr)}
                         className={`
@@ -440,7 +440,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                         <span className="mt-0.5">
                           {completed ? <Check className="w-3 h-3" /> : '\u00B7'}
                         </span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -514,7 +514,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
                     {/* Today toggle */}
-                    <button
+                    <Button type="button" variant="ghost" size="none"
                       onClick={() => !readOnly && toggleCompletion(habit.id, todayStr)}
                       className={`h-5 w-5 shrink-0 rounded border flex items-center justify-center transition-colors ${
                         isCompletedOn(habit, todayStr)
@@ -523,7 +523,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                       }`}
                     >
                       {isCompletedOn(habit, todayStr) && <Check className="h-3 w-3 text-white" />}
-                    </button>
+                    </Button>
                     <span className={`text-sm font-medium truncate ${
                       isCompletedOn(habit, todayStr) ? 'text-muted-foreground' : 'text-foreground'
                     }`}>
@@ -595,7 +595,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
               }`}
               onClick={() => setSelectedHabitId(habit.id)}
             >
-              <button
+              <Button type="button" variant="ghost" size="none"
                 onClick={(e) => { e.stopPropagation(); if (!readOnly) toggleCompletion(habit.id, todayStr); }}
                 className={`h-6 w-6 shrink-0 rounded-md border-2 flex items-center justify-center transition-colors ${
                   done
@@ -604,7 +604,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                 }`}
               >
                 {done && <Check className="h-4 w-4 text-white" />}
-              </button>
+              </Button>
               <div className="flex-1 min-w-0">
                 <span className={`text-sm font-medium ${done ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                   {habit.name}
@@ -660,7 +660,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                   {extendedDays.map(({ dateStr, isToday }) => {
                     const completed = isCompletedOn(habit, dateStr);
                     return (
-                      <button
+                      <Button type="button" variant="ghost" size="none"
                         key={dateStr}
                         onClick={(e) => { e.stopPropagation(); if (!readOnly) toggleCompletion(habit.id, dateStr); }}
                         className={`flex-1 h-7 rounded flex items-center justify-center transition-colors ${
@@ -674,7 +674,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                         } ${readOnly ? '' : 'hover:opacity-80'}`}
                       >
                         {completed && <Check className="h-3.5 w-3.5" />}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -822,7 +822,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
               {getWeekDays(3).map(({ dateStr, dayName, isToday }) => {
                 const completed = isCompletedOn(selectedHabit, dateStr);
                 return (
-                  <button
+                  <Button type="button" variant="ghost" size="none"
                     key={dateStr}
                     onClick={() => !readOnly && toggleCompletion(selectedHabit.id, dateStr)}
                     className={`flex-1 flex flex-col items-center rounded-lg py-2 transition-colors ${
@@ -833,7 +833,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
                   >
                     <span className="text-xs font-medium">{dayName}</span>
                     <span className="mt-1">{completed ? <Check className="h-4 w-4" /> : '\u00B7'}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </div>

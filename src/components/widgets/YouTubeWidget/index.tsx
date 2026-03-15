@@ -173,7 +173,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
       );
     }
     return (
-      <button
+      <Button type="button" variant="ghost" size="none"
         className="flex-1 flex items-center justify-center relative overflow-hidden rounded"
         onClick={() => window.open(getWatchUrl(localConfig.videoId!), '_blank', 'noopener,noreferrer')}
         title={videoTitle || 'Play on YouTube'}
@@ -186,7 +186,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
         <div className={`relative z-10 p-1 ${PLAY_BUTTON_CHROME_CLASS}`}>
           <Play className="h-3 w-3 text-white fill-white" />
         </div>
-      </button>
+      </Button>
     );
   };
 
@@ -202,7 +202,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
     }
     return (
       <div className="flex-1 flex items-center gap-2 overflow-hidden px-1">
-        <button
+        <Button type="button" variant="ghost" size="none"
           onClick={() => window.open(getWatchUrl(localConfig.videoId!), '_blank', 'noopener,noreferrer')}
           className="shrink-0 relative rounded overflow-hidden"
           style={{ width: Math.max(width * 20, 48), height: '100%' }}
@@ -217,7 +217,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
               <Play className="h-3 w-3 text-white fill-white" />
             </div>
           </div>
-        </button>
+        </Button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-xs font-medium">{videoTitle || localConfig.title || 'YouTube Video'}</p>
         </div>
@@ -256,7 +256,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
 
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <button
+        <Button type="button" variant="ghost" size="none"
           className="flex-1 relative overflow-hidden rounded-lg cursor-pointer"
           onClick={() => setIsPlaying(true)}
         >
@@ -270,7 +270,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
               <Play className="h-5 w-5 text-white fill-white" />
             </div>
           </div>
-        </button>
+        </Button>
         <p className="mt-1 text-[10px] truncate text-muted-foreground">
           {videoTitle || localConfig.title || 'Click to play'}
         </p>
@@ -305,7 +305,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
 
     return (
       <div className="flex-1 flex flex-col overflow-hidden">
-        <button
+        <Button type="button" variant="ghost" size="none"
           className="flex-1 relative overflow-hidden rounded-lg cursor-pointer"
           onClick={() => setIsPlaying(true)}
         >
@@ -319,7 +319,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
               <Play className="h-6 w-6 text-white fill-white" />
             </div>
           </div>
-        </button>
+        </Button>
         <div className="mt-1.5 min-w-0">
           <p className="text-sm font-medium truncate">{videoTitle || localConfig.title || 'YouTube Video'}</p>
           <Button

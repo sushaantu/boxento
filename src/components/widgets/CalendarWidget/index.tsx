@@ -14,6 +14,7 @@ import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/
 import { WidgetShell } from '../../widgets/common/WidgetShell'
 import { CalendarWidgetProps, CalendarWidgetConfig, CalendarEvent, CalendarSource } from './types'
 import { Button } from '../../ui/button'
+import { Tabs, TabsList, TabsTrigger } from '../../ui/tabs'
 import { Label } from '../../ui/label'
 import { Checkbox } from '../../ui/checkbox';
 
@@ -1711,24 +1712,23 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           </div>
 
           {/* View mode tabs */}
-          <div className="flex rounded-lg bg-muted p-0.5">
-            {(['month', 'week', 'day'] as const).map(mode => (
-              <button
-                key={mode}
-                onClick={() => {
-                  setViewMode(mode);
-                  updateConfig({ ...localConfig, viewMode: mode });
-                }}
-                className={`px-3 py-1 text-sm rounded-md capitalize transition-colors ${
-                  viewMode === mode
-                    ? 'bg-background shadow-sm font-medium'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            value={viewMode}
+            onValueChange={(value) => {
+              const nextMode = value as 'month' | 'week' | 'day';
+              setViewMode(nextMode);
+              updateConfig({ ...localConfig, viewMode: nextMode });
+            }}
+            className="w-auto"
+          >
+            <TabsList className="h-auto rounded-lg bg-muted p-0.5">
+              {(['month', 'week', 'day'] as const).map(mode => (
+                <TabsTrigger key={mode} value={mode} className="px-3 py-1 capitalize">
+                  {mode}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
       );
     };

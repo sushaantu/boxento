@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
 import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../common/WidgetSettingsDialog';
 import { WidgetShell } from '../common/WidgetShell';
 import { NotesWidgetProps, NotesWidgetConfig } from './types';
@@ -192,12 +193,12 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
           backgroundColor: 'transparent'
         }}
       >
-        <textarea
+        <Textarea
           ref={textareaRef}
           value={localConfig.content || ''}
           onChange={handleContentChange}
           readOnly={readOnly}
-          className="w-full h-full resize-none border-none focus:outline-none focus:ring-0 bg-transparent
+          className="h-full min-h-0 resize-none border-none bg-transparent shadow-none focus-visible:ring-0
                     text-foreground py-1 leading-relaxed placeholder-muted-foreground"
           style={{
             fontFamily: localConfig.fontFamily || defaultConfig.fontFamily,
