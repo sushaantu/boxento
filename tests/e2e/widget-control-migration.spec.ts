@@ -1,4 +1,5 @@
 import { mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
@@ -7,12 +8,13 @@ import { seedDashboard } from './helpers/dashboardSeed';
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(90_000);
 
-const LIGHT_DASHBOARD = '/Users/sushaantu/code/symphony-workspaces/boxento/SUS-32/output/playwright/widget-control-migration-light.png';
-const DARK_DASHBOARD = '/Users/sushaantu/code/symphony-workspaces/boxento/SUS-32/output/playwright/widget-control-migration-dark.png';
-const LIGHT_RSS = '/Users/sushaantu/code/symphony-workspaces/boxento/SUS-32/output/playwright/widget-control-migration-rss-light.png';
-const DARK_WEATHER = '/Users/sushaantu/code/symphony-workspaces/boxento/SUS-32/output/playwright/widget-control-migration-weather-dark.png';
-const DARK_IFRAME = '/Users/sushaantu/code/symphony-workspaces/boxento/SUS-32/output/playwright/widget-control-migration-iframe-dark.png';
-const DARK_QRCODE = '/Users/sushaantu/code/symphony-workspaces/boxento/SUS-32/output/playwright/widget-control-migration-qrcode-dark.png';
+const OUTPUT_DIR = join('output', 'playwright');
+const LIGHT_DASHBOARD = join(OUTPUT_DIR, 'widget-control-migration-light.png');
+const DARK_DASHBOARD = join(OUTPUT_DIR, 'widget-control-migration-dark.png');
+const LIGHT_RSS = join(OUTPUT_DIR, 'widget-control-migration-rss-light.png');
+const DARK_WEATHER = join(OUTPUT_DIR, 'widget-control-migration-weather-dark.png');
+const DARK_IFRAME = join(OUTPUT_DIR, 'widget-control-migration-iframe-dark.png');
+const DARK_QRCODE = join(OUTPUT_DIR, 'widget-control-migration-qrcode-dark.png');
 
 const RSS_FEEDS = {
   'https://feeds.example/engineering.xml': `<?xml version="1.0"?><rss version="2.0"><channel><title>Engineering</title><item><title>Replace controls with primitives</title><link>https://example.com/eng-1</link><description>Button and textarea migration complete.</description><pubDate>Fri, 14 Mar 2026 12:00:00 GMT</pubDate><author>Alex</author></item><item><title>Validate tabs and sliders</title><link>https://example.com/eng-2</link><description>Calendar and iframe widgets verified.</description><pubDate>Thu, 13 Mar 2026 12:00:00 GMT</pubDate><author>Sam</author></item></channel></rss>`,
@@ -123,7 +125,7 @@ const setTheme = async (page: Page, theme: 'light' | 'dark') => {
 };
 
 test('captures representative migrated controls in light and dark themes', async ({ page, baseURL }) => {
-  await mkdir('/Users/sushaantu/code/symphony-workspaces/boxento/SUS-32/output/playwright', { recursive: true });
+  await mkdir(OUTPUT_DIR, { recursive: true });
   await page.setViewportSize({ width: 1600, height: 2200 });
   await configureExternalRoutes(page);
 
