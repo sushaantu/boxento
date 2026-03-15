@@ -378,20 +378,22 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 .react-resizable .react-resizable-handle::after,
 .react-grid-item .react-resizable-handle::after {
   content: '';
+  display: block;
   position: absolute;
   right: 2px;
   bottom: 2px;
-  width: 8px;
-  height: 8px;
-  border-right: 1px solid rgba(15, 23, 42, 0.28);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.28);
+  width: 30px;
+  height: 30px;
+  border-right: 2px solid rgba(15, 23, 42, 0.2);
+  border-bottom: 2px solid rgba(15, 23, 42, 0.2);
+  border-radius: 0 0 var(--border-radius-standard) 0;
 }
 
 .dark .react-resizable-handle::after,
 .dark .react-resizable .react-resizable-handle::after,
 .dark .react-grid-item .react-resizable-handle::after {
-  border-right-color: rgba(226, 232, 240, 0.34);
-  border-bottom-color: rgba(226, 232, 240, 0.34);
+  border-right-color: rgba(255, 255, 255, 0.3);
+  border-bottom-color: rgba(255, 255, 255, 0.3);
 }
 
 .widget-container:hover .react-resizable-handle,
