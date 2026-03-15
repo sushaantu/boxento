@@ -669,7 +669,7 @@ const JellyfinWidget: React.FC<JellyfinWidgetProps> = ({ width, height, config }
         {/* Sidebar / Master */}
         <div className="w-1/3 border-r border-border flex flex-col overflow-hidden">
           {/* Search */}
-          <div className="p-2 border-b border-border widget-drag-handle cursor-move">
+          <div className="p-2 widget-drag-handle cursor-move">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input

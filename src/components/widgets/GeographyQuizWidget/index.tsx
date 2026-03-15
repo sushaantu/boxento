@@ -527,7 +527,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
   const renderApp = () => (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Tab bar */}
-      <div className="flex border-b border-border px-2 widget-drag-handle cursor-move">
+      <div className="flex px-2 widget-drag-handle cursor-move">
         {(['quiz', 'history', 'stats'] as const).map(tab => (
           <Button
             key={tab}

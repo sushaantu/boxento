@@ -541,7 +541,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
     return (
       <div className="flex flex-col h-full overflow-hidden">
         {/* Summary bar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+        <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{localConfig.services.length} services</span>
             {localConfig.showStatus && (
@@ -628,7 +628,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
         {/* Left sidebar: categories + service list */}
         <div className="flex w-1/3 min-w-[200px] max-w-[320px] flex-col border-r border-border">
           {/* Search */}
-          <div className="p-2 border-b border-border widget-drag-handle cursor-move">
+          <div className="p-2 widget-drag-handle cursor-move">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input

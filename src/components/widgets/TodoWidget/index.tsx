@@ -1143,7 +1143,7 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
       hideHeader={isApp}
       compactHeader={isShort}
       onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-      contentClassName={isTiny ? 'p-1' : isApp ? '' : 'p-3'}
+      contentClassName={isTiny ? 'p-1' : isApp ? '' : 'pt-1'}
     >
       {renderContent()}
       {renderSettings()}

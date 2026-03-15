@@ -999,7 +999,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
         <div className="w-1/3 border-r border-border/50 flex flex-col overflow-hidden">
           {/* Add flight inline */}
           {!readOnly && (
-            <div className="p-3 border-b border-border/50 space-y-2 widget-drag-handle cursor-move">
+            <div className="p-3 space-y-2 widget-drag-handle cursor-move">
               <div className="flex gap-2">
                 <Input
                   placeholder="Flight (e.g. AA100)"

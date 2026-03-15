@@ -601,7 +601,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
     return (
       <div className="flex flex-col h-full">
         {/* Summary bar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
+        <div className="flex items-center justify-between px-3 py-2">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span className="rounded-full bg-muted px-2.5 py-1 font-medium text-foreground">
               {pending.length} pending
@@ -689,7 +689,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
       <div className="flex h-full">
         {/* Sidebar: project filter */}
         <div className="w-1/4 min-w-[160px] max-w-[240px] border-r border-border/50 overflow-y-auto flex flex-col">
-          <div className="p-3 border-b border-border/50 widget-drag-handle cursor-move">
+          <div className="p-3 widget-drag-handle cursor-move">
             <div className="relative">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input

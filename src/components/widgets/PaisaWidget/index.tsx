@@ -519,7 +519,7 @@ const PaisaWidget: React.FC<PaisaWidgetProps> = ({ width, height, config }) => {
     return (
       <div className="flex flex-col h-full">
         {/* Summary bar */}
-        <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/50">
+        <div className="flex items-center justify-between px-2 py-1.5">
           <div className="flex items-center gap-3">
             <div>
               <div className="text-2xl font-bold text-foreground">{formatCurrency(totalNetworth)}</div>
@@ -661,7 +661,10 @@ const PaisaWidget: React.FC<PaisaWidgetProps> = ({ width, height, config }) => {
     return (
       <div className="flex flex-col h-full">
         {/* Top bar: net worth + period changes */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 widget-drag-handle cursor-move">
+        <div
+          data-testid="paisa-app-header"
+          className="flex items-center justify-between px-4 py-3 widget-drag-handle cursor-move"
+        >
           <div>
             <div className="text-3xl font-bold text-foreground">{formatCurrency(totalNetworth)}</div>
             <div className={`flex items-center text-sm mt-0.5 ${change30.amount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
