@@ -5,7 +5,7 @@ const COMPACT_HEADER_SPACING = 'gap-1';
 
 export const getWidgetHeaderClassName = (compact = false, className?: string) => (
   cn(
-    'widget-header widget-drag-handle flex cursor-move items-center justify-between px-0',
+    'widget-header widget-drag-handle flex cursor-move items-center justify-between gap-3 px-0',
     compact ? 'py-1.5' : 'py-2',
     className
   )
