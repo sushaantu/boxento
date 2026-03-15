@@ -11,6 +11,9 @@ const defaultPlaywrightPort = 45000 + ((workspacePortSeed + process.pid) % 10000
 const playwrightPort = Number(process.env.PLAYWRIGHT_PORT || defaultPlaywrightPort);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${playwrightPort}`;
 const shouldStartWebServer = !reuseExistingServer && !baseURL.startsWith('file://');
+const playwrightConnectWsEndpoint = process.env.PLAYWRIGHT_CONNECT_WS_ENDPOINT;
+const playwrightConnectExposeNetwork = process.env.PLAYWRIGHT_CONNECT_EXPOSE_NETWORK;
+const playwrightConnectTimeout = Number(process.env.PLAYWRIGHT_CONNECT_TIMEOUT_MS || 0);
 const playwrightChannel = process.env.PLAYWRIGHT_CHANNEL;
 const playwrightExecutablePath = process.env.PLAYWRIGHT_EXECUTABLE_PATH;
 const playwrightExtraArgs = (process.env.PLAYWRIGHT_EXTRA_ARGS || '')
@@ -25,19 +28,29 @@ export default defineConfig({
   timeout: 30_000,
   use: {
     baseURL,
-    ...(playwrightChannel ? { channel: playwrightChannel } : {}),
-    ...((playwrightExecutablePath || playwrightExtraArgs.length)
+    ...(playwrightConnectWsEndpoint
       ? {
-          launchOptions: {
-            ...(playwrightExecutablePath ? { executablePath: playwrightExecutablePath } : {}),
-            ...(playwrightExtraArgs.length ? { args: playwrightExtraArgs } : {}),
+          connectOptions: {
+            wsEndpoint: playwrightConnectWsEndpoint,
+            ...(playwrightConnectExposeNetwork ? { exposeNetwork: playwrightConnectExposeNetwork } : {}),
+            ...(playwrightConnectTimeout > 0 ? { timeout: playwrightConnectTimeout } : {}),
           },
         }
-      : {}),
+      : {
+          ...(playwrightChannel ? { channel: playwrightChannel } : {}),
+          ...((playwrightExecutablePath || playwrightExtraArgs.length)
+            ? {
+                launchOptions: {
+                  ...(playwrightExecutablePath ? { executablePath: playwrightExecutablePath } : {}),
+                  ...(playwrightExtraArgs.length ? { args: playwrightExtraArgs } : {}),
+                },
+              }
+            : {}),
+        }),
     trace: 'on-first-retry',
   },
   webServer: shouldStartWebServer ? {
-    command: `bunx --bun vite --host 127.0.0.1 --port ${playwrightPort} --strictPort`,
+    command: `npx --no-install vite --host 127.0.0.1 --port ${playwrightPort} --strictPort`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -41,6 +41,8 @@ firebase-debug.*.log*
 .rts2_cache_umd/
 .cache
 .rollup.cache
+/.tmp
+/.bun-home
 
 # Package managers
 .yarn/*

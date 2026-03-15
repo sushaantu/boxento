@@ -240,6 +240,9 @@ Anyone can create widgets - no matter your experience level:
 3. Test locally with `bun run dev`
 4. Submit a PR
 
+### Browser E2E In Sandboxed Sessions
+Codex/macOS sandbox sessions on this machine can block localhost binding, browser launch, and even loopback browser websocket connections for Playwright. See the current limitations and required environment changes in [Sandbox E2E Guide](/docs/E2E_SANDBOX.md).
+
 ### Reporting Issues
 Found a bug or have a feature request? Open an issue on our [GitHub repository](https://github.com/sushaantu/boxento/issues).
 
