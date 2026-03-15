@@ -378,12 +378,12 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 .react-resizable .react-resizable-handle::after,
 .react-grid-item .react-resizable-handle::after {
   content: '';
-  display: block;
   position: absolute;
   right: 2px;
   bottom: 2px;
   width: 30px;
   height: 30px;
+  pointer-events: none;
   border-right: 2px solid rgba(15, 23, 42, 0.2);
   border-bottom: 2px solid rgba(15, 23, 42, 0.2);
   border-radius: 0 0 var(--border-radius-standard) 0;
