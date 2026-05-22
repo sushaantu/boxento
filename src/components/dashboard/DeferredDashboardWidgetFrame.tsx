@@ -10,6 +10,7 @@ type DeferredDashboardWidgetFrameProps = React.ComponentProps<typeof DashboardWi
 type DeferredFrameObserver = {
   callbacks: Map<Element, () => void>;
   observer: IntersectionObserver;
+  refCount: number;
 };
 
 const deferredFrameObservers = new Map<string, DeferredFrameObserver>();
@@ -44,16 +45,30 @@ const observeDeferredFrame = (
       threshold: 0,
     });
 
-    sharedObserver = { callbacks, observer };
+    sharedObserver = { callbacks, observer, refCount: 0 };
     deferredFrameObservers.set(rootMargin, sharedObserver);
   }
 
+  sharedObserver.refCount += 1;
   sharedObserver.callbacks.set(element, onIntersect);
   sharedObserver.observer.observe(element);
 
+  let disposed = false;
+
   return () => {
+    if (disposed) {
+      return;
+    }
+
+    disposed = true;
     sharedObserver.callbacks.delete(element);
     sharedObserver.observer.unobserve(element);
+    sharedObserver.refCount -= 1;
+
+    if (sharedObserver.refCount === 0) {
+      sharedObserver.observer.disconnect();
+      deferredFrameObservers.delete(rootMargin);
+    }
   };
 };
 

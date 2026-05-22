@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getJsonResponseParseErrorMessage,
-  installJsonResponseGuard,
   parseJsonResponseText,
 } from '@/lib/jsonResponseGuard';
 
@@ -22,15 +21,13 @@ describe('jsonResponseGuard', () => {
     );
   });
 
-  it('makes response.json failures readable app-wide', async () => {
-    installJsonResponseGuard();
-
+  it('formats explicit parse failures without patching Response.json', () => {
     const response = new Response('<html><body>Not JSON</body></html>', {
       status: 404,
       headers: { 'content-type': 'text/html' },
     });
 
-    await expect(response.json()).rejects.toThrow(
+    expect(() => parseJsonResponseText('<html><body>Not JSON</body></html>', response)).toThrow(
       'The API endpoint returned HTML instead of JSON (HTTP 404). Check the API URL, backend proxy, or authentication.',
     );
   });

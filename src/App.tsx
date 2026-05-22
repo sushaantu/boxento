@@ -61,6 +61,8 @@ import {
 } from '@/lib/dashboardViewport'
 import { getWidgetGridDimensions } from '@/lib/widgetGridDimensions'
 import { useNetworkStatus } from '@/lib/useNetworkStatus'
+import { getConfigWidgetIdsToSave } from '@/lib/widgetConfigPersistence'
+import type { WidgetConfigPersistenceOptions } from '@/lib/widgetConfigPersistence'
 import { AppFooter } from '@/components/AppFooter'
 import { useStorage } from '@/lib/storage/StorageContext'
 import { getStorageProvider } from '@/lib/storage'
@@ -103,9 +105,8 @@ const cloneLayoutsByBreakpoint = (sourceLayouts: LayoutsByBreakpoint): LayoutsBy
   )
 );
 
-type SaveWidgetsOptions = {
+type SaveWidgetsOptions = WidgetConfigPersistenceOptions & {
   debounce?: boolean;
-  configWidgetIdsToSave?: Iterable<string>;
 };
 
 const createAppendLayoutItem = (
@@ -660,15 +661,14 @@ function App() {
    * Save widgets to storage using the current storage provider
    *
    * @param updatedWidgets - Array of widgets to save
-   * @param debounce - If true, save is scheduled for 500ms later and function returns immediately.
-   *                   If false, waits for save to complete before returning.
+   * @param options - Save timing and widget config persistence options.
    */
   const saveWidgets = async (
     updatedWidgets: Widget[],
-    options: boolean | SaveWidgetsOptions = true
+    options: boolean | SaveWidgetsOptions = { debounce: true }
   ): Promise<void> => {
     const saveOptions: SaveWidgetsOptions = typeof options === 'boolean'
-      ? { debounce: options }
+      ? { debounce: options, persistAllConfigs: true }
       : options;
     const debounce = saveOptions.debounce ?? true;
     widgetsRef.current = updatedWidgets;
@@ -677,11 +677,12 @@ function App() {
     const provider = getStorageProvider();
 
     const widgetsById = new Map(updatedWidgets.map(widget => [widget.id, widget]));
-    const configWidgetIdsToSave = Array.from(saveOptions.configWidgetIdsToSave ?? []);
+    const configWidgetIdsToSave = getConfigWidgetIdsToSave(updatedWidgets, saveOptions);
 
-    // Persist only configs that changed. Re-saving every widget config made a
-    // single add scale linearly with dashboard size.
-    void Promise.all(configWidgetIdsToSave.map((widgetId) => {
+    // Most saves persist only configs that changed. Legacy immediate saves can
+    // still persist all configs for migration paths where widget metadata and
+    // config documents must both be written.
+    const configSavePromise = Promise.all(configWidgetIdsToSave.map((widgetId) => {
       const widget = widgetsById.get(widgetId);
       if (widget?.config && widget.id) {
         const configToSave = prepareWidgetConfigForSave(widget.config);
@@ -689,6 +690,12 @@ function App() {
       }
       return Promise.resolve();
     }));
+
+    if (debounce) {
+      void configSavePromise;
+    } else {
+      await configSavePromise;
+    }
 
     // Save widgets to storage provider
     const saveToProvider = async () => {

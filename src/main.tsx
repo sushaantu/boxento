@@ -8,9 +8,6 @@ import { SafeSyncProvider } from './lib/SyncContext'
 import { AppSettingsProvider } from './context/AppSettingsContext'
 import { StorageContextProvider } from './lib/storage/StorageContext'
 import { SharedDashboardView } from './components/dashboard/SharedDashboardView'
-import { installJsonResponseGuard } from './lib/jsonResponseGuard'
-
-installJsonResponseGuard()
 
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault()
