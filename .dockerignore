@@ -4,18 +4,22 @@
 
 # Dependencies
 node_modules
+**/node_modules
 .npm
 .yarn
 
 # Build outputs
 dist
 build
+output
+test-results
 *.tsbuildinfo
 
 # Environment and secrets
 .env
 .env.*
 !.env.example
+.firebase
 
 # Development files
 *.log
@@ -40,4 +44,4 @@ Dockerfile*
 # Documentation
 README.md
 CHANGELOG.md
-docs/ 
+docs/

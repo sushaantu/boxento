@@ -8,10 +8,10 @@ FROM base AS deps
 WORKDIR /app
 
 # Copy package files
-COPY package.json ./
+COPY package.json bun.lock ./
 
-# Install dependencies and generate lockfile
-RUN bun install
+# Install dependencies from the committed lockfile
+RUN bun install --frozen-lockfile
 
 # Stage 3: Builder
 FROM deps AS builder
