@@ -54,6 +54,7 @@ Do not simply scale the same crowded UI up or down.
 - Use compact header spacing only when the widget is short or dense enough that the default header would crowd the content.
 - Use a clear, short title that matches the widget's user value.
 - Keep header actions minimal. The settings button is standard; add other actions only when they are truly primary.
+- In one-column, tiny, or short-row sizes, do not show clipped titles such as `Weat...`. Hide the outer header and expose settings through a size-appropriate overlay/control when the standard header cannot fit.
 
 ### Size Rules
 
@@ -139,6 +140,7 @@ Support these states intentionally:
 - Reduce chrome in smaller sizes and increase capability in larger ones.
 - Keep text wrapping and truncation deliberate.
 - Avoid accidental overflow, clipped controls, and stacked scrollbars.
+- Audit narrow states for clipped headings and wide/4K states for wasted dashboard canvas.
 - Avoid fixed pixel heights that break grid resizing.
 - Use theme tokens and semantic utility classes instead of ad hoc colors.
 - Introduce custom colors only when the data itself is semantic, such as status or category encoding.
@@ -161,11 +163,14 @@ Support these states intentionally:
 
 Use this checklist when reviewing a widget:
 
+- Did the change preserve existing visual styling unless it is explicitly fixing overflow, clipping, or broken recovery?
 - Does the widget have a deliberate tiny, compact, standard, and large-surface story for the sizes it claims to support?
 - Does it use the shared shell and settings primitives unless there is a good reason not to?
 - Does the header remain borderless and visually integrated?
 - Does it handle loading, empty, error, configured, and read-only states cleanly?
 - Does the settings flow keep destructive actions in the standard footer pattern?
+- Do one-column, tiny, and short-row states avoid clipped titles and overlapping controls?
+- Does the dashboard use the available canvas on wide/4K displays without forcing a laptop-width grid?
 - Does it avoid custom spacing and color systems that drift away from the rest of Boxento?
 - If it supports `1x1`, was `TINY_READY_WIDGET_TYPES` updated?
 
@@ -181,6 +186,8 @@ When summarizing widget UX changes, include a short PM-ready section covering:
 Use concise, testable statements such as:
 
 - The widget shows a glanceable tiny state without overflow or hidden critical text.
+- Narrow widget states avoid clipped titles or overlapping controls.
+- Performance changes do not add new hover effects, shadows, borders, or visual treatments.
 - The compact state preserves the primary job of the widget and removes secondary clutter.
 - The standard state exposes the main workflow and settings entry point.
 - The large or app state expands into richer controls or detail views only when they improve the workflow.

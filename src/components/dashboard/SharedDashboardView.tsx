@@ -7,7 +7,6 @@ import { getWidgetComponent } from '@/components/widgets';
 import WidgetErrorBoundary from '@/components/widgets/common/WidgetErrorBoundary';
 import { breakpoints, cols } from '@/lib/layoutUtils';
 import {
-  DASHBOARD_LAYOUT_MAX_WIDTH,
   calculateDashboardRowHeight,
   getDashboardBreakpointForWidth,
 } from '@/lib/dashboardViewport';
@@ -219,7 +218,7 @@ export function SharedDashboardView() {
 
       {/* Dashboard content */}
       <main className="flex-1 pt-16 md:pt-20">
-        <div style={{ width: '100%', maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH, margin: '0 auto' }}>
+        <div className="dashboard-canvas">
           <ResponsiveGridLayout
             className="layout"
             layouts={dashboard.layouts}
@@ -235,8 +234,6 @@ export function SharedDashboardView() {
             compactType="vertical"
             style={{
               width: '100%',
-              maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH,
-              margin: '0 auto',
             }}
           >
             {dashboard.widgets.map((widget) => (

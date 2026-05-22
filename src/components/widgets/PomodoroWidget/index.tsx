@@ -13,6 +13,7 @@ import { Label } from '../../ui/label';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
 import { faviconService } from '@/lib/services/favicon';
+import { cn } from '@/lib/utils';
 
 /**
  * Pomodoro Widget Component
@@ -615,52 +616,61 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
 
   // Large view (4x4 or larger)
   const renderLargeView = () => {
+    const isTightLarge = height <= 4;
+
     return (
-      <div className="flex flex-col items-center justify-center h-full space-y-6">
-        <div className={`text-6xl font-bold ${getModeColor()}`}>
+      <div className={cn(
+        'flex h-full min-h-0 flex-col items-center justify-center overflow-hidden',
+        isTightLarge ? 'gap-3' : 'gap-6',
+      )}>
+        <div className={`${isTightLarge ? 'text-5xl' : 'text-6xl'} font-bold leading-none ${getModeColor()}`}>
           {formatTime(timeLeft)}
         </div>
-        <div className="text-xl font-medium">{getModeLabel()}</div>
-        <div className="text-md opacity-75 text-center max-w-[280px]">{getModeDescription()}</div>
+        <div className={cn('font-medium', isTightLarge ? 'text-lg' : 'text-xl')}>
+          {getModeLabel()}
+        </div>
+        <div className={cn('text-center opacity-75', isTightLarge ? 'max-w-[220px] text-sm' : 'max-w-[280px] text-md')}>
+          {getModeDescription()}
+        </div>
         {!readOnly && (
-          <div className="flex space-x-4 mt-4">
+          <div className={cn('flex', isTightLarge ? 'gap-3' : 'mt-4 gap-4')}>
             <Button
               variant="secondary"
               size="icon"
-              className="rounded-full h-14 w-14"
+              className={cn('rounded-full', isTightLarge ? 'h-12 w-12' : 'h-14 w-14')}
               onClick={toggleTimer}
               aria-label={isActive ? 'Pause' : 'Start'}
             >
-              {isActive ? <Pause size={24} /> : <Play size={24} />}
+              {isActive ? <Pause size={isTightLarge ? 20 : 24} /> : <Play size={isTightLarge ? 20 : 24} />}
             </Button>
             <Button
               variant="secondary"
               size="icon"
-              className="rounded-full h-14 w-14"
+              className={cn('rounded-full', isTightLarge ? 'h-12 w-12' : 'h-14 w-14')}
               onClick={resetTimer}
               aria-label="Reset"
             >
-              <RotateCcw size={24} />
+              <RotateCcw size={isTightLarge ? 20 : 24} />
             </Button>
           </div>
         )}
-        <div className="text-lg mt-2">
+        <div className={cn(isTightLarge ? 'text-sm' : 'mt-2 text-lg')}>
           Cycle: {cyclesCompleted % (localConfig.cyclesBeforeLongBreak || 4) || (localConfig.cyclesBeforeLongBreak || 4)}/{localConfig.cyclesBeforeLongBreak || 4}
         </div>
-        <div className="text-md opacity-75">
+        <div className={cn('opacity-75', isTightLarge ? 'text-sm' : 'text-md')}>
           Total completed: {cyclesCompleted}
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-4 text-center w-full">
-          <div className="bg-muted p-3 rounded-lg">
-            <div className="text-sm opacity-75">Focus Time</div>
+        <div className={cn('grid w-full grid-cols-3 text-center', isTightLarge ? 'gap-2' : 'mt-4 gap-4')}>
+          <div className={cn('rounded-lg bg-muted', isTightLarge ? 'p-2' : 'p-3')}>
+            <div className={cn('opacity-75', isTightLarge ? 'text-xs' : 'text-sm')}>Focus Time</div>
             <div className="font-medium">{localConfig.workDuration} min</div>
           </div>
-          <div className="bg-muted p-3 rounded-lg">
-            <div className="text-sm opacity-75">Short Break</div>
+          <div className={cn('rounded-lg bg-muted', isTightLarge ? 'p-2' : 'p-3')}>
+            <div className={cn('opacity-75', isTightLarge ? 'text-xs' : 'text-sm')}>Short Break</div>
             <div className="font-medium">{localConfig.breakDuration} min</div>
           </div>
-          <div className="bg-muted p-3 rounded-lg">
-            <div className="text-sm opacity-75">Long Break</div>
+          <div className={cn('rounded-lg bg-muted', isTightLarge ? 'p-2' : 'p-3')}>
+            <div className={cn('opacity-75', isTightLarge ? 'text-xs' : 'text-sm')}>Long Break</div>
             <div className="font-medium">{localConfig.longBreakDuration} min</div>
           </div>
         </div>

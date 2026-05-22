@@ -34,7 +34,7 @@ import { Changelog } from '@/components/Changelog'
 import { faviconService } from '@/lib/services/favicon'
 import { useAppSettings } from '@/context/AppSettingsContext'
 import { DashboardContextMenu } from '@/components/dashboard/DashboardContextMenu'
-import DashboardWidgetFrame from '@/components/dashboard/DashboardWidgetFrame'
+import DeferredDashboardWidgetFrame from '@/components/dashboard/DeferredDashboardWidgetFrame'
 import { DashboardSwitcher, Dashboard, DashboardVisibility } from '@/components/dashboard/DashboardSwitcher'
 import {
   createDashboardRecord,
@@ -56,7 +56,6 @@ import {
   validateLayouts,
 } from '@/lib/dashboardLayouts'
 import {
-  DASHBOARD_LAYOUT_MAX_WIDTH,
   calculateDashboardRowHeight,
   getDashboardBreakpointForWidth,
 } from '@/lib/dashboardViewport'
@@ -104,23 +103,72 @@ const cloneLayoutsByBreakpoint = (sourceLayouts: LayoutsByBreakpoint): LayoutsBy
   )
 );
 
+type SaveWidgetsOptions = {
+  debounce?: boolean;
+  configWidgetIdsToSave?: Iterable<string>;
+};
+
+const createAppendLayoutItem = (
+  widgetId: string,
+  colCount: number,
+  breakpoint: string,
+  existingLayout: LayoutItem[] = []
+): LayoutItem => {
+  const isMobile = breakpoint === 'xs' || breakpoint === 'xxs';
+  const width = isMobile ? 2 : Math.min(3, colCount);
+  const height = isMobile ? 2 : 3;
+  const y = existingLayout.reduce((bottom, item) => Math.max(bottom, item.y + item.h), 0);
+
+  return {
+    i: widgetId,
+    x: 0,
+    y,
+    w: width,
+    h: height,
+    minW: 2,
+    minH: 2,
+    ...(isMobile ? { maxW: 2, maxH: 2 } : {}),
+  };
+};
+
 function App() {
   // Get storage context for provider info
   const { providerType: _providerType, refresh: refreshStorage, isInitialized: storageInitialized } = useStorage();
 
   // Register service worker for PWA functionality
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .then(() => {
-            // ServiceWorker registration successful
-          })
-          .catch(error => {
-            console.error('ServiceWorker registration failed: ', error);
-          });
-      });
+    if (!('serviceWorker' in navigator)) {
+      return undefined;
     }
+
+    if (!import.meta.env.PROD) {
+      void navigator.serviceWorker.getRegistrations()
+        .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+        .catch((error) => {
+          console.error('ServiceWorker cleanup failed: ', error);
+        });
+
+      if ('caches' in window) {
+        void caches.keys()
+          .then((cacheNames) => Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName))))
+          .catch((error) => {
+            console.error('Cache cleanup failed: ', error);
+          });
+      }
+
+      return undefined;
+    }
+
+    const registerServiceWorker = () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then((registration) => registration.update())
+        .catch(error => {
+          console.error('ServiceWorker registration failed: ', error);
+        });
+    };
+
+    window.addEventListener('load', registerServiceWorker);
+    return () => window.removeEventListener('load', registerServiceWorker);
   }, []);
 
   // Track online status for PWA functionality with toast notifications
@@ -351,11 +399,12 @@ function App() {
   ): { layouts: LayoutsByBreakpoint; changed: boolean } => {
     const widgetIds = new Set(widgetsToReconcile.map((widget) => widget.id));
     const widgetsById = new Map(widgetsToReconcile.map((widget) => [widget.id, widget]));
+    const validatedInputLayouts = validateLayouts(layoutsToReconcile, options);
     const reconciledLayouts: LayoutsByBreakpoint = {};
     let changed = false;
 
     BREAKPOINT_ORDER.forEach((breakpoint) => {
-      const currentLayout = layoutsToReconcile[breakpoint] || [];
+      const currentLayout = validatedInputLayouts[breakpoint] || [];
       const filteredLayout = currentLayout.filter((item) => widgetIds.has(item.i));
 
       if (filteredLayout.length !== currentLayout.length) {
@@ -614,19 +663,32 @@ function App() {
    * @param debounce - If true, save is scheduled for 500ms later and function returns immediately.
    *                   If false, waits for save to complete before returning.
    */
-  const saveWidgets = async (updatedWidgets: Widget[], debounce = true): Promise<void> => {
+  const saveWidgets = async (
+    updatedWidgets: Widget[],
+    options: boolean | SaveWidgetsOptions = true
+  ): Promise<void> => {
+    const saveOptions: SaveWidgetsOptions = typeof options === 'boolean'
+      ? { debounce: options }
+      : options;
+    const debounce = saveOptions.debounce ?? true;
     widgetsRef.current = updatedWidgets;
     setWidgets(updatedWidgets);
 
     const provider = getStorageProvider();
 
-    // Save each widget's configuration separately using configManager
-    updatedWidgets.forEach(widget => {
-      if (widget.config && widget.id) {
+    const widgetsById = new Map(updatedWidgets.map(widget => [widget.id, widget]));
+    const configWidgetIdsToSave = Array.from(saveOptions.configWidgetIdsToSave ?? []);
+
+    // Persist only configs that changed. Re-saving every widget config made a
+    // single add scale linearly with dashboard size.
+    void Promise.all(configWidgetIdsToSave.map((widgetId) => {
+      const widget = widgetsById.get(widgetId);
+      if (widget?.config && widget.id) {
         const configToSave = prepareWidgetConfigForSave(widget.config);
-        configManager.saveWidgetConfig(widget.id, configToSave);
+        return configManager.saveWidgetConfig(widget.id, configToSave);
       }
-    });
+      return Promise.resolve();
+    }));
 
     // Save widgets to storage provider
     const saveToProvider = async () => {
@@ -855,11 +917,10 @@ function App() {
       // Calculate column count for this breakpoint
       const colCount = cols[breakpoint as keyof typeof cols];
       
-      // Create default layout item based on the breakpoint
-      // Pass existing layout so it can find the first available position
-      const defaultItem = createDefaultLayoutItem(
+      // Adding one widget should not rescan thousands of existing layout cells.
+      // Auto-arrange remains available when the user wants to fill gaps.
+      const defaultItem = createAppendLayoutItem(
         widgetId,
-        updatedLayouts[breakpoint].length,
         colCount,
         breakpoint,
         updatedLayouts[breakpoint]
@@ -879,13 +940,11 @@ function App() {
       );
     });
     
-    // Update states and save data
-    setWidgets(updatedWidgets);
-    setLayouts(updatedLayouts);
+    // Update state through the save helpers to avoid duplicate dashboard renders.
     setLastCreatedWidgetId(widgetId);
     
     // Save changes
-    saveWidgets(updatedWidgets);
+    saveWidgets(updatedWidgets, { configWidgetIdsToSave: [widgetId] });
     saveLayouts(updatedLayouts, false);
     
     // Close the widget selector if it's open
@@ -1028,7 +1087,7 @@ function App() {
           data-breakpoint={currentBreakpoint}
           style={isMobileViewport ? { marginBottom: '16px', height: 'auto' } : undefined}
         >
-          <DashboardWidgetFrame
+          <DeferredDashboardWidgetFrame
             widget={widget}
             width={width}
             height={height}
@@ -1050,7 +1109,7 @@ function App() {
             key={widget.id} 
             className="mobile-widget-item"
           >
-            <DashboardWidgetFrame
+            <DeferredDashboardWidgetFrame
               widget={widget}
               width={2}
               height={2}
@@ -1538,12 +1597,12 @@ function App() {
           // Calculate column count for this breakpoint
           const colCount = cols[breakpoint as keyof typeof cols];
           
-          // Create default layout item based on the breakpoint
-          const defaultItem = createDefaultLayoutItem(
+          // Append pasted widgets cheaply; auto-arrange can fill gaps later.
+          const defaultItem = createAppendLayoutItem(
             widgetId, 
-            updatedLayouts[breakpoint].length, 
             colCount,
-            breakpoint
+            breakpoint,
+            updatedLayouts[breakpoint]
           );
           
           // Set appropriate size for video content
@@ -1555,13 +1614,11 @@ function App() {
           updatedLayouts[breakpoint].push(defaultItem);
         });
         
-        // Update states
-        setWidgets(updatedWidgets);
-        setLayouts(updatedLayouts);
+        // Update state through the save helpers to avoid duplicate dashboard renders.
         setLastCreatedWidgetId(widgetId);
         
         // Save changes
-        saveWidgets(updatedWidgets);
+        saveWidgets(updatedWidgets, { configWidgetIdsToSave: [widgetId] });
         saveLayouts(updatedLayouts, false);
         break;
         
@@ -1760,7 +1817,7 @@ function App() {
               </div>
             ) : (
               <div className="desktop-view-container">
-                <div style={{ width: '100%', maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH, margin: '0 auto' }}>
+                <div className="dashboard-canvas">
                   {!isLayoutReady && widgets.length > 0 && (
                     <div className="px-[10px] py-[10px]">
                       <div className="grid grid-cols-2 md:grid-cols-6 lg:grid-cols-12 gap-4 auto-rows-[100px]">
@@ -1813,8 +1870,6 @@ function App() {
                         transformScale={1}
                         style={{
                           width: '100%',
-                          maxWidth: DASHBOARD_LAYOUT_MAX_WIDTH,
-                          margin: '0 auto',
                           minHeight: '100%',
                         }}
                       >

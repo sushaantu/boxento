@@ -55,6 +55,63 @@ const readStoredLayoutX = async (page: Page, widgetId: string) => (
   }, [PERSONAL_DASHBOARD_STORAGE_KEYS.layouts, widgetId] as const)
 );
 
+const mockWeatherApi = async (page: Page) => {
+  await page.route('https://geocoding-api.open-meteo.com/**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        results: [
+          {
+            id: 5128581,
+            name: 'New York',
+            country: 'United States',
+            latitude: 40.7128,
+            longitude: -74.006,
+          },
+        ],
+      }),
+    });
+  });
+
+  await page.route('https://api.open-meteo.com/**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      status: 200,
+      body: JSON.stringify({
+        current: {
+          temperature_2m: 22,
+          relative_humidity_2m: 65,
+          apparent_temperature: 24,
+          weather_code: 0,
+          wind_speed_10m: 5.2,
+          wind_direction_10m: 120,
+        },
+        daily: {
+          time: ['2026-03-16', '2026-03-17', '2026-03-18', '2026-03-19', '2026-03-20'],
+          weather_code: [0, 2, 3, 61, 80],
+          temperature_2m_max: [24, 26, 28, 27, 25],
+          temperature_2m_min: [18, 17, 19, 20, 18],
+          sunrise: [
+            '2026-03-16T06:30:00-04:00',
+            '2026-03-17T06:29:00-04:00',
+            '2026-03-18T06:27:00-04:00',
+            '2026-03-19T06:26:00-04:00',
+            '2026-03-20T06:24:00-04:00',
+          ],
+          sunset: [
+            '2026-03-16T19:08:00-04:00',
+            '2026-03-17T19:09:00-04:00',
+            '2026-03-18T19:10:00-04:00',
+            '2026-03-19T19:11:00-04:00',
+            '2026-03-20T19:12:00-04:00',
+          ],
+        },
+      }),
+    });
+  });
+};
+
 const readFirstTextNodeCenter = async (locator: Locator) => (
   locator.evaluate((element) => {
     const walker = document.createTreeWalker(
@@ -343,7 +400,93 @@ test('keeps the weather resize preview from jumping to a layout branch that will
   await expect(widget.getByText('Sunset', { exact: true })).toHaveCount(0);
 });
 
-test('keeps widget geometry stable when switching from laptop to 4K-class viewports', async ({ page }) => {
+test('renders narrow weather widgets without a clipped title header', async ({ page }) => {
+  await mockWeatherApi(page);
+  await page.setViewportSize({ width: 1512, height: 982 });
+
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'weather-narrow',
+        type: 'weather',
+        config: {
+          location: 'New York',
+          units: 'metric',
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'weather-narrow', x: 0, y: 0, w: 1, h: 3, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="weather-narrow"]');
+  await expect(widget).toBeVisible();
+  await expect(widget.getByText('New York')).toBeVisible();
+  await expect(widget.locator('.widget-header')).toHaveCount(0);
+  await expect(widget.getByRole('heading', { name: 'Weather' })).toHaveCount(0);
+});
+
+test('keeps failed widget fallbacks draggable and removable', async ({ page }) => {
+  await page.setViewportSize({ width: 1512, height: 982 });
+
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'broken-widget',
+        type: 'missing-widget-type',
+        config: {},
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'broken-widget', x: 0, y: 0, w: 3, h: 3, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="broken-widget"]');
+  await expect(widget).toBeVisible();
+  await expect(widget.getByText('Widget Error')).toBeVisible();
+  await expect(widget.getByRole('button', { name: 'Remove widget' })).toBeVisible();
+
+  const dragHandle = widget.locator('[data-testid="widget-error-fallback"]');
+  const dragBox = await dragHandle.boundingBox();
+  if (!dragBox) {
+    throw new Error('Failed widget fallback drag handle is not available');
+  }
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await page.mouse.move(dragBox.x + dragBox.width / 2, dragBox.y + 40);
+    await page.mouse.down();
+    await page.mouse.move(dragBox.x + dragBox.width / 2 + 260, dragBox.y + 52, { steps: 12 });
+    await page.mouse.up();
+
+    const moved = await expect
+      .poll(async () => readStoredLayoutX(page, 'broken-widget'), { timeout: 2000 })
+      .toBeGreaterThan(0)
+      .then(() => true)
+      .catch(() => false);
+
+    if (moved) {
+      break;
+    }
+  }
+
+  expect(await readStoredLayoutX(page, 'broken-widget')).toBeGreaterThan(0);
+
+  await widget.getByRole('button', { name: 'Remove widget' }).click();
+  await expect(widget).toHaveCount(0);
+
+  await expect.poll(async () => {
+    const storedWidgets = await readStoredWidgets(page);
+    return storedWidgets.some((entry) => entry.id === 'broken-widget');
+  }).toBe(false);
+});
+
+test('uses the full dashboard canvas on 4K-class viewports without rewriting saved layouts', async ({ page }) => {
   await page.setViewportSize({ width: 1512, height: 982 });
 
   const widgets = Array.from({ length: 4 }, (_, index) => ({
@@ -397,6 +540,9 @@ test('keeps widget geometry stable when switching from laptop to 4K-class viewpo
 
   await expect(page.locator('.react-grid-item')).toHaveCount(4);
   const laptopGeometry = await captureRenderedLayout();
+  const laptopGridWidth = await page.locator('.react-grid-layout').evaluate((element) => (
+    Math.round(element.getBoundingClientRect().width)
+  ));
   const storedBefore = await page.evaluate(() => JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}'));
 
   await page.setViewportSize({ width: 2560, height: 1440 });
@@ -404,9 +550,14 @@ test('keeps widget geometry stable when switching from laptop to 4K-class viewpo
 
   await expect(page.locator('.react-grid-item')).toHaveCount(4);
   const externalDisplayGeometry = await captureRenderedLayout();
+  const externalGridWidth = await page.locator('.react-grid-layout').evaluate((element) => (
+    Math.round(element.getBoundingClientRect().width)
+  ));
   const storedAfter = await page.evaluate(() => JSON.parse(localStorage.getItem('boxento-layouts-personal') || '{}'));
 
-  expect(externalDisplayGeometry).toEqual(laptopGeometry);
+  expect(externalGridWidth).toBeGreaterThan(laptopGridWidth + 500);
+  expect(externalDisplayGeometry).not.toEqual(laptopGeometry);
+  expect(externalDisplayGeometry.at(-1)?.x ?? 0).toBeGreaterThan(laptopGeometry.at(-1)?.x ?? 0);
   expect(storedAfter).toEqual(storedBefore);
 });
 
@@ -895,7 +1046,7 @@ test('renders audited 1x1 widgets without header chrome', async ({ page }) => {
   await expect(clocksWidget).toBeVisible();
   await expect(clocksWidget.getByRole('heading', { name: 'World Clocks' })).toHaveCount(0);
   await expect(clocksWidget).toContainText('Mexico');
-  expect(await readOverflowingLeafNodes(page, 'world-clocks-1')).toEqual([]);
+  await expect.poll(async () => readOverflowingLeafNodes(page, 'world-clocks-1')).toEqual([]);
 
   const yearProgressWidget = page.locator('.react-grid-item[data-widget-id="year-progress-1"]');
   await expect(yearProgressWidget).toBeVisible();
@@ -961,6 +1112,6 @@ test('keeps world clock audit layouts within bounds from 1x1 through 4x4', async
   for (const widgetId of ['world-clocks-1', 'world-clocks-2', 'world-clocks-3', 'world-clocks-4']) {
     const widget = page.locator(`.react-grid-item[data-widget-id="${widgetId}"]`);
     await expect(widget).toBeVisible();
-    expect(await readOverflowingLeafNodes(page, widgetId)).toEqual([]);
+    await expect.poll(async () => readOverflowingLeafNodes(page, widgetId)).toEqual([]);
   }
 });

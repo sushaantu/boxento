@@ -281,16 +281,24 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
   // --- Setup prompt (no API token) ---
   if (!localConfig.apiToken) {
     if (isTiny) {
+      const setupIcon = <BookOpen className="h-5 w-5 text-muted-foreground" />;
+
       return (
-        <div className="widget-container h-full flex flex-col widget-drag-handle p-1">
-          <WidgetHeader
-            title={undefined}
-            onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-            compact
-          />
-          <div className="flex-1 flex items-center justify-center">
-            <BookOpen className="h-5 w-5 text-muted-foreground" />
-          </div>
+        <div className="widget-container flex h-full flex-col p-1 widget-drag-handle">
+          {readOnly ? (
+            <div className="flex flex-1 items-center justify-center">
+              {setupIcon}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="flex flex-1 items-center justify-center rounded-md"
+              onClick={() => setShowSettings(true)}
+              aria-label="Open Readwise settings"
+            >
+              {setupIcon}
+            </button>
+          )}
           {renderSettingsDialog()}
         </div>
       );
@@ -959,11 +967,12 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
 
   return (
     <div className={cn('widget-container h-full flex flex-col', isTiny ? 'widget-drag-handle' : 'p-2 md:p-3')}>
-      <WidgetHeader
-        title={isTiny ? undefined : localConfig.title}
-        onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-        compact={isTiny}
-      />
+      {!isTiny && (
+        <WidgetHeader
+          title={localConfig.title}
+          onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
+        />
+      )}
 
       {isTiny
         ? renderTiny()

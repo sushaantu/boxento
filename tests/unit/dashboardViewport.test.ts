@@ -1,28 +1,30 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DASHBOARD_LAYOUT_MAX_WIDTH,
   calculateDashboardRowHeight,
   getDashboardBreakpointForWidth,
   getDashboardLayoutViewportWidth,
 } from '@/lib/dashboardViewport';
 
 describe('dashboardViewport', () => {
-  it('caps desktop layout width on large external displays', () => {
+  it('uses the full layout width on large external displays', () => {
     expect(getDashboardLayoutViewportWidth(1512)).toBe(1512);
-    expect(getDashboardLayoutViewportWidth(2560)).toBe(DASHBOARD_LAYOUT_MAX_WIDTH);
+    expect(getDashboardLayoutViewportWidth(2560)).toBe(2560);
+    expect(getDashboardLayoutViewportWidth(3840)).toBe(3840);
   });
 
-  it('keeps large external displays on the laptop-class dashboard breakpoint', () => {
+  it('uses wide dashboard breakpoints on large external displays', () => {
     expect(getDashboardBreakpointForWidth(1512)).toBe('lg');
-    expect(getDashboardBreakpointForWidth(2560)).toBe('lg');
+    expect(getDashboardBreakpointForWidth(1536)).toBe('xl');
+    expect(getDashboardBreakpointForWidth(1920)).toBe('xxl');
+    expect(getDashboardBreakpointForWidth(2560)).toBe('xxxl');
     expect(getDashboardBreakpointForWidth(767)).toBe('xs');
   });
 
-  it('uses the bounded dashboard width for row height calculations', () => {
+  it('uses the full dashboard width for row height calculations', () => {
     const laptopRowHeight = calculateDashboardRowHeight(1512, 'lg');
-    const externalDisplayRowHeight = calculateDashboardRowHeight(2560, 'lg');
+    const externalDisplayRowHeight = calculateDashboardRowHeight(3840, 'xxxl');
 
-    expect(externalDisplayRowHeight).toBe(laptopRowHeight);
+    expect(externalDisplayRowHeight).toBeGreaterThan(laptopRowHeight);
   });
 });

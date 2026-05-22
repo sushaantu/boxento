@@ -149,7 +149,7 @@ describe('dashboardLayouts', () => {
     ]);
   });
 
-  it('keeps wide layouts empty when only a laptop layout is persisted', () => {
+  it('hydrates missing wide layouts from a persisted laptop layout', () => {
     const lgLayout = [
       createLayoutItem({ i: 'left', x: 0, y: 0, w: 3, h: 3 }),
       createLayoutItem({ i: 'right', x: 9, y: 0, w: 3, h: 3 }),
@@ -158,12 +158,21 @@ describe('dashboardLayouts', () => {
     const validated = validateLayouts({ lg: lgLayout }, { rebalanceWideSparse: true });
 
     expect(validated.lg).toEqual(lgLayout);
-    expect(validated.xl).toEqual([]);
-    expect(validated.xxl).toEqual([]);
-    expect(validated.xxxl).toEqual([]);
+    expect(validated.xl.map((item) => [item.i, item.x, item.w])).toEqual([
+      ['left', 0, 7],
+      ['right', 7, 7],
+    ]);
+    expect(validated.xxl.map((item) => [item.i, item.x, item.w])).toEqual([
+      ['left', 0, 9],
+      ['right', 9, 9],
+    ]);
+    expect(validated.xxxl.map((item) => [item.i, item.x, item.w])).toEqual([
+      ['left', 0, 12],
+      ['right', 12, 12],
+    ]);
   });
 
-  it('keeps laptop-only saved layouts stable across repeated validation passes', () => {
+  it('keeps generated wide layouts stable across repeated validation passes', () => {
     const savedLayouts = {
       lg: [
         createLayoutItem({ i: 'a', x: 0, y: 0, w: 3, h: 3 }),
@@ -187,9 +196,9 @@ describe('dashboardLayouts', () => {
     expect(secondPass).toEqual(firstPass);
     expect(firstPass.md).toEqual([]);
     expect(firstPass.sm).toEqual([]);
-    expect(secondPass.xl).toEqual([]);
-    expect(secondPass.xxl).toEqual([]);
-    expect(secondPass.xxxl).toEqual([]);
+    expect(secondPass.xl.length).toBe(4);
+    expect(secondPass.xxl.length).toBe(4);
+    expect(secondPass.xxxl.length).toBe(4);
   });
 
   it('preserves authored wide-screen layouts instead of rescaling them from laptop layouts', () => {

@@ -146,6 +146,18 @@ const findFallbackBreakpoint = (layouts: LayoutsByBreakpoint, breakpoint: Breakp
   return null;
 };
 
+const maybeRebalanceWideLayout = (
+  layout: LayoutItem[],
+  colCount: number,
+  options: ValidateLayoutsOptions
+): LayoutItem[] => {
+  if (!options.rebalanceWideSparse || colCount <= cols.lg) {
+    return layout;
+  }
+
+  return rebalanceWideSparseLayout(layout, colCount) ?? layout;
+};
+
 export const scaleLayoutToCols = (
   layout: LayoutItem[],
   fromCols: number,
@@ -289,14 +301,12 @@ export const validateLayouts = (
     const targetCols = cols[breakpoint];
     const fallbackCols = cols[fallbackBreakpoint];
 
-    // Preserve persisted wide-screen layouts as authored. Auto-scaling laptop layouts
-    // into wider breakpoints made the same dashboard drift on external displays.
-    if (targetCols > cols.lg) {
-      return;
-    }
-
     if (!currentLayout.length) {
-      validatedLayouts[breakpoint] = scaleLayoutToCols(fallbackLayout, fallbackCols, targetCols);
+      validatedLayouts[breakpoint] = maybeRebalanceWideLayout(
+        scaleLayoutToCols(fallbackLayout, fallbackCols, targetCols),
+        targetCols,
+        options
+      );
       return;
     }
 
@@ -305,14 +315,11 @@ export const validateLayouts = (
     }
 
     if (targetCols > cols.lg && layoutSignature(currentLayout) === layoutSignature(fallbackLayout)) {
-      validatedLayouts[breakpoint] = scaleLayoutToCols(fallbackLayout, fallbackCols, targetCols);
-    }
-
-    if (options.rebalanceWideSparse && targetCols > cols.lg) {
-      const rebalancedLayout = rebalanceWideSparseLayout(validatedLayouts[breakpoint], targetCols);
-      if (rebalancedLayout) {
-        validatedLayouts[breakpoint] = rebalancedLayout;
-      }
+      validatedLayouts[breakpoint] = maybeRebalanceWideLayout(
+        scaleLayoutToCols(fallbackLayout, fallbackCols, targetCols),
+        targetCols,
+        options
+      );
     }
   });
 

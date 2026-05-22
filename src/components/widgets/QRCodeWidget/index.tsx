@@ -636,7 +636,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                       value={localConfig.errorLevel || 'M'}
                       onValueChange={(value) => updateConfig({ errorLevel: value as 'L' | 'M' | 'Q' | 'H' })}
                     >
-                      <SelectTrigger className="h-7 w-[100px] text-xs">
+                      <SelectTrigger className="h-7 w-[9.5rem] text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

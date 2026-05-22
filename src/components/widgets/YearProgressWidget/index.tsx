@@ -290,7 +290,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
     // For small widgets, use a more compact layout
     if (width <= 2) {
       return (
-        <div className="flex flex-col space-y-1 mt-1 px-0.5 text-xs font-medium">
+        <div className="mt-1 flex shrink-0 flex-col space-y-1 px-0.5 text-xs font-medium">
           {localConfig.showDaysLeft && (
             <div className="bg-muted px-2 py-0.5 rounded-full transition-colors duration-200 text-center">
               <span className="text-foreground font-semibold">{daysLeft}</span>
@@ -309,7 +309,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
 
     // Standard layout for larger widgets
     return (
-      <div className="flex justify-between items-center mt-1.5 px-0.5 text-xs font-medium">
+      <div className="mt-1.5 flex shrink-0 items-center justify-between px-0.5 text-xs font-medium">
         {localConfig.showDaysLeft && (
           <div className="bg-muted px-2.5 py-1 rounded-full transition-colors duration-200">
             <span className="text-foreground font-semibold">{daysLeft}</span>
@@ -687,8 +687,8 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
 
   // ─── Existing default view (dot grid + stats) ───────────────────────
   const renderDefaultView = useCallback(() => (
-    <div className="h-full flex flex-col justify-between">
-      <div ref={svgContainerRef} className="flex-grow flex items-center justify-center relative">
+    <div className="flex h-full min-h-0 flex-col justify-between">
+      <div ref={svgContainerRef} className="relative flex min-h-0 flex-1 items-center justify-center">
         <svg
           ref={svgRef}
           viewBox={gridLayout.viewBox}

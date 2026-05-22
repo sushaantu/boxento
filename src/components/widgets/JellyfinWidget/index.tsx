@@ -300,17 +300,42 @@ const JellyfinWidget: React.FC<JellyfinWidgetProps> = ({ width, height, config }
 
   // --- Needs config view ---
 
-  const renderNeedsConfig = () => (
-    <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-      <Settings className="h-8 w-8" />
-      <p className="text-sm">Configure Jellyfin to get started</p>
-      {!readOnly && (
-        <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-          Open Settings
-        </Button>
-      )}
-    </div>
-  );
+  const renderNeedsConfig = () => {
+    if (isTiny) {
+      const setupIcon = <Settings className="h-5 w-5 text-muted-foreground" />;
+
+      if (readOnly) {
+        return (
+          <div className="flex flex-1 items-center justify-center">
+            {setupIcon}
+          </div>
+        );
+      }
+
+      return (
+        <button
+          type="button"
+          className="flex flex-1 items-center justify-center rounded-md"
+          onClick={() => setShowSettings(true)}
+          aria-label="Open Jellyfin settings"
+        >
+          {setupIcon}
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+        <Settings className="h-8 w-8" />
+        <p className="text-sm">Configure Jellyfin to get started</p>
+        {!readOnly && (
+          <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+            Open Settings
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   // --- Loading / Error states ---
 

@@ -23,8 +23,6 @@ export const GRID = {
   MIN_WIDGET_WIDTH: 1,
   /** Default minimum widget height */
   MIN_WIDGET_HEIGHT: 1,
-  /** Keep desktop dashboards at a laptop-class canvas width on very large displays */
-  MAX_DESKTOP_LAYOUT_WIDTH: 1512,
   /** Container padding in pixels */
   CONTAINER_PADDING: 10,
   /** Margin between grid items in pixels */

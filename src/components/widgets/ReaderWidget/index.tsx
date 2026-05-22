@@ -330,9 +330,24 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
   const renderTiny = () => {
     const stateView = renderStateOrNull();
     if (stateView) {
+      const stateIcon = <BookMarked size={18} className="text-muted-foreground" />;
+
+      if (!localConfig.apiToken && !readOnly) {
+        return (
+          <button
+            type="button"
+            className="flex flex-1 items-center justify-center rounded-md"
+            onClick={openSettings}
+            aria-label="Open Reader settings"
+          >
+            {stateIcon}
+          </button>
+        );
+      }
+
       return (
         <div className="flex-1 flex items-center justify-center">
-          <BookMarked size={18} className="text-muted-foreground" />
+          {stateIcon}
         </div>
       );
     }
@@ -965,11 +980,12 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
 
   return (
     <div className={cn('widget-container h-full flex flex-col', isTiny ? 'widget-drag-handle' : 'p-2 md:p-3')}>
-      <WidgetHeader
-        title={isTiny ? undefined : (localConfig.title || 'Reader')}
-        onSettingsClick={readOnly ? undefined : openSettings}
-        compact={isTiny}
-      />
+      {!isTiny && (
+        <WidgetHeader
+          title={localConfig.title || 'Reader'}
+          onSettingsClick={readOnly ? undefined : openSettings}
+        />
+      )}
 
       {/* Size-branching render (most specific first) */}
       {isTiny ? renderTiny()

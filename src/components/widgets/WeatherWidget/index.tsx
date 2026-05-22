@@ -39,6 +39,7 @@ interface CitySearchResult {
  */
 const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshInterval = 15 }) => {
   const isTiny = width === 1 && height === 1;
+  const isNarrowColumn = width === 1;
   const isShort = height === 1 && width > 1;
   const isApp = width >= 6 && height >= 6;
   const readOnly = config?.readOnly ?? false;
@@ -1306,9 +1307,9 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
   return (
     <WidgetShell
       ref={widgetRef}
-      title="Weather"
+      title={isNarrowColumn ? undefined : 'Weather'}
       isTiny={isTiny}
-      hideHeader={isApp}
+      hideHeader={isApp || isNarrowColumn}
       compactHeader={isShort || width === 1 || height === 1}
       onSettingsClick={readOnly ? undefined : () => setIsSettingsOpen(true)}
       contentClassName={isTiny ? 'rounded-md p-2' : isApp ? '' : 'rounded-md'}

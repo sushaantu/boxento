@@ -1,5 +1,5 @@
-import React, { Suspense, useMemo } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { Suspense, useCallback, useMemo } from 'react';
+import { AlertTriangle, Loader2, RefreshCcw, Trash2 } from 'lucide-react';
 
 import { getWidgetComponent } from '@/components/widgets';
 import WidgetErrorBoundary from '@/components/widgets/common/WidgetErrorBoundary';
@@ -20,6 +20,67 @@ type DashboardWidgetFrameProps = DashboardWidgetFrameComparisonProps & {
 const DashboardWidgetLoadingFallback = () => (
   <div className="flex h-full w-full items-center justify-center rounded-lg bg-card">
     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+  </div>
+);
+
+const isDynamicImportError = (error: Error): boolean => (
+  /dynamically imported module|importing a module script failed|chunkloaderror|loading chunk/i.test(error.message)
+);
+
+type DashboardWidgetErrorFallbackProps = {
+  isReadOnly: boolean;
+  message: string;
+  onDelete: () => void;
+  showReload?: boolean;
+};
+
+const DashboardWidgetErrorFallback: React.FC<DashboardWidgetErrorFallbackProps> = ({
+  isReadOnly,
+  message,
+  onDelete,
+  showReload = false,
+}) => (
+  <div
+    className="widget-drag-handle flex h-full w-full flex-col items-center justify-center rounded-lg bg-red-50 p-4 text-red-800 dark:bg-red-900 dark:bg-opacity-20 dark:text-red-200"
+    data-testid="widget-error-fallback"
+  >
+    <AlertTriangle className="mb-2" size={24} aria-hidden="true" />
+    <h3 className="mb-1 text-sm font-medium">Widget Error</h3>
+    <p className="text-center text-xs">
+      <span className="break-all">
+        {message}
+      </span>
+    </p>
+
+    <div className="mt-3 flex flex-wrap justify-center gap-2">
+      {showReload ? (
+        <button
+          type="button"
+          className="text-xs underline"
+          onClick={(event) => {
+            event.stopPropagation();
+            window.location.reload();
+          }}
+        >
+          <RefreshCcw className="size-4" aria-hidden="true" />
+          Reload
+        </button>
+      ) : null}
+
+      {!isReadOnly ? (
+        <button
+          type="button"
+          className="text-xs underline"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+        >
+          <Trash2 className="size-4" aria-hidden="true" />
+          Remove widget
+        </button>
+      ) : null}
+    </div>
   </div>
 );
 
@@ -46,12 +107,17 @@ const DashboardWidgetFrameComponent: React.FC<DashboardWidgetFrameProps> = ({
       },
     }),
   }), [isReadOnly, onDeleteWidget, onUpdateWidgetConfig, widget]);
+  const handleDeleteWidget = useCallback(() => {
+    void onDeleteWidget(widget.id);
+  }, [onDeleteWidget, widget.id]);
 
   if (!WidgetComponent) {
     return (
-      <div className="widget-error">
-        <p>Widget type "{widget.type}" not found</p>
-      </div>
+      <DashboardWidgetErrorFallback
+        isReadOnly={isReadOnly}
+        message={`Widget type "${widget.type}" is not available.`}
+        onDelete={handleDeleteWidget}
+      />
     );
   }
 
@@ -63,7 +129,17 @@ const DashboardWidgetFrameComponent: React.FC<DashboardWidgetFrameProps> = ({
       onClick={stopDashboardInteractionPropagation}
       onContextMenu={stopDashboardContextMenuPropagation}
     >
-      <WidgetErrorBoundary>
+      <WidgetErrorBoundary
+        resetKey={`${widget.id}:${widget.type}`}
+        fallback={(error) => (
+          <DashboardWidgetErrorFallback
+            isReadOnly={isReadOnly}
+            message={error.message || 'An error occurred while rendering this widget.'}
+            onDelete={handleDeleteWidget}
+            showReload={isDynamicImportError(error)}
+          />
+        )}
+      >
         <Suspense fallback={<DashboardWidgetLoadingFallback />}>
           <WidgetComponent
             width={width}

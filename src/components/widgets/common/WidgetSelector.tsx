@@ -29,6 +29,48 @@ const WidgetSelector = ({
 }: WidgetSelectorProps): React.ReactElement | null => {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  const renderWidgetIcon = (icon?: string): React.ReactElement => {
+    switch (icon) {
+      case 'Calendar': return <Calendar className="size-4" />;
+      case 'Cloud': return <Cloud className="size-4" />;
+      case 'Clock': return <Clock className="size-4" />;
+      case 'Link': return <Link className="size-4" />;
+      case 'StickyNote': return <StickyNote className="size-4" />;
+      case 'CheckSquare': return <CheckSquare className="size-4" />;
+      case 'Timer': return <Timer className="size-4" />;
+      case 'DollarSign': return <DollarSign className="size-4" />;
+      case 'BookOpen': return <BookOpen className="size-4" />;
+      case 'Video': return <Video className="size-4" />;
+      case 'Rss': return <Rss className="size-4" />;
+      case 'Github': return <Github className="size-4" />;
+      case 'Plane': return <Plane className="size-4" />;
+      case 'Globe': return <Globe className="size-4" />;
+      default: return <Plus className="size-4" />;
+    }
+  };
+
+  const renderWidgetCard = (widget: WidgetConfig): React.ReactElement => (
+    <Button
+      key={widget.type}
+      type="button"
+      variant="ghost"
+      size="none"
+      className="h-auto w-full justify-start gap-3 border border-gray-100 bg-white p-4 text-left dark:border-[#2c2c2e] dark:bg-[#1c1c1e]"
+      onClick={() => onAddWidget(widget.type)}
+      aria-label={`Add ${widget.name} widget`}
+    >
+      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-[#1c1c54] dark:text-blue-300">
+        {renderWidgetIcon(widget.icon)}
+      </span>
+      <span className="flex flex-1 flex-col pt-1 text-left">
+        <span className="text-sm text-gray-900 dark:text-[#f5f5f7]">{widget.name}</span>
+        {widget.description && (
+          <span className="mt-0.5 text-xs text-gray-500 dark:text-[#8e8e93]">{widget.description}</span>
+        )}
+      </span>
+    </Button>
+  );
+
   // Handle escape key press
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
@@ -94,44 +136,7 @@ const WidgetSelector = ({
             <h4 className="text-base font-semibold text-gray-700 dark:text-[#f5f5f7] mb-2">Search Results</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               {filteredWidgets.length > 0 ? (
-                filteredWidgets.map(widget => (
-                  <Button
-                    key={widget.type}
-                    type="button"
-                    variant="ghost"
-                    className="h-auto justify-start gap-3 border border-gray-100 bg-white p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:border-blue-200 hover:shadow-md dark:border-[#2c2c2e] dark:bg-[#1c1c1e] dark:hover:border-[#3c3c3e] dark:hover:bg-[#2c2c2e] dark:hover:shadow-black/20 dark:hover:shadow-lg"
-                    onClick={() => onAddWidget(widget.type)}
-                    aria-label={`Add ${widget.name} widget`}
-                  >
-                    <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-[#1c1c54] text-blue-600 dark:text-blue-300">
-                      {(() => {
-                        switch (widget.icon) {
-                          case 'Calendar': return <Calendar size={16} />;
-                          case 'Cloud': return <Cloud size={16} />;
-                          case 'Clock': return <Clock size={16} />;
-                          case 'Link': return <Link size={16} />;
-                          case 'StickyNote': return <StickyNote size={16} />;
-                          case 'CheckSquare': return <CheckSquare size={16} />;
-                          case 'Timer': return <Timer size={16} />;
-                          case 'DollarSign': return <DollarSign size={16} />;
-                          case 'BookOpen': return <BookOpen size={16} />;
-                          case 'Video': return <Video size={16} />;
-                          case 'Rss': return <Rss size={16} />;
-                          case 'Github': return <Github size={16} />;
-                          case 'Plane': return <Plane size={16} />;
-                          case 'Globe': return <Globe size={16} />;
-                          default: return <Plus size={16} />;
-                        }
-                      })()}
-                    </div>
-                    <div className="flex flex-col flex-1 pt-1">
-                      <div className="text-sm text-gray-900 dark:text-[#f5f5f7]">{widget.name}</div>
-                      {widget.description && (
-                        <div className="text-xs text-gray-500 dark:text-[#8e8e93] mt-0.5">{widget.description}</div>
-                      )}
-                    </div>
-                  </Button>
-                ))
+                filteredWidgets.map(renderWidgetCard)
               ) : (
                 <div className="col-span-full text-center py-8 text-gray-500 dark:text-[#8e8e93] text-sm">No widgets found matching "{searchQuery}"</div>
               )}
@@ -143,44 +148,7 @@ const WidgetSelector = ({
               <div key={category} className="mb-8">
                 <h4 className="text-base font-semibold text-gray-700 dark:text-[#f5f5f7] mb-2">{category}</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-                  {widgets.map(widget => (
-                    <Button
-                      key={widget.type}
-                      type="button"
-                      variant="ghost"
-                      className="h-auto justify-start gap-3 border border-gray-100 bg-white p-4 text-left transition-all duration-200 hover:scale-[1.02] hover:bg-blue-50 hover:border-blue-200 hover:shadow-md dark:border-[#2c2c2e] dark:bg-[#1c1c1e] dark:hover:border-[#3c3c3e] dark:hover:bg-[#2c2c2e] dark:hover:shadow-black/20 dark:hover:shadow-lg"
-                      onClick={() => onAddWidget(widget.type)}
-                      aria-label={`Add ${widget.name} widget`}
-                    >
-                      <div className="flex items-center justify-center w-11 h-11 rounded-lg bg-blue-100 dark:bg-[#1c1c54] text-blue-600 dark:text-blue-300">
-                        {(() => {
-                          switch (widget.icon) {
-                            case 'Calendar': return <Calendar size={16} />;
-                            case 'Cloud': return <Cloud size={16} />;
-                            case 'Clock': return <Clock size={16} />;
-                            case 'Link': return <Link size={16} />;
-                            case 'StickyNote': return <StickyNote size={16} />;
-                            case 'CheckSquare': return <CheckSquare size={16} />;
-                            case 'Timer': return <Timer size={16} />;
-                            case 'DollarSign': return <DollarSign size={16} />;
-                            case 'BookOpen': return <BookOpen size={16} />;
-                            case 'Video': return <Video size={16} />;
-                            case 'Rss': return <Rss size={16} />;
-                            case 'Github': return <Github size={16} />;
-                            case 'Plane': return <Plane size={16} />;
-                            case 'Globe': return <Globe size={16} />;
-                            default: return <Plus size={16} />;
-                          }
-                        })()}
-                      </div>
-                      <div className="flex flex-col flex-1 pt-1 text-left">
-                        <div className="text-sm text-gray-900 dark:text-[#f5f5f7]">{widget.name}</div>
-                        {widget.description && (
-                          <div className="text-xs text-gray-500 dark:text-[#8e8e93] mt-0.5">{widget.description}</div>
-                        )}
-                      </div>
-                    </Button>
-                  ))}
+                  {widgets.map(renderWidgetCard)}
                 </div>
               </div>
             ))}

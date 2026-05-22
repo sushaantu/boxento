@@ -390,6 +390,15 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
   // --- Setup prompt when no flights configured ---
   const renderSetup = () => {
     if (setupState === 'checking') {
+      if (isCompact) {
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 px-2 text-center text-muted-foreground">
+            <RefreshCw className="h-6 w-6 animate-spin" />
+            <p className="text-xs">Checking flight setup</p>
+          </div>
+        );
+      }
+
       return (
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
           <RefreshCw className="h-8 w-8 animate-spin" />
@@ -399,6 +408,39 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
     }
 
     if (setupBlocked) {
+      if (isCompact) {
+        const isSetupError = setupState === 'error';
+
+        return (
+          <div className="flex-1 flex flex-col items-center justify-center gap-2 px-2 text-center">
+            {isSetupError ? (
+              <AlertCircle className="h-6 w-6 text-muted-foreground" />
+            ) : (
+              <Plane className="h-6 w-6 text-muted-foreground" />
+            )}
+            <p className="text-xs font-medium leading-tight text-foreground">
+              {isSetupError ? 'Couldn\u2019t verify flight setup' : 'Flight data setup needed'}
+            </p>
+            {!readOnly && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  if (isSetupError) {
+                    void checkFlightTrackerSetup();
+                  } else {
+                    setShowSettings(true);
+                  }
+                }}
+              >
+                {isSetupError ? 'Retry' : 'Setup'}
+              </Button>
+            )}
+          </div>
+        );
+      }
+
       if (setupState === 'error') {
         return (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 px-4 text-center">
@@ -465,6 +507,27 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
                 Recheck Setup
               </Button>
             </div>
+          )}
+        </div>
+      );
+    }
+
+    if (isCompact) {
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center gap-2 px-2 text-center">
+          <Plane className="h-6 w-6 text-muted-foreground" />
+          <p className="text-xs font-medium leading-tight text-foreground">
+            No flights tracked yet
+          </p>
+          {!readOnly && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setShowSettings(true)}
+            >
+              Add Flight
+            </Button>
           )}
         </div>
       );

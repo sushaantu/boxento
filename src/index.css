@@ -204,6 +204,16 @@
   @apply h-full w-full;
 }
 
+.react-grid-item.widget-wrapper.app-widget {
+  content-visibility: auto;
+  contain-intrinsic-size: 320px 240px;
+}
+
+.react-grid-item.widget-wrapper.app-widget.react-draggable-dragging,
+.react-grid-item.widget-wrapper.app-widget.resizing {
+  content-visibility: visible;
+}
+
 /* Mouse interaction states */
 .react-grid-item:active,
 .react-grid-item:focus,
@@ -445,7 +455,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 }
 
 .header-container {
-  @apply max-w-[1600px] mx-auto flex justify-between items-center px-3 sm:px-6 py-0;
+  @apply w-full flex justify-between items-center px-3 sm:px-6 py-0;
 }
 
 .header-left {
@@ -490,7 +500,11 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
  */
 
 .dashboard-container {
-  @apply px-6 max-w-[1600px] mx-auto;
+  @apply w-full px-2 sm:px-3;
+}
+
+.dashboard-canvas {
+  width: 100%;
 }
 
 /* Empty dashboard call to action */

@@ -813,14 +813,14 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderMediumView = (): React.ReactElement => {
     return (
-      <div className="grid h-full grid-cols-2 overflow-y-auto p-2" style={{ gap: '0.55rem' }}>
+      <div className="grid h-full min-h-0 grid-cols-2 grid-rows-2 overflow-y-auto p-2" style={{ gap: '0.55rem' }}>
         {timezones.map(tz => {
           const display = getTimezoneDisplay(tz);
 
           return (
             <div
               key={tz.id}
-              className="flex flex-col items-center justify-between rounded-xl border border-border/60 bg-muted/35 px-2 py-2 text-center"
+              className="flex min-h-0 flex-col items-center justify-between overflow-hidden rounded-xl border border-border/60 bg-muted/35 px-2 py-2 text-center"
             >
               <div
                 className="min-h-[1.7rem] w-full px-1 font-semibold text-foreground"
@@ -936,15 +936,20 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
 
     // For 1-4 timezones, show larger clocks with more details
     if (timezones.length <= 4) {
+      const rows = Math.ceil(timezones.length / 2);
+
       return (
-        <div className="grid h-full grid-cols-2 transition-all duration-300" style={{ gap }}>
+        <div
+          className="grid h-full min-h-0 grid-cols-2 transition-all duration-300"
+          style={{ gap, gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))` }}
+        >
           {timezones.map(tz => {
             const display = getTimezoneDisplay(tz);
 
             return (
               <div
                 key={tz.id}
-                className="flex h-full flex-col items-center justify-between rounded-2xl border border-border/60 bg-muted/35 text-center transition-all duration-300"
+                className="flex min-h-0 flex-col items-center justify-between overflow-hidden rounded-2xl border border-border/60 bg-muted/35 text-center transition-all duration-300"
                 style={{ padding: cardPadding }}
               >
                 <div
@@ -1035,6 +1040,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
     const isDarkMode = document.documentElement.classList.contains('dark');
     const layoutScale = getAreaScale(16, 25);
     const columns = timezones.length <= 4 ? 2 : 3;
+    const rows = Math.ceil(timezones.length / columns);
     const clockSize = Math.round(interpolate(72, 84, layoutScale));
     const gap = `${interpolate(0.8, 1.1, layoutScale)}rem`;
     const cardPadding = `${interpolate(0.95, 1.2, layoutScale)}rem`;
@@ -1044,8 +1050,12 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
 
     return (
       <div
-        className="grid h-full overflow-y-auto transition-all duration-300"
-        style={{ gap, gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+        className="grid h-full min-h-0 overflow-y-auto transition-all duration-300"
+        style={{
+          gap,
+          gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+          gridTemplateRows: timezones.length <= 6 ? `repeat(${rows}, minmax(0, 1fr))` : undefined,
+        }}
       >
         {timezones.map(tz => {
           const display = getTimezoneDisplay(tz);
@@ -1053,7 +1063,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
           return (
             <div
               key={tz.id}
-              className="flex h-full flex-col items-center justify-between rounded-2xl border border-border/60 bg-muted/35 text-center transition-all duration-300"
+              className="flex min-h-0 flex-col items-center justify-between overflow-hidden rounded-2xl border border-border/60 bg-muted/35 text-center transition-all duration-300"
               style={{ padding: cardPadding }}
             >
               <div

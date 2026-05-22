@@ -320,14 +320,20 @@ All widgets MUST use a consistent structure and styling:
 
 ### 2. Responsive Design
 
-Widgets must be responsive to different sizes, with a minimum size of 2x2:
+Widgets must be responsive to different sizes. A widget can support `1x1` only when it has a deliberate tiny state and is listed in `TINY_READY_WIDGET_TYPES`; otherwise use the registry minimums that match the real UX:
 
+- **1x1**: Glanceable icon, metric, or setup tap target
 - **2x2**: Default view with essential information
 - **Wide (e.g., 4x2)**: Horizontal layout with expanded information
 - **Tall (e.g., 2x4)**: Vertical layout with expanded information
 - **Large (e.g., 4x4, 6x6)**: Full view with detailed information
 
-Note: Widgets cannot be smaller than 2x2 as this is enforced by the application.
+#### Header Fit
+
+- Do not ship clipped widget headers such as `Weat...` in narrow columns, tiny states, or short rows.
+- If the standard header cannot show the title and controls cleanly, hide the outer header and expose settings through a size-appropriate overlay or in-widget control.
+- Audit `1x1`, one-column tall, short-row, default, and large/app states before marking a widget tiny-ready or reducing its minimum size.
+- Keep header actions minimal and never let settings, titles, resize handles, or primary content overlap.
 
 ### 3. Theme Support
 
@@ -441,6 +447,7 @@ When working with external APIs:
 - **Progressive enhancement**: Display more information as widget size increases, prioritizing the most important content in smaller sizes.
 - **Adaptive content display**: Truncate and format content based on widget size to maintain readability.
 - **Responsive typography**: Adjust font sizes based on widget size when necessary.
+- **External displays**: Verify dashboards on wide/4K-class viewports. Widgets should use the active wide breakpoint instead of assuming a centered laptop-width canvas.
 
 ### State and Lifecycle
 
