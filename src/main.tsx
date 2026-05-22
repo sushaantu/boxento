@@ -8,6 +8,9 @@ import { SafeSyncProvider } from './lib/SyncContext'
 import { AppSettingsProvider } from './context/AppSettingsContext'
 import { StorageContextProvider } from './lib/storage/StorageContext'
 import { SharedDashboardView } from './components/dashboard/SharedDashboardView'
+import { installJsonResponseGuard } from './lib/jsonResponseGuard'
+
+installJsonResponseGuard()
 
 const rootElement = document.getElementById('root')
 if (!rootElement) throw new Error('Failed to find the root element')

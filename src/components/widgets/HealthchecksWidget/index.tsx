@@ -11,7 +11,6 @@ import {
   Timer,
   XCircle,
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
@@ -25,6 +24,7 @@ import {
 } from '../../ui/select';
 import { Skeleton } from '../../ui/skeleton';
 import WidgetHeader from '../common/WidgetHeader';
+import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../common/WidgetSettingsDialog';
 import { cn } from '@/lib/utils';
 import {
   formatMonitoringItemLimitPlaceholder,
@@ -32,6 +32,7 @@ import {
   getMonitoringItemLimit,
   parseMonitoringItemLimit,
 } from '../common/monitoringItemLimit';
+import { readMonitoringJson } from '../common/monitoringApiResponse';
 import { HealthchecksCheck, HealthchecksStatus, HealthchecksWidgetConfig, HealthchecksWidgetData } from './types';
 
 const SQLITE_API_URL = import.meta.env.VITE_SQLITE_API_URL || '';
@@ -181,11 +182,7 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
           : undefined,
         signal: AbortSignal.timeout(10000),
       });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => null);
-        throw new Error(payload?.error || `HTTP ${response.status}`);
-      }
-      const payload: HealthchecksWidgetData = await response.json();
+      const payload = await readMonitoringJson<HealthchecksWidgetData>(response, 'Healthchecks');
       setData(payload);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch');
@@ -304,13 +301,50 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
     </div>
   );
 
-  const renderError = () => (
-    <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center text-sm text-muted-foreground">
-      <XCircle className="h-5 w-5 text-red-500" />
-      <span>{error}</span>
-      <Button variant="secondary" size="sm" onClick={fetchData}>Retry</Button>
-    </div>
-  );
+  const renderError = () => {
+    if (isTiny) {
+      const tinyError = (
+        <>
+          <XCircle className="h-5 w-5 text-red-500" />
+          <span className="text-[10px] font-medium text-muted-foreground">Error</span>
+        </>
+      );
+
+      if (readOnly) {
+        return (
+          <div className="flex h-full flex-col items-center justify-center gap-1 text-center">
+            {tinyError}
+          </div>
+        );
+      }
+
+      return (
+        <button
+          type="button"
+          className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-md text-center"
+          onClick={() => setShowSettings(true)}
+          aria-label="Open Healthchecks settings"
+        >
+          {tinyError}
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-3 text-center text-sm text-muted-foreground">
+        <XCircle className="h-5 w-5 text-red-500" />
+        <span className="max-w-full break-words">{error}</span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Button variant="secondary" size="sm" onClick={fetchData}>Retry</Button>
+          {!readOnly && (
+            <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
+              Settings
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderEmpty = (message: string) => (
     <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-sm text-muted-foreground">
@@ -584,14 +618,6 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
     </div>
   );
 
-  if (loading && !data) {
-    return <div className={cn('widget-container h-full flex flex-col', isTiny ? 'widget-drag-handle' : '')}>{renderLoading()}</div>;
-  }
-
-  if (error && !data && !shouldShowSetupPrompt) {
-    return <div className={cn('widget-container h-full flex flex-col', isTiny ? 'widget-drag-handle' : '')}>{renderError()}</div>;
-  }
-
   return (
     <div className={cn('widget-container h-full flex flex-col', isTiny ? 'widget-drag-handle' : '')}>
       {!isTiny && !isApp && (
@@ -603,7 +629,9 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
       )}
 
       <div className={cn('flex-1 overflow-hidden', isTiny ? 'p-1' : isApp ? '' : 'p-2 md:p-3')}>
-        {shouldShowSetupPrompt ? renderSetupPrompt()
+        {loading && !data ? renderLoading()
+          : error && !data && !shouldShowSetupPrompt ? renderError()
+          : shouldShowSetupPrompt ? renderSetupPrompt()
           : isTiny ? renderTiny()
           : isShort ? renderShort()
           : isApp ? renderApp()
@@ -612,13 +640,22 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
           : renderDefault()}
       </div>
 
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{localConfig.title || DEFAULT_CONFIG.title} Settings</DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[min(60vh,500px)] overflow-y-auto py-2">
-            <div className="space-y-4 px-1">
+      <WidgetSettingsDialog
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        title={`${localConfig.title || DEFAULT_CONFIG.title} Settings`}
+        description="Configure the Healthchecks instance, API key, and backend endpoint."
+        bodyClassName="py-2"
+        footer={(
+          <WidgetSettingsDialogFooter
+            onDelete={config?.onDelete}
+            deleteLabel="Delete Widget"
+            onCancel={() => setShowSettings(false)}
+            onSave={saveSettings}
+          />
+        )}
+      >
+        <div className="space-y-4 px-1">
               <div className="space-y-2">
                 <Label htmlFor="health-title">Title</Label>
                 <Input
@@ -747,20 +784,7 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
                 />
               </div>
             </div>
-          </div>
-          <DialogFooter>
-            <div className="flex w-full justify-between">
-              {config?.onDelete ? (
-                <Button variant="destructive" onClick={config.onDelete}>Delete Widget</Button>
-              ) : <div />}
-              <div className="ml-auto flex items-center gap-2">
-                <Button variant="outline" onClick={() => setShowSettings(false)}>Cancel</Button>
-                <Button onClick={saveSettings}>Save</Button>
-              </div>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </WidgetSettingsDialog>
     </div>
   );
 };

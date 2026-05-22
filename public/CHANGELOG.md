@@ -1,5 +1,12 @@
 # What's New
 
+## May 22, 2026
+
+### 🐛 Bug Fixes
+• Widget API Errors: Replaced raw JSON parser failures like `Unexpected token '<'` with clear messages when an API endpoint returns HTML, empty content, or invalid JSON.
+• Monitoring Widgets: Uptime Kuma and Healthchecks now keep retry, settings, and delete controls available when their backend endpoint fails.
+• Docker/Self-hosted UX: Better diagnostics for misrouted backend proxies, login pages, or frontend app shells returned from widget API calls.
+
 ## December 27, 2025
 
 ### 🚀 Multi-Dashboard & Sharing
@@ -120,4 +127,4 @@
   - Flight Tracker
   - Geography Quiz
   - GitHub Streak
-  - Pomodoro Timer 
+  - Pomodoro Timer
