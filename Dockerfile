@@ -35,6 +35,9 @@ ARG VITE_SERVICES_BASE_URL="http://localhost"
 # SQLite backend URL for self-hosted mode (e.g., "http://mini:3001/api")
 ARG VITE_SQLITE_API_URL=""
 
+# Build version shown in the footer. Pass `--build-arg VITE_BUILD_HASH=$(git rev-parse --short HEAD)`.
+ARG VITE_BUILD_HASH="docker"
+
 # Create .env file for build time using heredoc for readability
 RUN <<EOF cat > .env
 VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY
@@ -45,6 +48,7 @@ VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID
 VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
 VITE_SERVICES_BASE_URL=$VITE_SERVICES_BASE_URL
 VITE_SQLITE_API_URL=$VITE_SQLITE_API_URL
+VITE_BUILD_HASH=$VITE_BUILD_HASH
 EOF
 
 # Build the application

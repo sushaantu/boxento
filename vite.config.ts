@@ -6,8 +6,14 @@ import { execSync } from 'child_process'
 
 // Get git commit hash for build versioning
 const getGitHash = () => {
+  if (process.env.VITE_BUILD_HASH) {
+    return process.env.VITE_BUILD_HASH
+  }
+
   try {
-    return execSync('git rev-parse --short HEAD').toString().trim()
+    return execSync('git rev-parse --short HEAD', {
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).toString().trim()
   } catch {
     return 'unknown'
   }
