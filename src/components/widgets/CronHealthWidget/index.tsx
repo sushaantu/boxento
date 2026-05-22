@@ -9,6 +9,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
+import { parseJsonResponseText } from '@/lib/jsonResponseGuard';
 import WidgetHeader from '../common/WidgetHeader';
 import { WidgetProps } from '@/types';
 import { CronHealthWidgetConfig, Job, HealthResponse } from './types';
@@ -73,7 +74,8 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
       setError(null);
       const response = await fetch(localConfig.apiUrl);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data: HealthResponse = await response.json();
+      const body = await response.text();
+      const data = parseJsonResponseText<HealthResponse>(body, response);
       setHealthData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch');
