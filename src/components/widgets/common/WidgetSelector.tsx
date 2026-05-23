@@ -1,5 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Calendar, Cloud, Clock, Link, StickyNote, CheckSquare, Timer, DollarSign, BookOpen, Video, Rss, Github, Plane, Globe } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Calendar,
+  Cloud,
+  Clock,
+  Link,
+  StickyNote,
+  CheckSquare,
+  Timer,
+  DollarSign,
+  BookOpen,
+  Video,
+  Rss,
+  Github,
+  Plane,
+  Globe,
+  Home,
+  DoorOpen,
+  Lightbulb,
+  Thermometer,
+  Activity,
+} from 'lucide-react';
 import { WidgetConfig } from '@/types';
 import { Button } from '@/components/ui/button';
 
@@ -45,6 +67,11 @@ const WidgetSelector = ({
       case 'Github': return <Github className="size-4" />;
       case 'Plane': return <Plane className="size-4" />;
       case 'Globe': return <Globe className="size-4" />;
+      case 'Home': return <Home className="size-4" />;
+      case 'DoorOpen': return <DoorOpen className="size-4" />;
+      case 'Lightbulb': return <Lightbulb className="size-4" />;
+      case 'Thermometer': return <Thermometer className="size-4" />;
+      case 'Activity': return <Activity className="size-4" />;
       default: return <Plus className="size-4" />;
     }
   };

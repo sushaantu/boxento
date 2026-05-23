@@ -33,6 +33,11 @@ const RivenWidget = React.lazy(() => import('./RivenWidget/index'));
 const CronHealthWidget = React.lazy(() => import('./CronHealthWidget/index'));
 const KumaWidget = React.lazy(() => import('./KumaWidget/index'));
 const HealthchecksWidget = React.lazy(() => import('./HealthchecksWidget/index'));
+const HomeOverviewWidget = React.lazy(() => import('./HomeOverviewWidget/index'));
+const HomeRoomWidget = React.lazy(() => import('./HomeRoomWidget/index'));
+const HomeLightsWidget = React.lazy(() => import('./HomeLightsWidget/index'));
+const HomeClimateWidget = React.lazy(() => import('./HomeClimateWidget/index'));
+const HomeDeviceHealthWidget = React.lazy(() => import('./HomeDeviceHealthWidget/index'));
 
 // Export widget types
 export * from './CalendarWidget/types';
@@ -66,6 +71,11 @@ export * from './RivenWidget/types';
 export * from './CronHealthWidget/types';
 export * from './KumaWidget/types';
 export * from './HealthchecksWidget/types';
+export * from './HomeOverviewWidget/types';
+export * from './HomeRoomWidget/types';
+export * from './HomeLightsWidget/types';
+export * from './HomeClimateWidget/types';
+export * from './HomeDeviceHealthWidget/types';
 
 // Enhanced Widget Config
 export interface EnhancedWidgetConfig extends WidgetConfig {
@@ -106,6 +116,11 @@ const TINY_READY_WIDGET_TYPES = new Set([
   'riven',
   'kuma',
   'healthchecks',
+  'home-overview',
+  'home-room',
+  'home-lights',
+  'home-climate',
+  'home-device-health',
 ]);
 
 // Widget registry with enhanced metadata
@@ -441,6 +456,61 @@ const BASE_WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     description: 'Display cron and dead-man-switch checks from Healthchecks'
   },
   {
+    type: 'home-overview',
+    name: 'Home Overview',
+    icon: 'Home',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Home',
+    description: 'See lights, climate, security, and health at a glance'
+  },
+  {
+    type: 'home-room',
+    name: 'Room Control',
+    icon: 'DoorOpen',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Home',
+    description: 'Control devices for one Home Assistant room or area'
+  },
+  {
+    type: 'home-lights',
+    name: 'Lights',
+    icon: 'Lightbulb',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 3,
+    category: 'Home',
+    description: 'Toggle and review Home Assistant lights'
+  },
+  {
+    type: 'home-climate',
+    name: 'Climate',
+    icon: 'Thermometer',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 2,
+    defaultHeight: 3,
+    category: 'Home',
+    description: 'Monitor thermostats, fans, humidity, and temperature sensors'
+  },
+  {
+    type: 'home-device-health',
+    name: 'Device Health',
+    icon: 'Activity',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Home',
+    description: 'Track unavailable devices, low batteries, and updates'
+  },
+  {
     type: 'cron-health',
     name: 'System Health',
     icon: 'Activity',
@@ -468,6 +538,7 @@ export const WIDGET_CATEGORIES = [
   { id: 'social', name: 'Social' },
   { id: 'utilities', name: 'Utilities' },
   { id: 'finance', name: 'Finance' },
+  { id: 'home', name: 'Home' },
   { id: 'entertainment', name: 'Entertainment' },
   { id: 'local-services', name: 'Local Services' }
 ];
@@ -511,6 +582,11 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'riven': RivenWidget as unknown as LazyWidgetComponent,
   'kuma': KumaWidget as unknown as LazyWidgetComponent,
   'healthchecks': HealthchecksWidget as unknown as LazyWidgetComponent,
+  'home-overview': HomeOverviewWidget as unknown as LazyWidgetComponent,
+  'home-room': HomeRoomWidget as unknown as LazyWidgetComponent,
+  'home-lights': HomeLightsWidget as unknown as LazyWidgetComponent,
+  'home-climate': HomeClimateWidget as unknown as LazyWidgetComponent,
+  'home-device-health': HomeDeviceHealthWidget as unknown as LazyWidgetComponent,
   'cron-health': CronHealthWidget as unknown as LazyWidgetComponent,
 };
 
