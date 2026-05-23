@@ -25,6 +25,7 @@ const CountdownWidget = React.lazy(() => import('./CountdownWidget/index'));
 const QRCodeWidget = React.lazy(() => import('./QRCodeWidget/index'));
 const ReaderWidget = React.lazy(() => import('./ReaderWidget/index'));
 const ServicesWidget = React.lazy(() => import('./ServicesWidget/index'));
+const TailscaleServeWidget = React.lazy(() => import('./TailscaleServeWidget/index'));
 const OllamaWidget = React.lazy(() => import('./OllamaWidget/index'));
 const PaisaWidget = React.lazy(() => import('./PaisaWidget/index'));
 const JellyfinWidget = React.lazy(() => import('./JellyfinWidget/index'));
@@ -63,6 +64,7 @@ export * from './CountdownWidget/types';
 export * from './QRCodeWidget/types';
 export * from './ReaderWidget/types';
 export * from './ServicesWidget/types';
+export * from './TailscaleServeWidget/types';
 export * from './OllamaWidget/types';
 export * from './PaisaWidget/types';
 export * from './JellyfinWidget/types';
@@ -114,6 +116,7 @@ const TINY_READY_WIDGET_TYPES = new Set([
   'paisa',
   'fava',
   'riven',
+  'tailscale-serve',
   'kuma',
   'healthchecks',
   'home-overview',
@@ -379,6 +382,17 @@ const BASE_WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
     description: 'Monitor and access your self-hosted services'
   },
   {
+    type: 'tailscale-serve',
+    name: 'Tailscale Serve',
+    icon: 'Globe',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Local Services',
+    description: 'View private tailnet URLs exposed with Tailscale Serve'
+  },
+  {
     type: 'ollama',
     name: 'Ollama Chat',
     icon: 'Bot',
@@ -575,6 +589,7 @@ const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
   'qrcode': QRCodeWidget,
   'reader': ReaderWidget,
   'services': ServicesWidget as unknown as LazyWidgetComponent,
+  'tailscale-serve': TailscaleServeWidget as unknown as LazyWidgetComponent,
   'ollama': OllamaWidget as unknown as LazyWidgetComponent,
   'paisa': PaisaWidget as unknown as LazyWidgetComponent,
   'jellyfin': JellyfinWidget as unknown as LazyWidgetComponent,

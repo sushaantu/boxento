@@ -60,6 +60,10 @@ services:
       - NODE_ENV=production
       - PORT=3001
       - DATABASE_PATH=/data/boxento.db
+      - TAILSCALE_CLI_PATH=${TAILSCALE_CLI_PATH:-}
+      - TAILSCALE_SERVE_STATUS_URL=${TAILSCALE_SERVE_STATUS_URL:-}
+      - TAILSCALE_SERVE_STATUS_FILE=${TAILSCALE_SERVE_STATUS_FILE:-}
+      - TAILSCALE_SERVE_STATUS_JSON=${TAILSCALE_SERVE_STATUS_JSON:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
       interval: 30s

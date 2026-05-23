@@ -1,6 +1,9 @@
 import { Hono, type Context } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { execFile } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { promisify } from 'node:util';
 import { getDatabase, closeDatabase } from './db/connection.js';
 
 // Database row types for type safety
@@ -108,9 +111,49 @@ interface HealthchecksRequestBody {
   apiKey?: string;
 }
 
+interface TailscaleServeHandler {
+  Proxy?: string;
+  Text?: string;
+  Path?: string;
+}
+
+interface TailscaleServeWebHost {
+  Handlers?: Record<string, TailscaleServeHandler>;
+}
+
+interface TailscaleServeTcpConfig {
+  HTTP?: boolean;
+  HTTPS?: boolean;
+  TCP?: boolean;
+  ['TLS-terminated TCP']?: boolean;
+}
+
+interface TailscaleServeStatus {
+  TCP?: Record<string, TailscaleServeTcpConfig>;
+  Web?: Record<string, TailscaleServeWebHost>;
+}
+
+interface NormalizedTailscaleServeRoute {
+  id: string;
+  host: string;
+  hostPort: string;
+  port: number | null;
+  path: string;
+  protocol: 'http' | 'https' | 'tcp';
+  publicUrl: string;
+  target: string;
+  targetHost: string | null;
+  targetPort: number | null;
+  targetProtocol: string | null;
+  targetType: 'local' | 'lan' | 'tailnet' | 'orb' | 'remote' | 'text' | 'unknown';
+}
+
 const app = new Hono();
 
 class BadRequestError extends Error {}
+class ServiceUnavailableError extends Error {}
+
+const execFileAsync = promisify(execFile);
 
 const fetchJson = async <T>(url: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(url, {
@@ -171,6 +214,170 @@ const parseKumaStatusPageUrl = (statusPageUrl: string): { baseUrl: string; slug:
   };
 };
 
+const parseMaybePrivateIp = (hostname: string): boolean => {
+  const match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!match) return false;
+
+  const [a, b] = match.slice(1).map(Number);
+  return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+};
+
+const parseHostPort = (hostPort: string): { host: string; port: number | null } => {
+  const bracketedIpv6 = hostPort.match(/^\[([^\]]+)]:(\d+)$/);
+  if (bracketedIpv6) {
+    return {
+      host: bracketedIpv6[1],
+      port: Number(bracketedIpv6[2]),
+    };
+  }
+
+  const colonCount = (hostPort.match(/:/g) ?? []).length;
+  if (colonCount === 1) {
+    const lastColonIndex = hostPort.lastIndexOf(':');
+    const possiblePort = Number(hostPort.slice(lastColonIndex + 1));
+    if (Number.isFinite(possiblePort)) {
+      return {
+        host: hostPort.slice(0, lastColonIndex),
+        port: possiblePort,
+      };
+    }
+  }
+
+  try {
+    const parsed = new URL(`https://${hostPort}`);
+    const port = parsed.port ? Number(parsed.port) : null;
+    return {
+      host: parsed.hostname,
+      port: Number.isFinite(port) ? port : null,
+    };
+  } catch {
+    return { host: hostPort, port: null };
+  }
+};
+
+const normalizeServePath = (path: string): string => {
+  if (!path || path === '/') return '/';
+  const prefixed = path.startsWith('/') ? path : `/${path}`;
+  return prefixed.endsWith('/') ? prefixed.slice(0, -1) : prefixed;
+};
+
+const classifyTarget = (target: string): Pick<NormalizedTailscaleServeRoute, 'targetHost' | 'targetPort' | 'targetProtocol' | 'targetType'> => {
+  if (!target) {
+    return {
+      targetHost: null,
+      targetPort: null,
+      targetProtocol: null,
+      targetType: 'unknown',
+    };
+  }
+
+  if (!target.startsWith('http://') && !target.startsWith('https://')) {
+    return {
+      targetHost: null,
+      targetPort: null,
+      targetProtocol: null,
+      targetType: target.startsWith('text:') ? 'text' : 'unknown',
+    };
+  }
+
+  try {
+    const parsed = new URL(target);
+    const hostname = parsed.hostname;
+    const port = parsed.port ? Number(parsed.port) : null;
+    const targetType: NormalizedTailscaleServeRoute['targetType'] =
+      hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
+        ? 'local'
+        : hostname.endsWith('.orb.local')
+          ? 'orb'
+          : hostname.endsWith('.ts.net')
+            ? 'tailnet'
+            : parseMaybePrivateIp(hostname)
+              ? 'lan'
+              : 'remote';
+
+    return {
+      targetHost: hostname,
+      targetPort: Number.isFinite(port) ? port : null,
+      targetProtocol: parsed.protocol.replace(':', ''),
+      targetType,
+    };
+  } catch {
+    return {
+      targetHost: null,
+      targetPort: null,
+      targetProtocol: null,
+      targetType: 'unknown',
+    };
+  }
+};
+
+const normalizeTailscaleServeStatus = (status: TailscaleServeStatus): NormalizedTailscaleServeRoute[] => {
+  const webEntries = Object.entries(status.Web ?? {});
+
+  return webEntries.flatMap(([hostPort, hostConfig]) => {
+    const { host, port } = parseHostPort(hostPort);
+    const tcpConfig = port != null ? status.TCP?.[String(port)] : undefined;
+    const protocol: NormalizedTailscaleServeRoute['protocol'] = tcpConfig?.HTTPS
+      ? 'https'
+      : tcpConfig?.HTTP
+        ? 'http'
+        : 'tcp';
+    const handlers = Object.entries(hostConfig.Handlers ?? {});
+
+    return handlers.map(([handlerPath, handler]) => {
+      const path = normalizeServePath(handlerPath);
+      const target = handler.Proxy ?? (handler.Text ? 'text:static-response' : handler.Path ?? '');
+      const targetDetails = classifyTarget(target);
+      const publicUrl = `${protocol === 'tcp' ? 'https' : protocol}://${hostPort}${path === '/' ? '/' : path}`;
+
+      return {
+        id: `${hostPort}${path}`,
+        host,
+        hostPort,
+        port,
+        path,
+        protocol: protocol === 'tcp' ? 'https' : protocol,
+        publicUrl,
+        target,
+        ...targetDetails,
+      };
+    });
+  }).sort((a, b) => {
+    const portDiff = (a.port ?? 0) - (b.port ?? 0);
+    return portDiff !== 0 ? portDiff : a.publicUrl.localeCompare(b.publicUrl);
+  });
+};
+
+const getTailscaleServeStatusJson = async (): Promise<TailscaleServeStatus> => {
+  const statusUrl = process.env.TAILSCALE_SERVE_STATUS_URL?.trim();
+  if (statusUrl) {
+    return fetchJson<TailscaleServeStatus>(statusUrl);
+  }
+
+  const statusFile = process.env.TAILSCALE_SERVE_STATUS_FILE?.trim();
+  if (statusFile) {
+    const fileContents = await readFile(statusFile, 'utf8');
+    return JSON.parse(fileContents) as TailscaleServeStatus;
+  }
+
+  const inlineStatus = process.env.TAILSCALE_SERVE_STATUS_JSON?.trim();
+  if (inlineStatus) {
+    return JSON.parse(inlineStatus) as TailscaleServeStatus;
+  }
+
+  try {
+    const cliPath = process.env.TAILSCALE_CLI_PATH?.trim() || 'tailscale';
+    const { stdout } = await execFileAsync(cliPath, ['serve', 'status', '--json'], {
+      timeout: 5000,
+      maxBuffer: 1024 * 1024,
+    });
+    return JSON.parse(stdout) as TailscaleServeStatus;
+  } catch (error) {
+    const detail = error instanceof Error && error.message ? ` ${error.message}` : '';
+    throw new ServiceUnavailableError(`Tailscale Serve status is not available to the Boxento backend.${detail}`);
+  }
+};
+
 // Middleware
 app.use('*', logger());
 app.use('*', cors({
@@ -185,6 +392,50 @@ const db = getDatabase();
 // Health check
 app.get('/api/health', (c) => {
   return c.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/tailscale/serve', async (c) => {
+  try {
+    const status = await getTailscaleServeStatusJson();
+    const routes = normalizeTailscaleServeStatus(status);
+    const summary = routes.reduce(
+      (acc, route) => {
+        acc.total += 1;
+        if (route.protocol === 'https') acc.https += 1;
+        if (route.protocol === 'http') acc.http += 1;
+        if (route.targetType === 'local') acc.local += 1;
+        if (route.targetType === 'lan') acc.lan += 1;
+        if (route.targetType === 'tailnet') acc.tailnet += 1;
+        if (route.targetType === 'orb') acc.orb += 1;
+        return acc;
+      },
+      { total: 0, https: 0, http: 0, local: 0, lan: 0, tailnet: 0, orb: 0 },
+    );
+
+    return c.json({
+      routes,
+      summary,
+      source: process.env.TAILSCALE_SERVE_STATUS_URL
+        ? 'url'
+        : process.env.TAILSCALE_SERVE_STATUS_FILE
+          ? 'file'
+          : process.env.TAILSCALE_SERVE_STATUS_JSON
+            ? 'env'
+            : 'cli',
+      updatedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    if (error instanceof ServiceUnavailableError) {
+      return c.json({
+        error: error.message,
+        setupHint: 'Run the Boxento backend on a host with the Tailscale CLI, or set TAILSCALE_SERVE_STATUS_URL, TAILSCALE_SERVE_STATUS_FILE, or TAILSCALE_SERVE_STATUS_JSON.',
+      }, 503);
+    }
+
+    return c.json({
+      error: error instanceof Error ? error.message : 'Failed to read Tailscale Serve status',
+    }, 502);
+  }
 });
 
 app.on(['GET', 'POST'], '/api/monitoring/kuma', async (c) => {
