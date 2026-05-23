@@ -20,6 +20,17 @@ const EMPTY_REGISTRY: RegistryResults = {
   entities: [],
 };
 
+type RegistryCacheEntry = {
+  expiresAt: number;
+  promise?: Promise<RegistryResults>;
+  value?: RegistryResults;
+};
+
+const REGISTRY_FETCH_TIMEOUT_MS = 8000;
+const REGISTRY_CACHE_TTL_MS = 30 * 60 * 1000;
+const EMPTY_REGISTRY_CACHE_TTL_MS = 60 * 1000;
+const registryCache = new Map<string, RegistryCacheEntry>();
+
 export function normalizeHomeAssistantUrl(value?: string): string {
   const rawValue = (value || '').trim();
   if (!rawValue) return '';
@@ -114,6 +125,39 @@ async function homeAssistantFetch<T = unknown>(
 }
 
 async function fetchRegistrySnapshot(baseUrl: string, token: string): Promise<RegistryResults> {
+  const now = Date.now();
+  const cached = registryCache.get(baseUrl);
+
+  if (cached?.value && cached.expiresAt > now) {
+    return cached.value;
+  }
+
+  if (cached?.promise) {
+    return cached.promise;
+  }
+
+  const promise = fetchRegistrySnapshotUncached(baseUrl, token)
+    .then((value) => {
+      registryCache.set(baseUrl, {
+        value,
+        expiresAt: Date.now() + getRegistryCacheDuration(value),
+      });
+      return value;
+    })
+    .catch((error) => {
+      registryCache.delete(baseUrl);
+      throw error;
+    });
+
+  registryCache.set(baseUrl, {
+    promise,
+    expiresAt: now + REGISTRY_FETCH_TIMEOUT_MS,
+  });
+
+  return promise;
+}
+
+function fetchRegistrySnapshotUncached(baseUrl: string, token: string): Promise<RegistryResults> {
   return new Promise((resolve) => {
     let settled = false;
     let nextId = 1;
@@ -140,7 +184,7 @@ async function fetchRegistrySnapshot(baseUrl: string, token: string): Promise<Re
       ws.send(JSON.stringify({ id, type }));
     };
 
-    const timeoutId = window.setTimeout(() => finish(EMPTY_REGISTRY), 3500);
+    const timeoutId = window.setTimeout(() => finish(EMPTY_REGISTRY), REGISTRY_FETCH_TIMEOUT_MS);
 
     ws.addEventListener('message', (event) => {
       let message: Record<string, unknown>;
@@ -188,6 +232,11 @@ async function fetchRegistrySnapshot(baseUrl: string, token: string): Promise<Re
       if (!settled) finish(EMPTY_REGISTRY);
     });
   });
+}
+
+function getRegistryCacheDuration(value: RegistryResults): number {
+  const hasRegistryData = value.areas.length > 0 || value.devices.length > 0 || value.entities.length > 0;
+  return hasRegistryData ? REGISTRY_CACHE_TTL_MS : EMPTY_REGISTRY_CACHE_TTL_MS;
 }
 
 function createWebSocketUrl(baseUrl: string): string {

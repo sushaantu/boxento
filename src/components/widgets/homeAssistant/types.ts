@@ -25,6 +25,7 @@ export type HomeAssistantAttributes = Record<string, unknown> & {
   unit_of_measurement?: string;
   current_temperature?: number;
   temperature?: number;
+  temperature_unit?: string;
   icon?: string;
 };
 

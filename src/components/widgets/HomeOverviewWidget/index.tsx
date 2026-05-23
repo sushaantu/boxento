@@ -16,6 +16,7 @@ import { HomeAssistantSettingsDialog } from '../homeAssistant/settings';
 import { useHomeAssistantData } from '../homeAssistant/useHomeAssistantData';
 import {
   getHealthIssues,
+  isActiveSecurityEntity,
   isEntityOn,
   selectEntities,
   toPersistedHomeAssistantConfig,
@@ -51,7 +52,7 @@ const HomeOverviewWidget: React.FC<HomeOverviewWidgetProps> = ({ width, height, 
     const climate = selectEntities(snapshot, { domains: ['climate'] });
     const security = selectEntities(snapshot, { domains: ['lock', 'cover', 'binary_sensor', 'alarm_control_panel'] });
     const issues = getHealthIssues(snapshot, appliedConfig.batteryThreshold);
-    const doorsOpen = security.filter((entity) => ['open', 'unlocked', 'triggered'].includes(entity.state)).length;
+    const doorsOpen = security.filter(isActiveSecurityEntity).length;
 
     return {
       lightsOn: lights.filter(isEntityOn).length,

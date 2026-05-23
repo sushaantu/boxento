@@ -17,7 +17,10 @@ import { HomeAssistantSettingsDialog } from '../homeAssistant/settings';
 import { useHomeAssistantData } from '../homeAssistant/useHomeAssistantData';
 import {
   CLIMATE_DOMAINS,
+  formatTemperatureValue,
   getClimateTemperature,
+  getTemperatureUnit,
+  isTemperatureEntity,
   selectEntities,
   toPersistedHomeAssistantConfig,
 } from '../homeAssistant/utils';
@@ -66,13 +69,17 @@ const HomeClimateWidget: React.FC<HomeClimateWidgetProps> = ({ width, height, co
     return [...direct, ...sensors];
   }, [appliedConfig.areaId, appliedConfig.entityIds, snapshot]);
 
-  const temperatures = climateEntities
-    .filter((entity) => entity.domain !== 'sensor' || entity.deviceClass === 'temperature')
+  const temperatureEntities = climateEntities.filter(isTemperatureEntity);
+  const temperatures = temperatureEntities
     .map(getClimateTemperature)
     .filter((value): value is number => typeof value === 'number');
   const averageTemperature = temperatures.length
     ? Math.round(temperatures.reduce((sum, value) => sum + value, 0) / temperatures.length)
     : null;
+  const temperatureUnit = temperatureEntities.map(getTemperatureUnit).find(Boolean);
+  const averageTemperatureLabel = averageTemperature != null
+    ? formatTemperatureValue(averageTemperature, temperatureUnit)
+    : 'n/a';
   const visibleEntities = climateEntities.slice(0, isApp ? 18 : appliedConfig.maxItems || 8);
 
   const resetSettings = () => {
@@ -92,13 +99,13 @@ const HomeClimateWidget: React.FC<HomeClimateWidgetProps> = ({ width, height, co
     if (!visibleEntities.length) return <HomeEmptyState label="No climate devices found" />;
 
     if (isTiny) {
-      return <HomeTinyStatus value={averageTemperature != null ? `${averageTemperature}C` : visibleEntities.length} label="Climate" />;
+      return <HomeTinyStatus value={averageTemperature != null ? averageTemperatureLabel : visibleEntities.length} label="Climate" />;
     }
 
     if (isShort) {
       return (
         <div className="flex h-full min-h-0 items-center gap-2 p-2">
-          <HomeMetricTile compact label="Average" value={averageTemperature != null ? `${averageTemperature}C` : 'n/a'} />
+          <HomeMetricTile compact label="Average" value={averageTemperatureLabel} />
           <HomeMetricTile compact label="Devices" value={climateEntities.length} />
           <HomeRefreshingBadge refreshing={refreshing} />
         </div>
@@ -108,7 +115,7 @@ const HomeClimateWidget: React.FC<HomeClimateWidgetProps> = ({ width, height, co
     return (
       <div className="flex h-full min-h-0 flex-col gap-3 p-3">
         <div className="flex items-center justify-between gap-2">
-          <HomeMetricTile label="Average Temperature" value={averageTemperature != null ? `${averageTemperature}C` : 'n/a'} />
+          <HomeMetricTile label="Average Temperature" value={averageTemperatureLabel} />
           <Thermometer className="size-5 text-muted-foreground" aria-hidden="true" />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">

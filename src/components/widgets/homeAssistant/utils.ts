@@ -11,6 +11,7 @@ import type {
 const UNAVAILABLE_STATES = new Set(['unavailable', 'unknown']);
 const ON_STATES = new Set(['on', 'open', 'opening', 'unlocked', 'home', 'heat', 'cool', 'heat_cool', 'playing']);
 const LOW_BATTERY_CLASSES = new Set(['battery']);
+const OPEN_SECURITY_STATES = new Set(['open', 'unlocked', 'triggered']);
 
 export const LIGHT_DOMAINS = ['light'];
 export const CLIMATE_DOMAINS = ['climate', 'fan', 'humidifier'];
@@ -117,6 +118,10 @@ export function isEntityOn(entity: HomeAssistantEntity): boolean {
   return ON_STATES.has(entity.state);
 }
 
+export function isActiveSecurityEntity(entity: HomeAssistantEntity): boolean {
+  return OPEN_SECURITY_STATES.has(entity.state) || (entity.domain === 'binary_sensor' && isEntityOn(entity));
+}
+
 export function canToggleEntity(entity: HomeAssistantEntity): boolean {
   return ['light', 'switch', 'fan', 'cover', 'lock', 'input_boolean'].includes(entity.domain);
 }
@@ -146,6 +151,19 @@ export function getClimateTemperature(entity: HomeAssistantEntity): number | nul
   if (typeof direct === 'number') return direct;
   if (Number.isFinite(stateNumber)) return stateNumber;
   return null;
+}
+
+export function isTemperatureEntity(entity: HomeAssistantEntity): boolean {
+  return entity.domain !== 'sensor' || entity.deviceClass === 'temperature';
+}
+
+export function getTemperatureUnit(entity: HomeAssistantEntity): string | undefined {
+  const unit = entity.unit || entity.attributes.temperature_unit || entity.attributes.unit_of_measurement;
+  return typeof unit === 'string' ? unit : undefined;
+}
+
+export function formatTemperatureValue(value: number, unit?: string): string {
+  return `${value}${unit || ''}`;
 }
 
 export function getHealthIssues(snapshot: HomeAssistantSnapshot | null, batteryThreshold = 20): HomeAssistantHealthIssue[] {
@@ -235,9 +253,9 @@ function isDiagnosticEntity(entity: HomeAssistantEntity): boolean {
 }
 
 function getEntitySortRank(entity: HomeAssistantEntity): number {
-  if (isUnavailable(entity)) return 0;
-  if (isEntityOn(entity)) return 1;
-  return 2;
+  if (isEntityOn(entity)) return 0;
+  if (isUnavailable(entity)) return 2;
+  return 1;
 }
 
 function severityRank(severity: HomeAssistantHealthIssue['severity']): number {
