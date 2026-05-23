@@ -1,0 +1,182 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  release:
+    name: Publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release tag
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tags must use vMAJOR.MINOR.PATCH, got: $TAG" >&2
+            exit 1
+          fi
+
+          VERSION="${TAG#v}"
+          PREVIOUS_TAG="$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | grep -v "^${TAG}$" | head -n 1 || true)"
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run lint
+        run: bun run lint
+
+      - name: Run unit tests
+        run: bun run test
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke tests
+        run: bun run test:e2e
+
+      - name: Build app
+        run: bun run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+            type=sha,prefix=sha-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate GitHub release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+          VERSION: ${{ steps.release.outputs.version }}
+          PREVIOUS_TAG: ${{ steps.release.outputs.previous_tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          NOTES_ARGS=(-f "tag_name=$TAG" -f "target_commitish=$GITHUB_SHA")
+          if [[ -n "$PREVIOUS_TAG" ]]; then
+            NOTES_ARGS+=(-f "previous_tag_name=$PREVIOUS_TAG")
+          fi
+
+          gh api "repos/$GITHUB_REPOSITORY/releases/generate-notes" "${NOTES_ARGS[@]}" > generated-release-notes.json
+
+          {
+            echo "## Docker"
+            echo
+            echo "Published multi-architecture images for linux/amd64 and linux/arm64:"
+            echo
+            echo "- \`ghcr.io/${GITHUB_REPOSITORY}:${VERSION}\`"
+            echo "- \`ghcr.io/${GITHUB_REPOSITORY}:${VERSION%.*}\`"
+            echo "- \`ghcr.io/${GITHUB_REPOSITORY}:${VERSION%%.*}\`"
+            echo "- \`ghcr.io/${GITHUB_REPOSITORY}:latest\`"
+            echo "- \`ghcr.io/${GITHUB_REPOSITORY}:sha-${GITHUB_SHA::7}\`"
+            echo
+            echo "Update an existing Docker Compose install with:"
+            echo
+            echo "\`\`\`bash"
+            echo "docker compose pull"
+            echo "docker compose up -d"
+            echo "\`\`\`"
+            echo
+            echo "No database or volume migration is required unless noted below."
+            echo
+            echo "## Changes"
+            echo
+            jq -r '.body' generated-release-notes.json
+          } > release-notes.md
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" \
+              --title "Boxento $TAG" \
+              --notes-file release-notes.md \
+              --latest
+          else
+            gh release create "$TAG" \
+              --verify-tag \
+              --title "Boxento $TAG" \
+              --notes-file release-notes.md \
+              --latest
+          fi
+
+      - name: Write release summary
+        run: |
+          {
+            echo "## Boxento ${{ steps.release.outputs.tag }}"
+            echo
+            echo "- GitHub Release published"
+            echo "- Docker tags published: ${{ steps.meta.outputs.tags }}"
+            echo "- Hosted boxento.app deployment is intentionally not part of this workflow"
+          } >> "$GITHUB_STEP_SUMMARY"
