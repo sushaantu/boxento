@@ -147,3 +147,74 @@ test('persists services settings changes from the tablet dialog flow', async ({ 
   await expect(widget).toContainText(serviceToAdd.name);
   await expect(widget).not.toContainText(serviceToDelete);
 });
+
+test('keeps 6x6 services widgets as a simple searchable directory list', async ({ page }) => {
+  await page.route('https://*.test/**', (route) => route.fulfill({ status: 204, body: '' }));
+  await page.setViewportSize({ width: 1512, height: 982 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'services-app',
+        type: 'services',
+        config: {
+          title: 'Services',
+          services: SERVICES,
+          showStatus: true,
+          checkInterval: 60,
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'services-app', x: 0, y: 0, w: 6, h: 6, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="services-app"]');
+  await expect(widget.getByPlaceholder('Filter...')).toBeVisible();
+  await expect(widget.getByRole('button', { name: 'Utilities (1)' })).toBeVisible();
+  await expect(widget.getByRole('button', { name: /Boxento/ })).toBeVisible();
+  await expect(widget.getByText('boxento.test')).toBeVisible();
+  await expect(widget.getByText('Response Time')).toHaveCount(0);
+  await expect(widget.getByRole('link', { name: 'https://boxento.test' })).toHaveCount(0);
+});
+
+test('reserves the services detail pane for truly wide app sizes', async ({ page }) => {
+  await page.route('https://*.test/**', (route) => route.fulfill({ status: 204, body: '' }));
+  await page.setViewportSize({ width: 1512, height: 982 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'services-wide-app',
+        type: 'services',
+        config: {
+          title: 'Services',
+          services: SERVICES,
+          showStatus: true,
+          checkInterval: 60,
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'services-wide-app', x: 0, y: 0, w: 8, h: 6, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="services-wide-app"]');
+  await expect(widget.getByRole('button', { name: 'Utilities' })).toBeVisible();
+  await expect(widget.getByRole('link', { name: 'https://boxento.test' })).toBeVisible();
+  await expect(widget.getByText('Response Time')).toBeVisible();
+
+  const detailFitsWidget = await widget.getByRole('link', { name: 'https://boxento.test' }).evaluate((link) => {
+    const widget = link.closest('.react-grid-item');
+    if (!(widget instanceof HTMLElement)) return false;
+    const widgetRect = widget.getBoundingClientRect();
+    const linkRect = link.getBoundingClientRect();
+    return linkRect.left >= widgetRect.left && linkRect.right <= widgetRect.right;
+  });
+
+  expect(detailFitsWidget).toBe(true);
+});

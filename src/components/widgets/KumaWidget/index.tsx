@@ -406,18 +406,18 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
         key={monitor.id}
         onClick={() => setSelectedMonitorId(monitor.id)}
         className={cn(
-          'w-full rounded-lg border border-border/60 bg-background/40 text-left transition-colors hover:bg-accent/50',
+          'w-full justify-start rounded-lg border border-border/60 bg-background/40 text-left transition-colors hover:bg-accent/50',
           compact ? 'px-2 py-2' : 'px-3 py-2',
           selected && 'border-primary/40 bg-accent/50',
         )}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 space-y-1">
+        <div className="flex w-full min-w-0 items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-2">
               <StatusIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
               <span className="truncate text-sm font-medium text-foreground">{monitor.name}</span>
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="truncate text-xs text-muted-foreground">
               {localConfig.showGroups ? `${monitor.group} · ` : ''}{monitor.type}
             </div>
             {!compact && localConfig.showMessages && monitor.message && (
@@ -451,7 +451,7 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
     const StatusIcon = statusStyle.icon;
 
     return (
-      <div className="flex h-full flex-col gap-4 p-4">
+      <div className="flex h-full min-h-0 flex-col gap-4 overflow-auto p-4">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <StatusIcon className="h-5 w-5 text-muted-foreground" />
