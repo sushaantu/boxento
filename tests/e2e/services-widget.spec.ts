@@ -178,6 +178,10 @@ test('keeps 6x6 services widgets as a simple searchable directory list', async (
   await expect(widget.getByText('boxento.test')).toBeVisible();
   await expect(widget.getByText('Response Time')).toHaveCount(0);
   await expect(widget.getByRole('link', { name: 'https://boxento.test' })).toHaveCount(0);
+
+  await widget.getByRole('button', { name: 'Utilities (1)' }).click();
+  await expect(widget.getByText('1 of 4 services')).toBeVisible();
+  await expect(widget.getByRole('button', { name: /Paisa/ })).toHaveCount(0);
 });
 
 test('reserves the services detail pane for truly wide app sizes', async ({ page }) => {

@@ -329,6 +329,8 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
   }, [localConfig.services, selectedServiceId]);
 
   useEffect(() => {
+    if (!isApp) return;
+
     if (!filteredServices.length) {
       setSelectedServiceId(null);
       return;
@@ -339,7 +341,11 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
         ? current
         : filteredServices[0].id
     );
-  }, [filteredServices]);
+  }, [filteredServices, isApp]);
+
+  const serviceCountLabel = searchQuery || selectedCategory
+    ? `${filteredServices.length} of ${localConfig.services.length} services`
+    : `${localConfig.services.length} services`;
 
   const getGridColumns = (measuredWidth: number) => {
     if (measuredWidth >= 1500) return 5;
@@ -558,7 +564,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
       <Button type="button" variant="ghost" size="none"
         key={service.id}
         onClick={() => openService(service.url)}
-        className="flex w-full justify-start rounded-none border-b border-border/60 px-3 py-3 text-left transition-colors hover:bg-accent"
+        className="flex w-full justify-start rounded-none border-b border-border/60 px-3 py-3 text-left transition-colors hover:bg-accent last:border-b-0"
       >
         <div className="flex w-full min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-card ring-1 ring-border">
@@ -609,7 +615,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
       <div className="space-y-3 px-3 py-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{localConfig.services.length} services</span>
+            <span className="font-medium text-foreground">{serviceCountLabel}</span>
             {localConfig.showStatus && (
               <>
                 <span className="flex items-center gap-1">
@@ -966,19 +972,19 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
         {/* Connection details */}
         <div className="rounded-lg border border-border divide-y divide-border">
           <div className="flex items-start justify-between gap-4 px-4 py-3">
-            <span className="text-sm text-muted-foreground">URL</span>
+            <span className="shrink-0 text-sm text-muted-foreground">URL</span>
             <a
               href={service.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="min-w-0 max-w-[72%] break-all text-right font-mono text-sm text-foreground hover:underline"
+              className="min-w-0 flex-1 break-all text-right font-mono text-sm text-foreground hover:underline"
             >
               {service.url}
             </a>
           </div>
           <div className="flex items-start justify-between gap-4 px-4 py-3">
-            <span className="text-sm text-muted-foreground">Host</span>
-            <span className="min-w-0 max-w-[72%] break-all text-right text-sm text-foreground">{getServiceHost(service.url)}</span>
+            <span className="shrink-0 text-sm text-muted-foreground">Host</span>
+            <span className="min-w-0 flex-1 break-all text-right text-sm text-foreground">{getServiceHost(service.url)}</span>
           </div>
           <div className="flex items-start justify-between gap-4 px-4 py-3">
             <span className="text-sm text-muted-foreground">Port</span>
