@@ -22,6 +22,7 @@ type HomeAssistantWebSocketMessage = {
 type SharedHomeAssistantData = {
   config: HomeAssistantBaseConfig;
   error: string | null;
+  intervalDelayMs?: number;
   intervalId?: number;
   loading: boolean;
   promise?: Promise<void>;
@@ -32,9 +33,9 @@ type SharedHomeAssistantData = {
   realtimeSocket?: WebSocket;
   realtimeStatus: RealtimeStatus;
   realtimeSubscriptionId?: number;
-  refreshIntervalMs: number;
   refreshing: boolean;
   snapshot: HomeAssistantSnapshot | null;
+  subscriberRefreshIntervals: Map<() => void, number>;
   subscribers: Set<() => void>;
 };
 
@@ -55,12 +56,12 @@ export function useHomeAssistantData(config: HomeAssistantBaseConfig) {
   useEffect(() => {
     if (!canFetch || !connectionKey) return undefined;
 
-    const entry = getSharedData(connectionKey, config, refreshIntervalMs);
+    const entry = getSharedData(connectionKey, config);
     entry.config = config;
-    entry.refreshIntervalMs = refreshIntervalMs;
 
     const listener = () => setVersion((current) => current + 1);
     entry.subscribers.add(listener);
+    entry.subscriberRefreshIntervals.set(listener, refreshIntervalMs);
     ensureRefreshInterval(entry);
     ensureRealtimeConnection(entry);
 
@@ -70,14 +71,19 @@ export function useHomeAssistantData(config: HomeAssistantBaseConfig) {
 
     return () => {
       entry.subscribers.delete(listener);
+      entry.subscriberRefreshIntervals.delete(listener);
 
       if (entry.subscribers.size === 0 && entry.intervalId !== undefined) {
         window.clearInterval(entry.intervalId);
         entry.intervalId = undefined;
+        entry.intervalDelayMs = undefined;
       }
 
       if (entry.subscribers.size === 0) {
         disconnectRealtime(entry);
+        sharedDataByConnection.delete(connectionKey);
+      } else {
+        ensureRefreshInterval(entry);
       }
     };
   }, [canFetch, config, connectionKey, refreshIntervalMs]);
@@ -94,24 +100,24 @@ export function useHomeAssistantData(config: HomeAssistantBaseConfig) {
       };
     }
 
-    const entry = getSharedData(connectionKey, config, refreshIntervalMs);
+    const entry = getSharedData(connectionKey, config);
     return {
       error: entry.error,
       loading: entry.loading,
       refreshing: entry.refreshing,
       snapshot: entry.snapshot,
     };
-  }, [canFetch, config, connectionKey, refreshIntervalMs, version]);
+  }, [canFetch, config, connectionKey, version]);
 
   const refresh = useCallback(() => {
     if (!canFetch || !connectionKey) {
       return Promise.resolve();
     }
 
-    const entry = getSharedData(connectionKey, config, refreshIntervalMs);
+    const entry = getSharedData(connectionKey, config);
     entry.config = config;
     return fetchSharedData(entry, 'refresh');
-  }, [canFetch, config, connectionKey, refreshIntervalMs]);
+  }, [canFetch, config, connectionKey]);
 
   return useMemo(() => ({
     snapshot: view.snapshot,
@@ -130,11 +136,7 @@ function getConnectionKey(baseUrlValue?: string, apiTokenValue?: string): string
   return baseUrl && token ? `${baseUrl}::${token}` : '';
 }
 
-function getSharedData(
-  connectionKey: string,
-  config: HomeAssistantBaseConfig,
-  refreshIntervalMs: number
-): SharedHomeAssistantData {
+function getSharedData(connectionKey: string, config: HomeAssistantBaseConfig): SharedHomeAssistantData {
   const existing = sharedDataByConnection.get(connectionKey);
   if (existing) return existing;
 
@@ -145,9 +147,9 @@ function getSharedData(
     realtimeMessageId: 1,
     realtimeReconnectAttempts: 0,
     realtimeStatus: 'idle',
-    refreshIntervalMs,
     refreshing: false,
     snapshot: null,
+    subscriberRefreshIntervals: new Map(),
     subscribers: new Set(),
   };
   sharedDataByConnection.set(connectionKey, next);
@@ -156,13 +158,24 @@ function getSharedData(
 }
 
 function ensureRefreshInterval(entry: SharedHomeAssistantData) {
+  const intervalDelayMs = getSharedRefreshIntervalMs(entry);
+  if (entry.intervalId !== undefined && entry.intervalDelayMs === intervalDelayMs) {
+    return;
+  }
+
   if (entry.intervalId !== undefined) {
     window.clearInterval(entry.intervalId);
   }
 
+  entry.intervalDelayMs = intervalDelayMs;
   entry.intervalId = window.setInterval(() => {
     void fetchSharedData(entry, 'refresh');
-  }, entry.refreshIntervalMs);
+  }, intervalDelayMs);
+}
+
+function getSharedRefreshIntervalMs(entry: SharedHomeAssistantData): number {
+  const intervals = [...entry.subscriberRefreshIntervals.values()];
+  return intervals.length ? Math.min(...intervals) : DEFAULT_REFRESH_INTERVAL * 1000;
 }
 
 function ensureRealtimeConnection(entry: SharedHomeAssistantData) {
@@ -215,8 +228,12 @@ function handleRealtimeMessage(
 ) {
   let message: HomeAssistantWebSocketMessage;
 
+  if (typeof event.data !== 'string') {
+    return;
+  }
+
   try {
-    message = JSON.parse(String(event.data)) as HomeAssistantWebSocketMessage;
+    message = JSON.parse(event.data) as HomeAssistantWebSocketMessage;
   } catch {
     return;
   }

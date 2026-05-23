@@ -12,23 +12,27 @@ const OPTIMISTIC_TOGGLE_TIMEOUT_MS = 10000;
 const DEFAULT_SCOPE = 'home-assistant';
 const optimisticStatesByScope = new Map<string, Map<string, OptimisticEntityState>>();
 const pendingEntityIdsByScope = new Map<string, Set<string>>();
-const listeners = new Set<() => void>();
+const listenersByScope = new Map<string, Set<() => void>>();
 
 export function useHomeAssistantOptimisticStates(
   config: HomeAssistantBaseConfig,
   snapshot: HomeAssistantSnapshot | null
 ) {
-  const scope = useMemo(() => getScopeKey(config.baseUrl), [config.baseUrl]);
+  const scope = useMemo(() => getScopeKey(config.baseUrl, config.apiToken), [config.apiToken, config.baseUrl]);
   const [version, setVersion] = useState(0);
 
   useEffect(() => {
     const listener = () => setVersion((current) => current + 1);
+    const listeners = getScopeListeners(scope);
     listeners.add(listener);
 
     return () => {
       listeners.delete(listener);
+      if (listeners.size === 0) {
+        listenersByScope.delete(scope);
+      }
     };
-  }, []);
+  }, [scope]);
 
   const view = useMemo(() => {
     void version;
@@ -71,8 +75,11 @@ export function useHomeAssistantOptimisticStates(
   };
 }
 
-function getScopeKey(baseUrl?: string): string {
-  return normalizeHomeAssistantUrl(baseUrl) || DEFAULT_SCOPE;
+function getScopeKey(baseUrlValue?: string, apiTokenValue?: string): string {
+  const baseUrl = normalizeHomeAssistantUrl(baseUrlValue);
+  const token = apiTokenValue?.trim();
+
+  return baseUrl && token ? `${baseUrl}::${token}` : DEFAULT_SCOPE;
 }
 
 function readScopeView(scope: string): {
@@ -98,7 +105,7 @@ function setOptimisticEntityState(scope: string, entityId: string, state: string
     state,
     expiresAt: Date.now() + OPTIMISTIC_TOGGLE_TIMEOUT_MS,
   });
-  emitChange();
+  emitScopeChange(scope);
 }
 
 function clearOptimisticEntityState(scope: string, entityId: string) {
@@ -109,7 +116,7 @@ function clearOptimisticEntityState(scope: string, entityId: string) {
     optimisticStatesByScope.delete(scope);
   }
 
-  emitChange();
+  emitScopeChange(scope);
 }
 
 function setPendingEntityState(scope: string, entityId: string, pending: boolean) {
@@ -125,7 +132,7 @@ function setPendingEntityState(scope: string, entityId: string, pending: boolean
     pendingEntityIdsByScope.delete(scope);
   }
 
-  emitChange();
+  emitScopeChange(scope);
 }
 
 function reconcileOptimisticStates(scope: string, snapshot: HomeAssistantSnapshot) {
@@ -148,7 +155,7 @@ function reconcileOptimisticStates(scope: string, snapshot: HomeAssistantSnapsho
   }
 
   if (changed) {
-    emitChange();
+    emitScopeChange(scope);
   }
 }
 
@@ -171,7 +178,7 @@ function expireOptimisticStates(scope: string) {
   }
 
   if (changed) {
-    emitChange();
+    emitScopeChange(scope);
   }
 }
 
@@ -195,6 +202,16 @@ function getPendingEntityIds(scope: string): Set<string> {
   return pendingEntityIds;
 }
 
-function emitChange() {
-  listeners.forEach((listener) => listener());
+function getScopeListeners(scope: string): Set<() => void> {
+  let listeners = listenersByScope.get(scope);
+  if (!listeners) {
+    listeners = new Set();
+    listenersByScope.set(scope, listeners);
+  }
+
+  return listeners;
+}
+
+function emitScopeChange(scope: string) {
+  listenersByScope.get(scope)?.forEach((listener) => listener());
 }

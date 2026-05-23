@@ -188,8 +188,12 @@ function fetchRegistrySnapshotUncached(baseUrl: string, token: string): Promise<
 
     ws.addEventListener('message', (event) => {
       let message: Record<string, unknown>;
+      if (typeof event.data !== 'string') {
+        return;
+      }
+
       try {
-        message = JSON.parse(String(event.data));
+        message = JSON.parse(event.data);
       } catch {
         return;
       }

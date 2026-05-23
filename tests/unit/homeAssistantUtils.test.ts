@@ -190,6 +190,7 @@ describe('Home Assistant widget utilities', () => {
         entities: [{ entity_id: 'light.kitchen', area_id: 'kitchen' }],
       }),
     };
+    const originalRemoteBattery = snapshot.entities.find((entity) => entity.entityId === 'sensor.remote_battery');
 
     const patched = patchHomeAssistantSnapshotState(snapshot, {
       entity_id: 'light.kitchen',
@@ -198,6 +199,7 @@ describe('Home Assistant widget utilities', () => {
     });
 
     expect(patched.states.find((state) => state.entity_id === 'light.kitchen')?.state).toBe('off');
+    expect(patched.entities.find((entity) => entity.entityId === 'sensor.remote_battery')).toBe(originalRemoteBattery);
     expect(patched.entities.find((entity) => entity.entityId === 'light.kitchen')).toMatchObject({
       areaId: 'kitchen',
       areaName: 'Kitchen',

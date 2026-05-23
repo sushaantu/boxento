@@ -153,14 +153,30 @@ export function patchHomeAssistantSnapshotState(
     states.push(nextState);
   }
 
+  const registryEntry = snapshot.registryEntities.find((entity) => entity.entity_id === nextState.entity_id);
+  const entities = found
+    ? snapshot.entities.map((entity) => entity.entityId === nextState.entity_id
+      ? {
+          ...entity,
+          name: getEntityName(nextState, registryEntry),
+          state: nextState.state,
+          attributes: nextState.attributes,
+          deviceClass: getStringAttribute(nextState, 'device_class'),
+          unit: getStringAttribute(nextState, 'unit_of_measurement'),
+          lastChanged: nextState.last_changed,
+          lastUpdated: nextState.last_updated,
+        }
+      : entity)
+    : buildHomeAssistantEntities(states, {
+        areas: snapshot.areas,
+        devices: snapshot.devices,
+        entities: snapshot.registryEntities,
+      });
+
   return {
     ...snapshot,
     states,
-    entities: buildHomeAssistantEntities(states, {
-      areas: snapshot.areas,
-      devices: snapshot.devices,
-      entities: snapshot.registryEntities,
-    }),
+    entities,
     loadedAt: new Date().toISOString(),
   };
 }
