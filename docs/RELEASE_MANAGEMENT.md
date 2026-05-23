@@ -103,4 +103,4 @@ docker compose pull
 docker compose up -d
 ```
 
-If a GitHub Release was published with incorrect notes, edit the release notes rather than deleting the tag. Delete and recreate a tag only when the release artifact itself is wrong and users have not adopted it yet.
+If a GitHub Release was published with incorrect notes, edit the release notes rather than deleting the tag. If the release artifact itself is wrong, publish a new patch version, for example `v1.1.1`, instead of deleting and recreating an existing public tag.
