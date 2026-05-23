@@ -163,7 +163,7 @@ function fetchRegistrySnapshotUncached(baseUrl: string, token: string): Promise<
     let nextId = 1;
     const results: RegistryResults = { ...EMPTY_REGISTRY };
     const pending = new Map<number, keyof RegistryResults>();
-    const ws = new WebSocket(createWebSocketUrl(baseUrl));
+    const ws = new WebSocket(createHomeAssistantWebSocketUrl(baseUrl));
 
     const finish = (value: RegistryResults) => {
       if (settled) return;
@@ -239,7 +239,7 @@ function getRegistryCacheDuration(value: RegistryResults): number {
   return hasRegistryData ? REGISTRY_CACHE_TTL_MS : EMPTY_REGISTRY_CACHE_TTL_MS;
 }
 
-function createWebSocketUrl(baseUrl: string): string {
+export function createHomeAssistantWebSocketUrl(baseUrl: string): string {
   const parsed = new URL(baseUrl);
   parsed.protocol = parsed.protocol === 'https:' ? 'wss:' : 'ws:';
   parsed.pathname = `${parsed.pathname.replace(/\/+$/, '')}/api/websocket`;

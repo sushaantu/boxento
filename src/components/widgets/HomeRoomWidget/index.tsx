@@ -15,13 +15,16 @@ import {
   HomeTinyStatus,
 } from '../homeAssistant/components';
 import { HomeAssistantSettingsDialog } from '../homeAssistant/settings';
+import { useHomeAssistantOptimisticStates } from '../homeAssistant/optimisticEntityStates';
 import { useHomeAssistantData } from '../homeAssistant/useHomeAssistantData';
 import {
   ROOM_DOMAINS,
+  applyEntityStateOverrides,
   canToggleEntity,
   getAreaName,
-  getToggleService,
+  getToggleAction,
   isEntityOn,
+  removeRedundantAggregateEntities,
   selectEntities,
   toPersistedHomeAssistantConfig,
 } from '../homeAssistant/utils';
@@ -48,8 +51,14 @@ const HomeRoomWidget: React.FC<HomeRoomWidgetProps> = ({ width, height, config }
   const appliedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
   const [draftConfig, setDraftConfig] = useState<HomeRoomWidgetConfig>(appliedConfig);
   const [showSettings, setShowSettings] = useState(false);
-  const [pendingEntityId, setPendingEntityId] = useState<string | null>(null);
   const { snapshot, loading, refreshing, error, canFetch, refresh } = useHomeAssistantData(appliedConfig);
+  const {
+    optimisticStateValues,
+    pendingEntityIds,
+    setOptimisticState,
+    clearOptimisticState,
+    setPendingEntity,
+  } = useHomeAssistantOptimisticStates(appliedConfig, snapshot);
 
   useEffect(() => {
     setDraftConfig(appliedConfig);
@@ -58,29 +67,36 @@ const HomeRoomWidget: React.FC<HomeRoomWidgetProps> = ({ width, height, config }
   const roomEntities = useMemo(() => {
     const explicitAreaId = appliedConfig.areaId || inferPrimaryAreaId(snapshot);
 
-    return selectEntities(snapshot, {
+    const selected = selectEntities(snapshot, {
       domains: ROOM_DOMAINS,
       areaId: explicitAreaId,
       entityIds: appliedConfig.entityIds,
     });
-  }, [appliedConfig.areaId, appliedConfig.entityIds, snapshot]);
+
+    return removeRedundantAggregateEntities(applyEntityStateOverrides(selected, optimisticStateValues));
+  }, [appliedConfig.areaId, appliedConfig.entityIds, optimisticStateValues, snapshot]);
 
   const roomName = getAreaName(snapshot, appliedConfig.areaId || inferPrimaryAreaId(snapshot));
   const visibleEntities = roomEntities.slice(0, isApp ? 18 : appliedConfig.maxItems || 8);
   const activeCount = roomEntities.filter(isEntityOn).length;
 
   const toggleEntity = useCallback(async (entity: HomeAssistantEntity) => {
-    const service = getToggleService(entity);
-    if (!service || readOnly) return;
+    const action = getToggleAction(entity);
+    if (!action || readOnly) return;
+
+    setOptimisticState(entity.entityId, action.nextState);
+    setPendingEntity(entity.entityId, true);
 
     try {
-      setPendingEntityId(entity.entityId);
-      await callHomeAssistantService(appliedConfig, service.domain, service.service, entity.entityId);
+      await callHomeAssistantService(appliedConfig, action.domain, action.service, entity.entityId);
       await refresh();
+    } catch (toggleError) {
+      clearOptimisticState(entity.entityId);
+      console.error('Failed to toggle Home Assistant device', toggleError);
     } finally {
-      setPendingEntityId(null);
+      setPendingEntity(entity.entityId, false);
     }
-  }, [appliedConfig, readOnly, refresh]);
+  }, [appliedConfig, clearOptimisticState, readOnly, refresh, setOptimisticState, setPendingEntity]);
 
   const resetSettings = () => {
     setDraftConfig(appliedConfig);
@@ -129,7 +145,7 @@ const HomeRoomWidget: React.FC<HomeRoomWidgetProps> = ({ width, height, config }
               entity={entity}
               dense={isCompact}
               action={canToggleEntity(entity) && !readOnly ? () => toggleEntity(entity) : undefined}
-              actionDisabled={pendingEntityId === entity.entityId}
+              actionDisabled={pendingEntityIds.has(entity.entityId)}
             />
           ))}
         </div>

@@ -177,36 +177,74 @@ VITE_ALLOWED_HOSTS=your-domain.com,another-domain.com docker compose up -d
 
 ### Widget Gallery
 
-Boxento comes with a diverse collection of widgets organized by category:
+Boxento comes with a diverse collection of widgets organized by the same
+categories you see in **Add Widget**:
 
 #### Productivity
-- **Todo Widget**: Track tasks and stay organized
-- **Todoist Widget**: Sync with your Todoist tasks
-- **Calendar Widget**: Display upcoming events
-- **Notes Widget**: Capture thoughts and ideas
-- **Pomodoro Timer**: Boost productivity with time management
-- **Habit Tracker**: Build daily habits with streak tracking
+
+- **Calendar**: Display upcoming events and appointments
+- **Quick Links**: Save and quickly access favorite links
+- **Notes**: Take and save quick notes
+- **Todo List**: Manage tasks and to-dos
+- **Pomodoro Timer**: Time management with the Pomodoro Technique
+- **GitHub Streak**: Track GitHub contribution streaks and activity
+- **Todoist Tasks**: View and manage Todoist tasks
+- **Habit Tracker**: Track daily habits and build streaks
 - **Countdown**: Count down to important events and dates
-- **GitHub Streak Tracker**: Monitor your GitHub activity
 
 #### Information
-- **Weather Widget**: Check current conditions and forecasts
-- **World Clocks Widget**: Bauhaus-inspired clocks across time zones
-- **RSS Feed Widget**: Stay updated with favorite content
-- **Readwise Widget**: Access your reading highlights
-- **Year Progress**: Visualize progress through the year
 
-#### Finance & Travel
-- **Currency Converter**: Live exchange rates
-- **UF (Chile) Widget**: Display UF value in CLP
+- **Weather**: Display current weather and forecast
+- **World Clocks**: Display time across different time zones
+- **Readwise Highlights**: Display highlights from Readwise
+- **RSS Feed**: Display feeds from favorite websites
+- **Year Progress**: Visualize progress through the year
+- **Reader**: Surface articles from Readwise Reader
+
+#### Finance
+
+- **Currency Converter**: Convert currencies using live exchange rates
+- **UF (Chile)**: Display UF value in CLP
+
+#### Travel
+
 - **Flight Tracker**: Monitor real-time flight status
 
-#### Entertainment & Utilities
-- **YouTube Widget**: Watch videos directly
+#### Education
+
 - **Geography Quiz**: Test your knowledge
-- **Quick Links**: Organize favorite websites
-- **QR Code Generator**: Generate QR codes from text or URLs
-- **Embed Widget**: Embed external content via iframe or images
+
+#### Entertainment
+
+- **YouTube Video**: Watch YouTube videos directly on your dashboard
+
+#### Utilities
+
+- **Embed**: Embed external content via iframe URL
+- **QR Code**: Generate QR codes from text or URLs
+
+#### Local Services
+
+- **Services**: Monitor and access self-hosted services
+- **Ollama Chat**: Chat with local Ollama AI models
+- **Paisa Finance**: View net worth and asset breakdown from Paisa
+- **Jellyfin**: View now playing and recently added media from Jellyfin
+- **Fava**: View Beancount balance sheet and income statement
+- **Riven**: Quick access to Riven media automation
+- **System Health**: Monitor cron jobs and launchd services
+
+#### Self-hosted
+
+- **Uptime Kuma**: Display service monitors from an Uptime Kuma status feed
+- **Healthchecks**: Display cron and dead-man-switch checks from Healthchecks
+
+#### Home
+
+- **Home Overview**: See lights, climate, security, and device health at a glance
+- **Room Control**: Control devices for one Home Assistant room or area
+- **Lights**: Toggle and review Home Assistant lights with realtime status
+- **Climate**: Monitor thermostats, fans, humidity, and temperature sensors
+- **Device Health**: Track unavailable devices, low batteries, and updates
 
 ### Customization
 

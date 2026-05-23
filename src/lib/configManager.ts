@@ -89,13 +89,26 @@ export const configManager = {
       const decryptedConfigs: WidgetConfigStore = {};
 
       for (const widgetId of Object.keys(configs)) {
-        const decryptedConfig = await encryptionUtils.processObjectFromStorage(
-          configs[widgetId],
-          DEFAULT_SENSITIVE_FIELDS
-        );
+        try {
+          const decryptedConfig = await encryptionUtils.processObjectFromStorage(
+            configs[widgetId],
+            DEFAULT_SENSITIVE_FIELDS
+          );
 
-        // Restore Date objects
-        decryptedConfigs[widgetId] = configManager.restoreDates(decryptedConfig);
+          // Restore Date objects
+          decryptedConfigs[widgetId] = configManager.restoreDates(decryptedConfig);
+        } catch (error) {
+          console.warn(`Skipping undecryptable sensitive fields for widget config "${widgetId}"`, error);
+
+          const fallbackConfig = { ...configs[widgetId] };
+          for (const field of DEFAULT_SENSITIVE_FIELDS) {
+            if (typeof fallbackConfig[field] === 'string' && (fallbackConfig[field] as string).startsWith('enc:v1:')) {
+              delete fallbackConfig[field];
+            }
+          }
+
+          decryptedConfigs[widgetId] = configManager.restoreDates(fallbackConfig);
+        }
       }
 
       return decryptedConfigs;

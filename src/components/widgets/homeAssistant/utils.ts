@@ -12,6 +12,7 @@ const UNAVAILABLE_STATES = new Set(['unavailable', 'unknown']);
 const ON_STATES = new Set(['on', 'open', 'opening', 'unlocked', 'home', 'heat', 'cool', 'heat_cool', 'playing']);
 const LOW_BATTERY_CLASSES = new Set(['battery']);
 const OPEN_SECURITY_STATES = new Set(['open', 'unlocked', 'triggered']);
+const ENTITY_NAME_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 
 export const LIGHT_DOMAINS = ['light'];
 export const CLIMATE_DOMAINS = ['climate', 'fan', 'humidifier'];
@@ -102,7 +103,7 @@ export function selectEntities(
     .filter((entity) => domains.size === 0 || domains.has(entity.domain))
     .filter((entity) => !options.areaId || entity.areaId === options.areaId)
     .filter((entity) => selectedIds.size === 0 || selectedIds.has(entity.entityId))
-    .sort((a, b) => getEntitySortRank(a) - getEntitySortRank(b) || a.name.localeCompare(b.name));
+    .sort((a, b) => ENTITY_NAME_COLLATOR.compare(a.name, b.name) || a.entityId.localeCompare(b.entityId));
 }
 
 export function getAreaName(snapshot: HomeAssistantSnapshot | null, areaId?: string): string {
@@ -118,6 +119,61 @@ export function isEntityOn(entity: HomeAssistantEntity): boolean {
   return ON_STATES.has(entity.state);
 }
 
+export type HomeAssistantEntityStateOverrides = Record<string, string>;
+
+export function applyEntityStateOverrides(
+  entities: HomeAssistantEntity[],
+  overrides: HomeAssistantEntityStateOverrides
+): HomeAssistantEntity[] {
+  if (Object.keys(overrides).length === 0) {
+    return entities;
+  }
+
+  return entities.map((entity) => {
+    const nextState = overrides[entity.entityId];
+    return nextState ? { ...entity, state: nextState } : entity;
+  });
+}
+
+export function patchHomeAssistantSnapshotState(
+  snapshot: HomeAssistantSnapshot,
+  nextState: HomeAssistantState
+): HomeAssistantSnapshot {
+  let found = false;
+  const states = snapshot.states.map((state) => {
+    if (state.entity_id !== nextState.entity_id) {
+      return state;
+    }
+
+    found = true;
+    return nextState;
+  });
+
+  if (!found) {
+    states.push(nextState);
+  }
+
+  return {
+    ...snapshot,
+    states,
+    entities: buildHomeAssistantEntities(states, {
+      areas: snapshot.areas,
+      devices: snapshot.devices,
+      entities: snapshot.registryEntities,
+    }),
+    loadedAt: new Date().toISOString(),
+  };
+}
+
+export function removeRedundantAggregateEntities(entities: HomeAssistantEntity[]): HomeAssistantEntity[] {
+  const selectedEntityIds = new Set(entities.map((entity) => entity.entityId));
+
+  return entities.filter((entity) => {
+    const groupedEntityIds = getGroupedEntityIds(entity);
+    return groupedEntityIds.length === 0 || !groupedEntityIds.some((entityId) => selectedEntityIds.has(entityId));
+  });
+}
+
 export function isActiveSecurityEntity(entity: HomeAssistantEntity): boolean {
   return OPEN_SECURITY_STATES.has(entity.state) || (entity.domain === 'binary_sensor' && isEntityOn(entity));
 }
@@ -126,20 +182,44 @@ export function canToggleEntity(entity: HomeAssistantEntity): boolean {
   return ['light', 'switch', 'fan', 'cover', 'lock', 'input_boolean'].includes(entity.domain);
 }
 
-export function getToggleService(entity: HomeAssistantEntity): { domain: string; service: string } | null {
+export function getToggleAction(entity: HomeAssistantEntity): { domain: string; service: string; nextState: string } | null {
   if (entity.domain === 'cover') {
-    return { domain: 'cover', service: entity.state === 'open' ? 'close_cover' : 'open_cover' };
+    const shouldClose = entity.state === 'open' || entity.state === 'opening';
+    return {
+      domain: 'cover',
+      service: shouldClose ? 'close_cover' : 'open_cover',
+      nextState: shouldClose ? 'closed' : 'open',
+    };
   }
 
   if (entity.domain === 'lock') {
-    return { domain: 'lock', service: entity.state === 'unlocked' ? 'lock' : 'unlock' };
+    const shouldLock = entity.state === 'unlocked';
+    return {
+      domain: 'lock',
+      service: shouldLock ? 'lock' : 'unlock',
+      nextState: shouldLock ? 'locked' : 'unlocked',
+    };
   }
 
   if (['light', 'switch', 'fan', 'input_boolean'].includes(entity.domain)) {
-    return { domain: entity.domain, service: 'toggle' };
+    const shouldTurnOff = isEntityOn(entity);
+    return {
+      domain: entity.domain,
+      service: shouldTurnOff ? 'turn_off' : 'turn_on',
+      nextState: shouldTurnOff ? 'off' : 'on',
+    };
   }
 
   return null;
+}
+
+export function getToggleService(entity: HomeAssistantEntity): { domain: string; service: string } | null {
+  const action = getToggleAction(entity);
+  return action ? { domain: action.domain, service: action.service } : null;
+}
+
+export function getOptimisticToggleState(entity: HomeAssistantEntity): string {
+  return getToggleAction(entity)?.nextState || entity.state;
 }
 
 export function getClimateTemperature(entity: HomeAssistantEntity): number | null {
@@ -252,10 +332,14 @@ function isDiagnosticEntity(entity: HomeAssistantEntity): boolean {
   return entity.entityCategory === 'diagnostic' || entity.entityCategory === 'config';
 }
 
-function getEntitySortRank(entity: HomeAssistantEntity): number {
-  if (isEntityOn(entity)) return 0;
-  if (isUnavailable(entity)) return 2;
-  return 1;
+function getGroupedEntityIds(entity: HomeAssistantEntity): string[] {
+  const groupedEntityIds = entity.attributes.entity_id;
+
+  if (Array.isArray(groupedEntityIds)) {
+    return groupedEntityIds.filter((entityId): entityId is string => typeof entityId === 'string');
+  }
+
+  return typeof groupedEntityIds === 'string' ? [groupedEntityIds] : [];
 }
 
 function severityRank(severity: HomeAssistantHealthIssue['severity']): number {

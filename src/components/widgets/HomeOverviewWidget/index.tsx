@@ -13,11 +13,14 @@ import {
   HomeTinyStatus,
 } from '../homeAssistant/components';
 import { HomeAssistantSettingsDialog } from '../homeAssistant/settings';
+import { useHomeAssistantOptimisticStates } from '../homeAssistant/optimisticEntityStates';
 import { useHomeAssistantData } from '../homeAssistant/useHomeAssistantData';
 import {
+  applyEntityStateOverrides,
   getHealthIssues,
   isActiveSecurityEntity,
   isEntityOn,
+  removeRedundantAggregateEntities,
   selectEntities,
   toPersistedHomeAssistantConfig,
 } from '../homeAssistant/utils';
@@ -42,13 +45,16 @@ const HomeOverviewWidget: React.FC<HomeOverviewWidgetProps> = ({ width, height, 
   const [draftConfig, setDraftConfig] = useState<HomeOverviewWidgetConfig>(appliedConfig);
   const [showSettings, setShowSettings] = useState(false);
   const { snapshot, loading, refreshing, error, canFetch, refresh } = useHomeAssistantData(appliedConfig);
+  const { optimisticStateValues } = useHomeAssistantOptimisticStates(appliedConfig, snapshot);
 
   useEffect(() => {
     setDraftConfig(appliedConfig);
   }, [appliedConfig]);
 
   const summary = useMemo(() => {
-    const lights = selectEntities(snapshot, { domains: ['light'] });
+    const lights = removeRedundantAggregateEntities(
+      applyEntityStateOverrides(selectEntities(snapshot, { domains: ['light'] }), optimisticStateValues)
+    );
     const climate = selectEntities(snapshot, { domains: ['climate'] });
     const security = selectEntities(snapshot, { domains: ['lock', 'cover', 'binary_sensor', 'alarm_control_panel'] });
     const issues = getHealthIssues(snapshot, appliedConfig.batteryThreshold);
@@ -63,7 +69,7 @@ const HomeOverviewWidget: React.FC<HomeOverviewWidgetProps> = ({ width, height, 
       issues: issues.slice(0, isApp ? 12 : 5),
       entityCount: snapshot?.entities.length || 0,
     };
-  }, [appliedConfig.batteryThreshold, isApp, snapshot]);
+  }, [appliedConfig.batteryThreshold, isApp, optimisticStateValues, snapshot]);
 
   const resetSettings = () => {
     setDraftConfig(appliedConfig);

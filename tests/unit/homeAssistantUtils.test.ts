@@ -6,8 +6,11 @@ import {
   formatTemperatureValue,
   getHealthIssues,
   getTemperatureUnit,
+  getToggleAction,
   isActiveSecurityEntity,
+  patchHomeAssistantSnapshotState,
   parseEntityIds,
+  removeRedundantAggregateEntities,
   selectEntities,
 } from '@/components/widgets/homeAssistant/utils';
 
@@ -103,25 +106,122 @@ describe('Home Assistant widget utilities', () => {
     ]);
   });
 
-  it('sorts active entities before idle and unavailable entities', () => {
+  it('keeps entity ordering stable across state changes', () => {
+    const orderedStates: HomeAssistantState[] = [
+      {
+        entity_id: 'light.hue_candle_2',
+        state: 'on',
+        attributes: { friendly_name: 'Hue candle 2' },
+      },
+      {
+        entity_id: 'light.hue_candle_10',
+        state: 'off',
+        attributes: { friendly_name: 'Hue candle 10' },
+      },
+      {
+        entity_id: 'light.hue_candle_1',
+        state: 'off',
+        attributes: { friendly_name: 'Hue candle 1' },
+      },
+    ];
     const snapshot = {
       loadedAt: new Date().toISOString(),
-      states,
+      states: orderedStates,
       areas: [],
       devices: [],
       registryEntities: [],
-      entities: buildHomeAssistantEntities(states, {
+      entities: buildHomeAssistantEntities(orderedStates, {
         areas: [],
         devices: [],
         entities: [],
       }),
     };
 
-    expect(selectEntities(snapshot, { domains: ['light', 'switch'] }).map((entity) => entity.entityId)).toEqual([
-      'light.kitchen',
-      'light.living_room',
-      'switch.router',
+    expect(selectEntities(snapshot, { domains: ['light'] }).map((entity) => entity.entityId)).toEqual([
+      'light.hue_candle_1',
+      'light.hue_candle_2',
+      'light.hue_candle_10',
     ]);
+  });
+
+  it('removes aggregate entities when their members are already present', () => {
+    const groupStates: HomeAssistantState[] = [
+      {
+        entity_id: 'light.hue_candle_1',
+        state: 'off',
+        attributes: { friendly_name: 'Hue candle 1' },
+      },
+      {
+        entity_id: 'light.hue_candle_2',
+        state: 'off',
+        attributes: { friendly_name: 'Hue candle 2' },
+      },
+      {
+        entity_id: 'light.living_room',
+        state: 'off',
+        attributes: {
+          friendly_name: 'Living room',
+          entity_id: ['light.hue_candle_1', 'light.hue_candle_2'],
+        },
+      },
+    ];
+    const entities = buildHomeAssistantEntities(groupStates, {
+      areas: [],
+      devices: [],
+      entities: [],
+    });
+
+    expect(removeRedundantAggregateEntities(entities).map((entity) => entity.entityId)).toEqual([
+      'light.hue_candle_1',
+      'light.hue_candle_2',
+    ]);
+  });
+
+  it('patches snapshots from realtime Home Assistant state events', () => {
+    const snapshot = {
+      loadedAt: new Date().toISOString(),
+      states,
+      areas: [{ area_id: 'kitchen', name: 'Kitchen' }],
+      devices: [],
+      registryEntities: [{ entity_id: 'light.kitchen', area_id: 'kitchen' }],
+      entities: buildHomeAssistantEntities(states, {
+        areas: [{ area_id: 'kitchen', name: 'Kitchen' }],
+        devices: [],
+        entities: [{ entity_id: 'light.kitchen', area_id: 'kitchen' }],
+      }),
+    };
+
+    const patched = patchHomeAssistantSnapshotState(snapshot, {
+      entity_id: 'light.kitchen',
+      state: 'off',
+      attributes: { friendly_name: 'Kitchen Light' },
+    });
+
+    expect(patched.states.find((state) => state.entity_id === 'light.kitchen')?.state).toBe('off');
+    expect(patched.entities.find((entity) => entity.entityId === 'light.kitchen')).toMatchObject({
+      areaId: 'kitchen',
+      areaName: 'Kitchen',
+      state: 'off',
+    });
+  });
+
+  it('uses explicit service calls for deterministic toggles', () => {
+    const entities = buildHomeAssistantEntities(states, {
+      areas: [],
+      devices: [],
+      entities: [],
+    });
+
+    expect(getToggleAction(entities.find((entity) => entity.entityId === 'light.kitchen')!)).toMatchObject({
+      domain: 'light',
+      service: 'turn_off',
+      nextState: 'off',
+    });
+    expect(getToggleAction(entities.find((entity) => entity.entityId === 'light.living_room')!)).toMatchObject({
+      domain: 'light',
+      service: 'turn_on',
+      nextState: 'on',
+    });
   });
 
   it('counts active binary sensors as security activity', () => {

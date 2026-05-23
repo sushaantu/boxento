@@ -17,10 +17,14 @@ import {
   HomeTinyStatus,
 } from '../homeAssistant/components';
 import { HomeAssistantSettingsDialog } from '../homeAssistant/settings';
+import { useHomeAssistantOptimisticStates } from '../homeAssistant/optimisticEntityStates';
 import { useHomeAssistantData } from '../homeAssistant/useHomeAssistantData';
 import {
   LIGHT_DOMAINS,
+  applyEntityStateOverrides,
+  getToggleAction,
   isEntityOn,
+  removeRedundantAggregateEntities,
   selectEntities,
   toPersistedHomeAssistantConfig,
 } from '../homeAssistant/utils';
@@ -48,8 +52,14 @@ const HomeLightsWidget: React.FC<HomeLightsWidgetProps> = ({ width, height, conf
   const appliedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
   const [draftConfig, setDraftConfig] = useState<HomeLightsWidgetConfig>(appliedConfig);
   const [showSettings, setShowSettings] = useState(false);
-  const [pendingEntityId, setPendingEntityId] = useState<string | null>(null);
   const { snapshot, loading, refreshing, error, canFetch, refresh } = useHomeAssistantData(appliedConfig);
+  const {
+    optimisticStateValues,
+    pendingEntityIds,
+    setOptimisticState,
+    clearOptimisticState,
+    setPendingEntity,
+  } = useHomeAssistantOptimisticStates(appliedConfig, snapshot);
 
   useEffect(() => {
     setDraftConfig(appliedConfig);
@@ -61,24 +71,32 @@ const HomeLightsWidget: React.FC<HomeLightsWidgetProps> = ({ width, height, conf
       areaId: appliedConfig.areaId,
       entityIds: appliedConfig.entityIds,
     });
+    const withOptimisticState = applyEntityStateOverrides(selected, optimisticStateValues);
+    const withoutAggregateDuplicates = removeRedundantAggregateEntities(withOptimisticState);
 
-    return appliedConfig.showOnlyOn ? selected.filter(isEntityOn) : selected;
-  }, [appliedConfig.areaId, appliedConfig.entityIds, appliedConfig.showOnlyOn, snapshot]);
+    return appliedConfig.showOnlyOn ? withoutAggregateDuplicates.filter(isEntityOn) : withoutAggregateDuplicates;
+  }, [appliedConfig.areaId, appliedConfig.entityIds, appliedConfig.showOnlyOn, optimisticStateValues, snapshot]);
 
   const onCount = lights.filter(isEntityOn).length;
   const visibleLights = lights.slice(0, isApp ? 24 : appliedConfig.maxItems || 10);
 
   const toggleLight = useCallback(async (entity: HomeAssistantEntity) => {
-    if (readOnly) return;
+    const action = getToggleAction(entity);
+    if (!action || readOnly) return;
+
+    setOptimisticState(entity.entityId, action.nextState);
+    setPendingEntity(entity.entityId, true);
 
     try {
-      setPendingEntityId(entity.entityId);
-      await callHomeAssistantService(appliedConfig, 'light', 'toggle', entity.entityId);
+      await callHomeAssistantService(appliedConfig, action.domain, action.service, entity.entityId);
       await refresh();
+    } catch (toggleError) {
+      clearOptimisticState(entity.entityId);
+      console.error('Failed to toggle Home Assistant light', toggleError);
     } finally {
-      setPendingEntityId(null);
+      setPendingEntity(entity.entityId, false);
     }
-  }, [appliedConfig, readOnly, refresh]);
+  }, [appliedConfig, clearOptimisticState, readOnly, refresh, setOptimisticState, setPendingEntity]);
 
   const resetSettings = () => {
     setDraftConfig(appliedConfig);
@@ -110,7 +128,7 @@ const HomeLightsWidget: React.FC<HomeLightsWidgetProps> = ({ width, height, conf
               type="button"
               size="sm"
               variant={isEntityOn(light) ? 'default' : 'outline'}
-              disabled={readOnly || pendingEntityId === light.entityId}
+              disabled={readOnly || pendingEntityIds.has(light.entityId)}
               onClick={() => toggleLight(light)}
               className="h-8 min-w-0 shrink truncate px-2 text-xs"
             >
@@ -134,7 +152,7 @@ const HomeLightsWidget: React.FC<HomeLightsWidgetProps> = ({ width, height, conf
               entity={light}
               dense={isCompact}
               action={readOnly ? undefined : () => toggleLight(light)}
-              actionDisabled={pendingEntityId === light.entityId}
+              actionDisabled={pendingEntityIds.has(light.entityId)}
             />
           ))}
         </div>
