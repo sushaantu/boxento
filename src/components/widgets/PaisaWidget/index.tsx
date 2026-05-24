@@ -26,7 +26,7 @@ import {
   Home,
   Car,
   CreditCard,
-  Settings,
+  Settings2,
   RefreshCw,
   ArrowUpRight,
   ArrowDownRight,
@@ -265,7 +265,7 @@ const PaisaWidget: React.FC<PaisaWidgetProps> = ({ width, height, config }) => {
           onSettingsClick={readOnly ? undefined : () => handleSettingsOpen(true)}
         />
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-          <Settings className="h-8 w-8" />
+          <Settings2 className="h-8 w-8" />
           <p className="text-sm">Configure Paisa URL to get started</p>
           {!readOnly && (
             <Button variant="outline" size="sm" onClick={() => handleSettingsOpen(true)}>

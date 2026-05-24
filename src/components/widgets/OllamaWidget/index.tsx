@@ -21,7 +21,7 @@ import {
 import WidgetHeader from '../common/WidgetHeader';
 import { OllamaWidgetConfig, OllamaWidgetProps, ChatMessage, OllamaModel } from './types';
 import { cn } from '@/lib/utils';
-import { Bot, Send, Loader2, AlertCircle, Trash2, Settings, MessageSquare, Cpu } from 'lucide-react';
+import { Bot, Send, Loader2, AlertCircle, Trash2, Settings2, MessageSquare, Cpu } from 'lucide-react';
 
 const defaultConfig: OllamaWidgetConfig = {
   title: 'Ollama',
@@ -732,7 +732,7 @@ const OllamaWidget: React.FC<OllamaWidgetProps> = ({ width, height, config }) =>
           onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
         />
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-          <Settings className="h-8 w-8" />
+          <Settings2 className="h-8 w-8" />
           <p className="text-sm">Configure Ollama to get started</p>
           {!readOnly && (
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>

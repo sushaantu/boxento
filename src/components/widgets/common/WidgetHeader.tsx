@@ -1,5 +1,5 @@
 import React, { ReactNode } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 import {
@@ -58,7 +58,7 @@ const WidgetHeader = ({
             onSettingsClick();
           }}
         >
-          <Settings aria-hidden="true" />
+          <Settings2 aria-hidden="true" />
         </Button>
       )}
     </div>

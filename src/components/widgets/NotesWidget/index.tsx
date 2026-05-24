@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { StickyNote, FileText, Type, Hash, AlignLeft, Settings } from 'lucide-react';
+import { StickyNote, FileText, Type, Hash, AlignLeft, Settings2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -318,7 +318,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
                 onClick={() => setShowSettings(true)}
                 aria-label="Notes settings"
               >
-                <Settings size={14} />
+                <Settings2 size={14} />
               </Button>
             )}
           </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { QrCode, Download, Copy, Check, Plus, Trash2, Settings, Clock } from 'lucide-react';
+import { QrCode, Download, Copy, Check, Plus, Trash2, Settings2, Clock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -211,7 +211,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
         compactLayout ? 'gap-1.5 px-2 text-center' : 'gap-2'
       )}
     >
-      <Settings className={cn(compactLayout ? 'h-5 w-5' : 'h-8 w-8')} />
+      <Settings2 className={cn(compactLayout ? 'h-5 w-5' : 'h-8 w-8')} />
       <p
         className={cn(
           'text-center',

@@ -6,7 +6,7 @@ import {
   ExternalLink,
   RefreshCw,
   Search,
-  Settings,
+  Settings2,
   Siren,
   Timer,
   XCircle,
@@ -285,7 +285,7 @@ const HealthchecksWidget: React.FC<Props> = ({ width, height, config }) => {
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-        <Settings className="h-8 w-8" />
+        <Settings2 className="h-8 w-8" />
         <p className="text-sm">Add your Healthchecks URL and read-only API key to get started.</p>
         {!readOnly && (
           <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>

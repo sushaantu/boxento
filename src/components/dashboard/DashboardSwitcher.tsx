@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ChevronDown, Plus, Settings, Lock, Globe, Users, Copy, Check, Trash2 } from 'lucide-react';
+import { ChevronDown, Plus, Settings2, Lock, Globe, Users, Copy, Check, Trash2 } from 'lucide-react';
 
 export type DashboardVisibility = 'private' | 'team' | 'public';
 export type ShareRole = 'viewer' | 'editor';
@@ -170,7 +170,7 @@ export function DashboardSwitcher({
             onClick={handleOpenSettings}
             className="cursor-pointer"
           >
-            <Settings className="h-4 w-4 mr-2" />
+            <Settings2 className="h-4 w-4 mr-2" />
             Dashboard Settings
           </DropdownMenuItem>
         </DropdownMenuContent>

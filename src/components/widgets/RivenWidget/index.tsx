@@ -21,7 +21,7 @@ import {
   Check,
   Star,
   Tv,
-  Settings,
+  Settings2,
   Clock,
   TrendingUp,
   Library,
@@ -298,7 +298,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
           onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
         />
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-          <Settings className="h-8 w-8" />
+          <Settings2 className="h-8 w-8" />
           <p className="text-sm">Configure Riven to get started</p>
           {!readOnly && (
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>

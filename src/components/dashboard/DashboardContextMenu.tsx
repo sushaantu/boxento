@@ -11,7 +11,7 @@ import {
 import { AppSettingsModal } from '@/components/settings/AppSettingsModal';
 import {
   Plus,
-  Settings,
+  Settings2,
   LayoutGrid
 } from 'lucide-react';
 
@@ -88,7 +88,7 @@ export function DashboardContextMenu({ children, onAddWidget, onAutoArrange }: D
             >
               <div className="flex items-center">
                 <div className="bg-primary/10 rounded-full p-1.5 mr-3 group-hover:bg-primary/20 group-focus:bg-primary/20 transition-colors">
-                  <Settings className="h-4 w-4 text-primary" />
+                  <Settings2 className="h-4 w-4 text-primary" />
                 </div>
                 <span>App Settings</span>
               </div>

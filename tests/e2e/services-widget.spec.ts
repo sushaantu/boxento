@@ -76,7 +76,6 @@ test('persists services settings changes from the tablet dialog flow', async ({ 
   const updatedCheckInterval = 120;
   const serviceToAdd = {
     category: 'Media',
-    description: 'Photo backup',
     name: 'Immich',
     url: 'https://immich.test',
   } as const;
@@ -123,7 +122,6 @@ test('persists services settings changes from the tablet dialog flow', async ({ 
 
   await page.locator('#service-name').fill(serviceToAdd.name);
   await page.locator('#service-url').fill(serviceToAdd.url);
-  await page.locator('#service-desc').fill(serviceToAdd.description);
   await page.locator('#service-category').fill(serviceToAdd.category);
   await page.getByRole('button', { name: 'Add Service', exact: true }).click();
 

@@ -25,7 +25,7 @@ import {
   ChevronLeft,
   Activity,
   Clock,
-  Settings
+  Settings2
 } from 'lucide-react';
 
 type CronHealthWidgetProps = WidgetProps<CronHealthWidgetConfig>;
@@ -700,7 +700,7 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
       <div className="w-full h-full flex flex-col bg-card rounded-lg p-2 md:p-3">
         <WidgetHeader title={localConfig.title} onSettingsClick={readOnly ? undefined : () => setShowSettings(true)} />
         <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-          <Settings className="h-8 w-8" />
+          <Settings2 className="h-8 w-8" />
           <p className="text-sm">Configure the health API URL</p>
           {!readOnly && (
             <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>

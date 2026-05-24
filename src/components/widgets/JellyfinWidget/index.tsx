@@ -26,7 +26,7 @@ import {
   Music,
   Loader2,
   AlertCircle,
-  Settings,
+  Settings2,
   ExternalLink,
   Library,
   Search,
@@ -302,7 +302,7 @@ const JellyfinWidget: React.FC<JellyfinWidgetProps> = ({ width, height, config }
 
   const renderNeedsConfig = () => {
     if (isTiny) {
-      const setupIcon = <Settings className="h-5 w-5 text-muted-foreground" />;
+      const setupIcon = <Settings2 className="h-5 w-5 text-muted-foreground" />;
 
       if (readOnly) {
         return (
@@ -326,7 +326,7 @@ const JellyfinWidget: React.FC<JellyfinWidgetProps> = ({ width, height, config }
 
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-        <Settings className="h-8 w-8" />
+        <Settings2 className="h-8 w-8" />
         <p className="text-sm">Configure Jellyfin to get started</p>
         {!readOnly && (
           <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Play, PlaySquare, ExternalLink, Settings } from 'lucide-react';
+import { Play, PlaySquare, ExternalLink, Settings2 } from 'lucide-react';
 
 const PLAY_BUTTON_CHROME_CLASS = 'rounded-full bg-black/75 text-white shadow-lg';
 
@@ -151,7 +151,7 @@ const YouTubeWidget: React.FC<YouTubeWidgetProps> = ({ width, height, config }) 
   // --- Setup prompt when no video configured ---
   const renderSetup = () => (
     <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-      <Settings className="h-8 w-8" />
+      <Settings2 className="h-8 w-8" />
       <p className="text-sm">Configure a YouTube video</p>
       {!readOnly && (
         <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>

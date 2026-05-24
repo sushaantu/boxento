@@ -7,7 +7,7 @@ export interface Service {
   id: string;
   name: string;
   url: string;
-  icon?: string; // Lucide icon name or URL to icon
+  icon?: string; // Icon key or URL to icon
   description?: string;
   category?: string;
   statusUrl?: string; // URL to check for health (defaults to url)

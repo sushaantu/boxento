@@ -5,7 +5,7 @@ import {
   ExternalLink,
   RefreshCw,
   Search,
-  Settings,
+  Settings2,
   XCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -271,7 +271,7 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-        <Settings className="h-8 w-8" />
+        <Settings2 className="h-8 w-8" />
         <p className="text-sm">Add your Uptime Kuma status page URL to get started.</p>
         {!readOnly && (
           <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type FC, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
-import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info, Search, MapPin, Loader2, Thermometer, Gauge, Sunrise, Sunset, Settings } from 'lucide-react';
+import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info, Search, MapPin, Loader2, Thermometer, Gauge, Sunrise, Sunset, Settings2 } from 'lucide-react';
 import { Skeleton } from '../../ui/skeleton';
 import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/common/WidgetSettingsDialog';
@@ -984,7 +984,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
                 setIsSettingsOpen(true);
               }}
             >
-              <Settings size={16} className="text-muted-foreground" />
+              <Settings2 size={16} className="text-muted-foreground" />
             </Button>
           )}
         </div>
