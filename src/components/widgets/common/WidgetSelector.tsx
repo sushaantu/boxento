@@ -1,29 +1,60 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  X,
-  Plus,
-  Calendar,
-  Cloud,
-  Clock,
-  Link,
-  StickyNote,
-  CheckSquare,
-  Timer,
-  DollarSign,
+  Activity,
+  Bot,
+  BookMarked,
   BookOpen,
-  Video,
-  Rss,
+  Calendar,
+  CheckSquare,
+  Clock,
+  Cloud,
+  DollarSign,
+  DoorOpen,
+  Film,
   GitBranch,
-  Plane,
   Globe,
   Home,
-  DoorOpen,
   Lightbulb,
+  Link,
+  PiggyBank,
+  Plane,
+  Plus,
+  QrCode,
+  Rss,
+  Search,
+  Server,
+  StickyNote,
   Thermometer,
-  Activity,
+  Timer,
+  Video,
+  type LucideIcon,
 } from 'lucide-react';
-import { WidgetConfig } from '@/types';
+
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { WidgetConfig } from '@/types';
+import { cn } from '@/lib/utils';
 
 interface WidgetSelectorProps {
   isOpen: boolean;
@@ -33,157 +64,277 @@ interface WidgetSelectorProps {
   widgetCategories: { [category: string]: WidgetConfig[] };
 }
 
+type CategoryOption = {
+  id: string;
+  name: string;
+  count: number;
+};
+
+const ICONS: Record<string, LucideIcon> = {
+  Activity,
+  BookMarked,
+  BookOpen,
+  Bot,
+  Calendar,
+  CheckSquare,
+  Clock,
+  Cloud,
+  DollarSign,
+  DoorOpen,
+  Film,
+  Github: GitBranch,
+  Globe,
+  Home,
+  Lightbulb,
+  Link,
+  PiggyBank,
+  Plane,
+  QrCode,
+  Rss,
+  Server,
+  StickyNote,
+  Thermometer,
+  Timer,
+  Video,
+};
+
+const createCategoryId = (category: string) => (
+  category.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+);
+
+const getWidgetSearchText = (widget: WidgetConfig) => (
+  `${widget.name} ${widget.description ?? ''} ${widget.category ?? ''}`.toLowerCase()
+);
+
 /**
  * Widget Selector Component
- * 
- * Provides a modal interface for searching and adding widgets to the dashboard
- * 
- * @component
- * @param {WidgetSelectorProps} props - Component props
- * @returns {React.ReactElement | null} Widget selector modal or null if closed
+ *
+ * Provides a modal interface for searching and adding widgets to the dashboard.
  */
-const WidgetSelector = ({ 
-  isOpen, 
-  onClose, 
-  onAddWidget, 
+const WidgetSelector = ({
+  isOpen,
+  onClose,
+  onAddWidget,
   widgetRegistry,
-  widgetCategories
+  widgetCategories,
 }: WidgetSelectorProps): React.ReactElement | null => {
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('all');
+
+  const categories = useMemo<CategoryOption[]>(() => ([
+    { id: 'all', name: 'All Widgets', count: widgetRegistry.length },
+    ...Object.entries(widgetCategories).map(([category, widgets]) => ({
+      id: createCategoryId(category),
+      name: category,
+      count: widgets.length,
+    })),
+  ]), [widgetCategories, widgetRegistry.length]);
+
+  const widgetsByCategoryId = useMemo(() => {
+    const entries = Object.entries(widgetCategories).map(([category, widgets]) => [
+      createCategoryId(category),
+      widgets,
+    ] as const);
+
+    return new Map<string, WidgetConfig[]>([
+      ['all', widgetRegistry],
+      ...entries,
+    ]);
+  }, [widgetCategories, widgetRegistry]);
+
+  const trimmedSearchQuery = searchQuery.trim().toLowerCase();
+  const selectedCategory = categories.find((category) => category.id === selectedCategoryId) ?? categories[0];
+  const scopedWidgets = widgetsByCategoryId.get(selectedCategoryId) ?? widgetRegistry;
+  const visibleWidgets = useMemo(() => {
+    if (!trimmedSearchQuery) {
+      return scopedWidgets;
+    }
+
+    return widgetRegistry.filter((widget) => getWidgetSearchText(widget).includes(trimmedSearchQuery));
+  }, [scopedWidgets, trimmedSearchQuery, widgetRegistry]);
+  const resultLabel = trimmedSearchQuery
+    ? `${visibleWidgets.length} result${visibleWidgets.length === 1 ? '' : 's'}`
+    : `${selectedCategory.count} widget${selectedCategory.count === 1 ? '' : 's'}`;
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery('');
+      setSelectedCategoryId('all');
+    }
+  }, [isOpen]);
 
   const renderWidgetIcon = (icon?: string): React.ReactElement => {
-    switch (icon) {
-      case 'Calendar': return <Calendar className="size-4" />;
-      case 'Cloud': return <Cloud className="size-4" />;
-      case 'Clock': return <Clock className="size-4" />;
-      case 'Link': return <Link className="size-4" />;
-      case 'StickyNote': return <StickyNote className="size-4" />;
-      case 'CheckSquare': return <CheckSquare className="size-4" />;
-      case 'Timer': return <Timer className="size-4" />;
-      case 'DollarSign': return <DollarSign className="size-4" />;
-      case 'BookOpen': return <BookOpen className="size-4" />;
-      case 'Video': return <Video className="size-4" />;
-      case 'Rss': return <Rss className="size-4" />;
-      case 'Github': return <GitBranch className="size-4" />;
-      case 'Plane': return <Plane className="size-4" />;
-      case 'Globe': return <Globe className="size-4" />;
-      case 'Home': return <Home className="size-4" />;
-      case 'DoorOpen': return <DoorOpen className="size-4" />;
-      case 'Lightbulb': return <Lightbulb className="size-4" />;
-      case 'Thermometer': return <Thermometer className="size-4" />;
-      case 'Activity': return <Activity className="size-4" />;
-      default: return <Plus className="size-4" />;
+    const Icon = icon ? ICONS[icon] : undefined;
+    return Icon ? <Icon /> : <Plus />;
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      onClose();
     }
+  };
+
+  const handleAddWidget = (widgetType: string) => {
+    onAddWidget(widgetType);
   };
 
   const renderWidgetCard = (widget: WidgetConfig): React.ReactElement => (
     <Button
       key={widget.type}
       type="button"
-      variant="ghost"
+      variant="outline"
       size="none"
-      className="h-auto w-full justify-start gap-3 border border-gray-100 bg-white p-4 text-left dark:border-[#2c2c2e] dark:bg-[#1c1c1e]"
-      onClick={() => onAddWidget(widget.type)}
+      className="group h-full min-h-[96px] w-full justify-start rounded-2xl border-border/70 bg-card p-3 text-left shadow-none hover:border-foreground/20 hover:bg-muted/40 sm:p-4"
+      onClick={() => handleAddWidget(widget.type)}
       aria-label={`Add ${widget.name} widget`}
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-[#1c1c54] dark:text-blue-300">
-        {renderWidgetIcon(widget.icon)}
-      </span>
-      <span className="flex flex-1 flex-col pt-1 text-left">
-        <span className="text-sm text-gray-900 dark:text-[#f5f5f7]">{widget.name}</span>
-        {widget.description && (
-          <span className="mt-0.5 text-xs text-gray-500 dark:text-[#8e8e93]">{widget.description}</span>
-        )}
+      <span className="flex h-full min-w-0 flex-1 items-start gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground group-hover:text-foreground">
+          {renderWidgetIcon(widget.icon)}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-2">
+          <span className="min-w-0 truncate text-sm font-medium text-foreground">
+            {widget.name}
+          </span>
+          {widget.description ? (
+            <span className="line-clamp-2 text-xs leading-5 text-muted-foreground">
+              {widget.description}
+            </span>
+          ) : null}
+        </span>
       </span>
     </Button>
   );
 
-  // Handle escape key press
-  useEffect(() => {
-    const handleEscapeKey = (event: KeyboardEvent) => {
-      if (isOpen && event.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscapeKey);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [isOpen, onClose]);
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setSearchQuery(e.target.value);
-  };
-
-  const filteredWidgets = searchQuery 
-    ? widgetRegistry.filter(widget => 
-        widget.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (widget.description && widget.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (widget.category && widget.category.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-    : [];
-
   if (!isOpen) return null;
-  
+
   return (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex justify-center items-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white dark:bg-black rounded-xl shadow-2xl dark:shadow-xl dark:shadow-black/40 w-full max-w-4xl max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col border border-gray-200 dark:border-[#1c1c1e]" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-[#1c1c1e]">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">Add Widget</h3>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onClose} 
-            className="rounded-full duration-200"
-            aria-label="Close widget selector"
-          >
-            <X size={20} className="dark:text-white" />
-          </Button>
-        </div>
-        
-        <div className="relative p-4 sm:p-5 md:p-6 border-b border-gray-200 dark:border-[#1c1c1e]">
-          <input
-            type="text"
-            placeholder="Search widgets..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className="w-full h-10 rounded-md border border-gray-300 dark:border-[#2c2c2e] bg-white dark:bg-[#1c1c1e] px-3 py-2 text-sm ring-offset-background dark:text-white dark:placeholder:text-[#8e8e93] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70 dark:focus-visible:ring-blue-400/50 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
-            aria-label="Search widgets"
-            autoFocus
-          />
-        </div>
-        
-        {searchQuery ? (
-          <div className="p-4 sm:p-5 md:p-6 overflow-y-auto flex-1 dark:bg-black">
-            <h4 className="text-base font-semibold text-gray-700 dark:text-[#f5f5f7] mb-2">Search Results</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              {filteredWidgets.length > 0 ? (
-                filteredWidgets.map(renderWidgetCard)
-              ) : (
-                <div className="col-span-full text-center py-8 text-gray-500 dark:text-[#8e8e93] text-sm">No widgets found matching "{searchQuery}"</div>
-              )}
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="grid max-h-[min(760px,calc(100vh-1rem))] gap-0 overflow-hidden p-0 sm:max-w-[980px]"
+      >
+        <DialogHeader className="px-4 pb-3 pt-4 sm:px-6 sm:pt-6">
+          <div className="flex flex-col gap-3 pr-10 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 flex-col gap-1">
+              <DialogTitle className="text-xl">Add Widget</DialogTitle>
+              <DialogDescription>
+                Choose a widget, search by name, or browse by category.
+              </DialogDescription>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Badge variant="secondary">{widgetRegistry.length} widgets</Badge>
+              <Badge variant="outline">{categories.length - 1} categories</Badge>
             </div>
           </div>
-        ) : (
-          <div className="p-4 sm:p-5 md:p-6 overflow-y-auto flex-1 dark:bg-black">
-            {Object.entries(widgetCategories).map(([category, widgets]) => (
-              <div key={category} className="mb-8">
-                <h4 className="text-base font-semibold text-gray-700 dark:text-[#f5f5f7] mb-2">{category}</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-                  {widgets.map(renderWidgetCard)}
-                </div>
+        </DialogHeader>
+
+        <div className="flex min-h-0 flex-col gap-4 px-4 pb-4 sm:px-6 sm:pb-6">
+          <InputGroup className="h-10">
+            <InputGroupAddon>
+              <Search />
+            </InputGroupAddon>
+            <InputGroupInput
+              type="text"
+              placeholder="Search widgets..."
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              aria-label="Search widgets"
+              autoFocus
+            />
+            {searchQuery ? (
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton
+                  size="xs"
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear widget search"
+                >
+                  Clear
+                </InputGroupButton>
+              </InputGroupAddon>
+            ) : null}
+          </InputGroup>
+
+          <div className="min-h-0 overflow-hidden rounded-2xl border border-border/70 bg-background">
+            <div className="grid min-h-0 grid-rows-[auto_1fr] md:grid-cols-[220px_minmax(0,1fr)] md:grid-rows-1">
+              <div className="border-b border-border/70 bg-muted/30 p-3 md:border-b-0 md:border-r">
+                <ScrollArea className="max-h-[132px] md:h-[520px] md:max-h-none">
+                  <div className="flex gap-2 md:flex-col">
+                    {categories.map((category) => {
+                      const active = !trimmedSearchQuery && category.id === selectedCategoryId;
+
+                      return (
+                        <button
+                          key={category.id}
+                          type="button"
+                          className={cn(
+                            'flex h-9 min-w-fit items-center justify-between gap-3 rounded-xl px-3 text-left text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30 md:w-full',
+                            active && 'font-medium text-foreground'
+                          )}
+                          onClick={() => {
+                            setSelectedCategoryId(category.id);
+                            setSearchQuery('');
+                          }}
+                          aria-pressed={active}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span
+                              className={cn(
+                                'h-4 w-0.5 rounded-full bg-transparent',
+                                active && 'bg-muted-foreground'
+                              )}
+                              aria-hidden="true"
+                            />
+                            <span className="truncate">{category.name}</span>
+                          </span>
+                          <Badge variant="outline" className="ml-2">
+                            {category.count}
+                          </Badge>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               </div>
-            ))}
+
+              <div className="flex min-h-0 flex-col">
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-foreground">
+                      {trimmedSearchQuery ? 'Search Results' : selectedCategory.name}
+                    </div>
+                    <div className="text-xs text-muted-foreground">{resultLabel}</div>
+                  </div>
+                </div>
+
+                <ScrollArea className="h-[min(50vh,460px)] min-h-0">
+                  <div className="p-4 pt-0">
+                    {visibleWidgets.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {visibleWidgets.map(renderWidgetCard)}
+                      </div>
+                    ) : (
+                      <Empty className="min-h-[280px] border-0">
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <Search />
+                          </EmptyMedia>
+                          <EmptyTitle>No widgets found</EmptyTitle>
+                          <EmptyDescription>
+                            No widgets match "{searchQuery}". Try a widget name, category, or
+                            the job you want the widget to do.
+                          </EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 
-export default WidgetSelector; 
+export default WidgetSelector;
