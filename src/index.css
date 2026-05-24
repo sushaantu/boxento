@@ -582,9 +582,23 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 
 .mobile-widget-item {
   border-radius: var(--border-radius-standard);
+  background-color: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--widget-surface-shadow);
+  transition: box-shadow 0.2s ease-out;
   overflow: hidden;
   position: relative;
-  @apply dark:bg-slate-800 dark:shadow-lg dark:shadow-black/20;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mobile-widget-item:hover {
+    box-shadow: var(--widget-surface-shadow-hover);
+  }
+}
+
+.mobile-widget-item .widget-container {
+  box-shadow: none;
+  transition: none;
 }
 
 /*

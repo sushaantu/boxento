@@ -4,13 +4,19 @@ import { describe, expect, it } from 'vitest';
 
 import NotesWidget from '@/components/widgets/NotesWidget/index';
 
-const renderNotesWidget = (width: number, height: number, content = 'Notes content') => renderToStaticMarkup(
+const renderNotesWidget = (
+  width: number,
+  height: number,
+  content = 'Notes content',
+  config: Record<string, unknown> = {}
+) => renderToStaticMarkup(
   React.createElement(NotesWidget, {
     width,
     height,
     config: {
       title: 'Notes',
       content,
+      ...config,
     },
   })
 );
@@ -33,5 +39,15 @@ describe('NotesWidget icon styling', () => {
 
     expect(appHtml).toMatch(/lucide-file-text[^"]*text-muted-foreground/);
     expect(appHtml).not.toContain('amber');
+  });
+
+  it('uses the configured font size in compact and panel editors', () => {
+    const compactHtml = renderNotesWidget(2, 2, 'Compact note', { fontSize: 20 });
+    const panelHtml = renderNotesWidget(4, 4, 'Panel note', { fontSize: 18 });
+
+    expect(compactHtml).toContain('font-size:20px');
+    expect(panelHtml).toContain('font-size:18px');
+    expect(compactHtml).not.toContain('font-size:11px');
+    expect(panelHtml).not.toContain('font-size:19px');
   });
 });

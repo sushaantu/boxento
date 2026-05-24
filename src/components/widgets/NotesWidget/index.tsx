@@ -274,7 +274,7 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
   const renderCompactView = () => {
     return (
       <div className="h-full overflow-hidden p-1">
-        {renderLinedNotepad(11)}
+        {renderLinedNotepad()}
       </div>
     );
   };
@@ -352,12 +352,9 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
     if (isCompact) return renderCompactView();
 
     // Default: 3x3 widget and 4x4-5x5 panel — lined notepad editor
-    // Panel gets slightly larger font for breathing room
-    const isPanel = (width >= 4 && height >= 4) && !isApp;
-    const panelFontSize = isPanel ? Math.max((localConfig.fontSize || 14) + 1, 15) : undefined;
     return (
       <div className="h-full overflow-hidden p-2">
-        {renderLinedNotepad(panelFontSize)}
+        {renderLinedNotepad()}
       </div>
     );
   };

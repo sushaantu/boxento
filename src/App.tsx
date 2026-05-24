@@ -1114,7 +1114,7 @@ function App() {
         {widgets.map(widget => (
           <div 
             key={widget.id} 
-            className="mobile-widget-item"
+            className="mobile-widget-item mobile-widget"
           >
             <DeferredDashboardWidgetFrame
               widget={widget}
