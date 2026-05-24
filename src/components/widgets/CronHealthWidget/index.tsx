@@ -7,6 +7,7 @@ import {
   DialogFooter
 } from '../../ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { parseJsonResponseText } from '@/lib/jsonResponseGuard';
@@ -200,19 +201,19 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
 
     return (
       <div className="flex flex-wrap items-center gap-2 px-1 text-[11px] text-muted-foreground">
-        <span className={`flex items-center gap-1 rounded-full px-2.5 py-1 font-medium ${summaryTone}`}>
-          <SummaryIcon className="h-3.5 w-3.5" />
+        <Badge variant="secondary" className={`px-2.5 py-1 ${summaryTone}`}>
+          <SummaryIcon aria-hidden="true" />
           <span>{stats.running}/{stats.total} ok</span>
-        </span>
+        </Badge>
         {stats.failed > 0 && (
-          <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-red-700 dark:text-red-300">
+          <Badge variant="secondary" className="bg-red-500/10 px-2.5 py-1 text-red-700 dark:text-red-300">
             {stats.failed} failed
-          </span>
+          </Badge>
         )}
         {stats.stopped > 0 && (
-          <span className="rounded-full bg-yellow-500/10 px-2.5 py-1 text-yellow-700 dark:text-yellow-300">
+          <Badge variant="secondary" className="bg-yellow-500/10 px-2.5 py-1 text-yellow-700 dark:text-yellow-300">
             {stats.stopped} stopped
-          </span>
+          </Badge>
         )}
       </div>
     );
@@ -261,18 +262,18 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
 
     return (
       <div className="flex h-full items-center gap-2 overflow-x-auto px-1 text-xs text-muted-foreground">
-        <div className={`flex items-center gap-1 shrink-0 rounded-full px-2 py-1 font-medium ${stats.failed > 0 ? 'bg-red-500/10 text-red-700 dark:text-red-300' : 'bg-green-500/10 text-green-700 dark:text-green-300'}`}>
-          <SummaryIcon className="h-3.5 w-3.5" />
+        <Badge variant="secondary" className={`shrink-0 px-2 py-1 ${stats.failed > 0 ? 'bg-red-500/10 text-red-700 dark:text-red-300' : 'bg-green-500/10 text-green-700 dark:text-green-300'}`}>
+          <SummaryIcon aria-hidden="true" />
           <span>{stats.running}/{stats.total} ok</span>
-        </div>
+        </Badge>
         {stats.failed > 0 && (
-          <div className="shrink-0 rounded-full bg-red-500/10 px-2 py-1 text-red-700 dark:text-red-300">
+          <Badge variant="secondary" className="shrink-0 bg-red-500/10 px-2 py-1 text-red-700 dark:text-red-300">
             {stats.failed} failed
-          </div>
+          </Badge>
         )}
-        <div className="min-w-0 truncate rounded-full bg-black/[0.04] px-2 py-1 text-foreground dark:bg-white/[0.06]">
+        <Badge variant="secondary" className="min-w-0 truncate bg-black/[0.04] px-2 py-1 text-foreground dark:bg-white/[0.06]">
           {problematicJob?.name}
-        </div>
+        </Badge>
         {healthData.updated && (
           <div className="shrink-0 text-[11px] text-muted-foreground">
             {formatTimeAgo(healthData.updated)}
@@ -715,7 +716,7 @@ const CronHealthWidget: React.FC<CronHealthWidgetProps> = ({ width, height, conf
   function renderSettingsDialog() {
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'System Health'} Settings</DialogTitle>
           </DialogHeader>

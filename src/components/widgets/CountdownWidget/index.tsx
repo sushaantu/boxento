@@ -763,7 +763,7 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
 
     return (
       <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{isNew ? 'Add Countdown' : 'Edit Countdown'}</DialogTitle>
           </DialogHeader>
@@ -801,7 +801,6 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
                         );
                       }
                     }}
-                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
@@ -812,7 +811,7 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
                 {DEFAULT_COLORS.map((color) => (
                   <Button type="button" variant="ghost" size="none"
                     key={color}
-                    className={`h-6 w-6 rounded-full border-2 transition-all ${
+                    className={`h-6 w-6 rounded-full border-2 transition-[border-color,box-shadow,transform] ${
                       editingEvent.color === color
                         ? 'border-foreground scale-110'
                         : 'border-transparent'
@@ -883,7 +882,7 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
           if (!open) cancelSettings();
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
@@ -939,7 +938,6 @@ const CountdownWidget: React.FC<CountdownWidgetProps> = ({ width, height, config
                       updateTargetDate(date ?? undefined);
                       setCalendarOpen(false);
                     }}
-                    initialFocus
                   />
                 </PopoverContent>
               </Popover>

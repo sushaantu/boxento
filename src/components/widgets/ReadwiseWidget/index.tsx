@@ -863,7 +863,7 @@ const ReadwiseWidget: React.FC<ReadwiseWidgetProps> = ({ width, height, config }
 
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'Readwise Highlights'} Settings</DialogTitle>
           </DialogHeader>

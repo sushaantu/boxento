@@ -888,7 +888,7 @@ const FavaWidget: React.FC<FavaWidgetProps> = ({ width, height, config }) => {
     if (readOnly) return null;
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'Fava'} Settings</DialogTitle>
           </DialogHeader>

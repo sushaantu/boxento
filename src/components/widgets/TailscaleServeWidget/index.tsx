@@ -22,6 +22,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -473,11 +474,13 @@ const TailscaleServeWidget: React.FC<TailscaleServeWidgetProps> = ({ width, heig
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
+            <SelectGroup>
             {Object.entries(TARGET_TYPE_LABELS).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
               </SelectItem>
             ))}
+            </SelectGroup>
           </SelectContent>
         </Select>
       </div>

@@ -495,7 +495,7 @@ const JellyfinWidget: React.FC<JellyfinWidgetProps> = ({ width, height, config }
           <img
             src={imgUrl}
             alt={item.Name}
-            className={`${compact ? 'w-8 h-11' : 'w-10 h-14'} object-cover rounded flex-shrink-0`}
+            className={`media-outline ${compact ? 'w-8 h-11' : 'w-10 h-14'} object-cover rounded flex-shrink-0`}
           />
         ) : (
           <div
@@ -641,7 +641,7 @@ const JellyfinWidget: React.FC<JellyfinWidgetProps> = ({ width, height, config }
 
         <div className="flex gap-4">
           {imgUrl ? (
-            <img src={imgUrl} alt={item.Name} className="w-28 h-40 object-cover rounded-lg flex-shrink-0" />
+            <img src={imgUrl} alt={item.Name} className="media-outline w-28 h-40 object-cover rounded-lg flex-shrink-0" />
           ) : (
             <div className="w-28 h-40 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
               {getItemIcon(item.Type, 'w-8 h-8')}
@@ -958,7 +958,7 @@ const JellyfinWidget: React.FC<JellyfinWidgetProps> = ({ width, height, config }
       {/* Settings Modal */}
       {!readOnly && (
         <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="settings-dialog-content sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{localConfig.title || 'Jellyfin'} Settings</DialogTitle>
             </DialogHeader>

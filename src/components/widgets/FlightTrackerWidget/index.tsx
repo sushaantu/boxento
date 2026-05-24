@@ -1365,7 +1365,7 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
   // --- Settings modal ---
   const renderSettings = () => (
     <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Flight Tracker Settings</DialogTitle>
         </DialogHeader>
@@ -1541,7 +1541,6 @@ const FlightTrackerWidget: React.FC<FlightTrackerWidgetProps> = ({
                       setAddFlightDate(format(date, 'yyyy-MM-dd'));
                     }
                   }}
-                  initialFocus
                 />
               </PopoverContent>
             </Popover>

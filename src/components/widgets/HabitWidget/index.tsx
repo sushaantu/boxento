@@ -933,7 +933,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {editingHabit ? 'Edit Habit' : 'Add Habit'}
@@ -988,7 +988,7 @@ const HabitWidget: React.FC<HabitWidgetProps> = ({ width = 2, height = 2, config
         }
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{localConfig.title || 'Habits'} Settings</DialogTitle>
         </DialogHeader>

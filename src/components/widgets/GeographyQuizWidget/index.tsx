@@ -24,7 +24,8 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
+  SelectGroup
 } from '@/components/ui/select';
 import {
   Globe,
@@ -816,7 +817,7 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
 
   const renderSettings = () => (
     <Dialog open={showSettings} onOpenChange={handleSettingsOpen}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{localConfig.title || 'Geography Quiz'} Settings</DialogTitle>
         </DialogHeader>
@@ -845,9 +846,11 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                 <SelectValue placeholder="Select difficulty" />
               </SelectTrigger>
               <SelectContent>
+                <SelectGroup>
                 <SelectItem value={QuizDifficulty.EASY}>Easy</SelectItem>
                 <SelectItem value={QuizDifficulty.MEDIUM}>Medium</SelectItem>
                 <SelectItem value={QuizDifficulty.HARD}>Hard</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -864,11 +867,13 @@ const GeographyQuizWidget: React.FC<GeographyQuizWidgetProps> = ({ width, height
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
+                <SelectGroup>
                 <SelectItem value={QuestionType.MIXED}>Mixed</SelectItem>
                 <SelectItem value={QuestionType.CAPITALS}>Capitals</SelectItem>
                 <SelectItem value={QuestionType.FLAGS}>Flags</SelectItem>
                 <SelectItem value={QuestionType.BORDERS}>Borders</SelectItem>
                 <SelectItem value={QuestionType.LANDMARKS}>Landmarks</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>

@@ -32,6 +32,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '../../ui/select';
 
 const defaultConfig: ReaderWidgetConfig = {
@@ -444,7 +445,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
             <img
               src={document.image_url}
               alt=""
-              className="w-full h-full object-cover"
+              className="media-outline w-full h-full object-cover"
               onError={(e) => (e.currentTarget.style.display = 'none')}
             />
           </div>
@@ -532,7 +533,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
           </div>
           <div
             ref={contentRef}
-            className="flex-1 overflow-y-auto text-sm leading-relaxed [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-muted-foreground [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-3 [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded [&_pre]:overflow-x-auto [&_img]:max-w-full [&_img]:rounded"
+            className="rich-media-outline flex-1 overflow-y-auto text-sm leading-relaxed [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-muted-foreground [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-3 [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded [&_pre]:overflow-x-auto [&_img]:max-w-full [&_img]:rounded"
             dangerouslySetInnerHTML={{ __html: document.html_content }}
           />
         </div>
@@ -547,7 +548,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
             <img
               src={document.image_url}
               alt=""
-              className="w-full h-full object-cover"
+              className="media-outline w-full h-full object-cover"
               onError={(e) => (e.currentTarget.style.display = 'none')}
             />
           </div>
@@ -760,7 +761,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
                   )}
                 </div>
                 <div
-                  className="text-sm leading-relaxed [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-muted-foreground [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-3 [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded [&_pre]:overflow-x-auto [&_img]:max-w-full [&_img]:rounded"
+                  className="rich-media-outline text-sm leading-relaxed [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:text-base [&_h3]:font-medium [&_h3]:mt-2 [&_h3]:mb-1 [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-primary [&_a]:underline [&_blockquote]:border-l-2 [&_blockquote]:border-muted-foreground [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:my-3 [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded [&_pre]:overflow-x-auto [&_img]:max-w-full [&_img]:rounded"
                   dangerouslySetInnerHTML={{ __html: document.html_content }}
                 />
               </div>
@@ -773,7 +774,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
                   <img
                     src={document.image_url}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="media-outline w-full h-full object-cover"
                     onError={(e) => (e.currentTarget.style.display = 'none')}
                   />
                 </div>
@@ -851,7 +852,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
   // --- Settings Modal ---
   const renderSettingsModal = () => (
     <Dialog open={showSettings} onOpenChange={(open) => { if (!open) cancelSettings(); }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{localConfig.title || 'Reader'} Settings</DialogTitle>
         </DialogHeader>
@@ -892,12 +893,14 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectGroup>
                 <SelectItem value="all">All Locations</SelectItem>
                 <SelectItem value="new">Inbox (New)</SelectItem>
                 <SelectItem value="later">Later</SelectItem>
                 <SelectItem value="shortlist">Shortlist</SelectItem>
                 <SelectItem value="archive">Archive</SelectItem>
                 <SelectItem value="feed">Feed</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -912,6 +915,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectGroup>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="article">Articles</SelectItem>
                 <SelectItem value="rss">RSS</SelectItem>
@@ -920,6 +924,7 @@ const ReaderWidget: React.FC<ReaderWidgetProps> = ({ width, height, config }) =>
                 <SelectItem value="epub">EPUB</SelectItem>
                 <SelectItem value="tweet">Tweets</SelectItem>
                 <SelectItem value="video">Videos</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>

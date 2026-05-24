@@ -219,7 +219,7 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ width, height, config }) =>
           <img
             src={sanitizeUrl(url)}
             alt={title || 'Embedded image'}
-            className="max-w-full max-h-full object-contain"
+            className="media-outline max-w-full max-h-full object-contain"
             loading="lazy"
           />
         </div>
@@ -502,7 +502,7 @@ const IframeWidget: React.FC<IframeWidgetProps> = ({ width, height, config }) =>
             if (!open) cancelSettings();
           }}
         >
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="settings-dialog-content sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Globe className="h-5 w-5" />

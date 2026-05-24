@@ -19,7 +19,7 @@ export function AppSettingsModal({ open, onClose }: AppSettingsModalProps) {
   
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="settings-dialog-content max-w-md">
         <DialogHeader>
           <DialogTitle>App Settings</DialogTitle>
         </DialogHeader>

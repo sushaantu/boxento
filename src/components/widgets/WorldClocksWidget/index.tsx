@@ -1524,7 +1524,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
    */
   const renderSettings = () => (
     <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-      <DialogContent className="flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden p-0 sm:max-w-md">
+      <DialogContent className="settings-dialog-content flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="gap-2 px-6 pt-6">
           <DialogTitle>World Clocks Settings</DialogTitle>
           <DialogDescription>

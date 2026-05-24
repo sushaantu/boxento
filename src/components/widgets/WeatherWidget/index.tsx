@@ -4,13 +4,25 @@ import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
 import { Cloud, CloudRain, CloudSnow, CloudLightning, Wind, Sun, SunDim, Droplets, Info, Search, MapPin, Loader2, Thermometer, Gauge, Sunrise, Sunset, Settings } from 'lucide-react';
 import { Skeleton } from '../../ui/skeleton';
 import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
-import { Label } from '../../ui/label';
 import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/common/WidgetSettingsDialog';
 import { WidgetShell } from '../../widgets/common/WidgetShell';
 import { WeatherWidgetProps, WeatherData, WeatherWidgetConfig } from './types';
 import { Button } from '../../ui/button';
-import { Input } from '../../ui/input';
 import { Popover, PopoverAnchor, PopoverContent } from '../../ui/popover';
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '../../ui/field';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '../../ui/input-group';
 import { faviconService } from '@/lib/services/favicon';
 
 interface CitySearchResult {
@@ -1131,9 +1143,9 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
    */
   const renderSettingsContent = () => {
   return (
-    <>
-      <div className="space-y-2">
-        <Label htmlFor="location-input">Location</Label>
+    <FieldGroup className="gap-4">
+      <Field data-invalid={Boolean(locationError)} className="gap-2">
+        <FieldLabel htmlFor="location-input">Location</FieldLabel>
         <Popover
           open={showResults && citySearch.length >= 2}
           onOpenChange={(open) => {
@@ -1143,9 +1155,11 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
           }}
         >
           <PopoverAnchor asChild>
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+            <InputGroup>
+              <InputGroupAddon>
+                <Search aria-hidden="true" />
+              </InputGroupAddon>
+              <InputGroupInput
                 id="location-input"
                 type="text"
                 placeholder="Search for a city..."
@@ -1158,12 +1172,14 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
                     setShowResults(true);
                   }
                 }}
-                className={`pl-9 ${locationError ? 'border-red-500' : ''}`}
+                aria-invalid={Boolean(locationError)}
               />
               {isSearching && (
-                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                <InputGroupAddon align="inline-end">
+                  <Loader2 aria-hidden="true" className="animate-spin" />
+                </InputGroupAddon>
               )}
-            </div>
+            </InputGroup>
           </PopoverAnchor>
 
           <PopoverContent align="start" className="w-[min(28rem,calc(100vw-4rem))] max-h-60 overflow-y-auto p-1">
@@ -1177,7 +1193,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
                     className="h-auto justify-start gap-2 rounded-sm px-3 py-2 text-left"
                     onClick={() => handleCitySelect(city)}
                   >
-                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <MapPin data-icon="inline-start" className="mt-0.5 shrink-0 text-muted-foreground" />
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium">{city.name}</div>
                       <div className="truncate text-xs text-muted-foreground">
@@ -1194,31 +1210,30 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
             )}
           </PopoverContent>
         </Popover>
-        {locationError && (
-          <p className="text-xs text-red-500">{locationError}</p>
-        )}
-        <p className="text-xs text-muted-foreground">
+        <FieldError>{locationError}</FieldError>
+        <FieldDescription>
           Start typing to search for any city worldwide
-        </p>
-      </div>
+        </FieldDescription>
+      </Field>
 
-      <div className="space-y-2">
-        <Label>Temperature Units</Label>
+      <FieldSet className="gap-2">
+        <FieldLegend variant="label" className="mb-0">Temperature Units</FieldLegend>
         <RadioGroup
           value={localConfig.units || 'metric'}
           onValueChange={handleUnitsChange}
+          className="gap-2"
         >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="metric" id="metric" />
-            <Label htmlFor="metric">Celsius (°C)</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="imperial" id="imperial" />
-            <Label htmlFor="imperial">Fahrenheit (°F)</Label>
-          </div>
+          <Field orientation="horizontal" className="gap-2">
+            <RadioGroupItem value="metric" id="weather-units-metric" />
+            <FieldLabel htmlFor="weather-units-metric">Celsius (°C)</FieldLabel>
+          </Field>
+          <Field orientation="horizontal" className="gap-2">
+            <RadioGroupItem value="imperial" id="weather-units-imperial" />
+            <FieldLabel htmlFor="weather-units-imperial">Fahrenheit (°F)</FieldLabel>
+          </Field>
         </RadioGroup>
-      </div>
-    </>
+      </FieldSet>
+    </FieldGroup>
   );
 };
 
@@ -1328,7 +1343,7 @@ const WeatherWidget: FC<WeatherWidgetProps> = ({ width, height, config, refreshI
             resetSearchState();
           }}
           title="Weather Settings"
-          bodyClassName="flex flex-col gap-4"
+          bodyClassName="flex flex-col gap-4 px-1"
           footer={renderSettingsFooter()}
         >
           {renderSettingsContent()}

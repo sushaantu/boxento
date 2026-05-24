@@ -24,6 +24,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '../../ui/select';
 
 /**
@@ -967,10 +968,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
                 <SelectValue placeholder="Sort order" />
               </SelectTrigger>
               <SelectContent>
+                <SelectGroup>
                 <SelectItem value="manual">Manual</SelectItem>
                 <SelectItem value="alphabetical">Alphabetical</SelectItem>
                 <SelectItem value="created">Date Created</SelectItem>
                 <SelectItem value="completed">Completion</SelectItem>
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -1124,10 +1127,12 @@ const TodoWidget: React.FC<TodoWidgetProps> = ({ width, height, config }) => {
               <SelectValue placeholder="Select sort order" />
             </SelectTrigger>
             <SelectContent>
+              <SelectGroup>
               <SelectItem value="created">Created Date</SelectItem>
               <SelectItem value="alphabetical">Alphabetical</SelectItem>
               <SelectItem value="completed">Completion Status</SelectItem>
               <SelectItem value="manual">Manual (Drag to Sort)</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>

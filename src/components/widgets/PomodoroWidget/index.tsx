@@ -718,7 +718,7 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
   const renderSettings = () => {
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden sm:max-w-md">
+        <DialogContent className="settings-dialog-content flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Pomodoro Widget Settings</DialogTitle>
           </DialogHeader>

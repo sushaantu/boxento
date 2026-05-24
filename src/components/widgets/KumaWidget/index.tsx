@@ -18,7 +18,10 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '../../ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty';
 import { Skeleton } from '../../ui/skeleton';
 import WidgetHeader from '../common/WidgetHeader';
 import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../common/WidgetSettingsDialog';
@@ -347,25 +350,29 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
   };
 
   const renderEmpty = (message: string) => (
-    <div className="flex h-full flex-col items-center justify-center gap-2 px-3 text-center text-sm text-muted-foreground">
-      <AlertCircle className="h-5 w-5" />
-      <span>{message}</span>
-    </div>
+    <Empty className="h-full border-0 p-3">
+      <EmptyHeader className="gap-2">
+        <EmptyMedia variant="icon" className="mb-0">
+          <AlertCircle aria-hidden="true" />
+        </EmptyMedia>
+        <EmptyTitle className="text-sm font-normal text-muted-foreground">{message}</EmptyTitle>
+      </EmptyHeader>
+    </Empty>
   );
 
   const renderStatusPills = () => (
     <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-      <span className="rounded-full bg-green-500/10 px-2.5 py-1 text-green-700 dark:text-green-300">
+      <Badge variant="secondary" className="bg-green-500/10 px-2.5 py-1 text-green-700 dark:text-green-300">
         {summary.up} healthy
-      </span>
+      </Badge>
       {attentionCount > 0 && (
-        <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-red-700 dark:text-red-300">
+        <Badge variant="secondary" className="bg-red-500/10 px-2.5 py-1 text-red-700 dark:text-red-300">
           {attentionCount} need attention
-        </span>
+        </Badge>
       )}
-      <span className="rounded-full bg-muted px-2.5 py-1">
+      <Badge variant="secondary" className="bg-muted px-2.5 py-1">
         {summary.total} total
-      </span>
+      </Badge>
     </div>
   );
 
@@ -430,9 +437,9 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
             </div>
           </div>
           <div className="flex shrink-0 flex-col items-end gap-2">
-            <span className={cn('rounded-full px-2 py-1 text-[11px] font-medium', statusStyle.badge)}>
+            <Badge variant="secondary" className={cn('px-2 py-1 text-[11px]', statusStyle.badge)}>
               {statusStyle.label}
-            </span>
+            </Badge>
             {!compact && (
               <span className="text-[11px] text-muted-foreground">
                 {monitor.uptime24 != null ? `${Math.round(monitor.uptime24 * 100)}% 24h` : 'No uptime'}
@@ -460,7 +467,7 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             {localConfig.showGroups && <span>{monitor.group}</span>}
             <span>{monitor.type}</span>
-            <span className={cn('rounded-full px-2 py-1 font-medium', statusStyle.badge)}>{statusStyle.label}</span>
+            <Badge variant="secondary" className={cn('px-2 py-1', statusStyle.badge)}>{statusStyle.label}</Badge>
           </div>
         </div>
 
@@ -508,9 +515,9 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
       {visibleMonitors.slice(0, 4).map((monitor) => {
         const statusStyle = STATUS_STYLES[monitor.status];
         return (
-          <div key={monitor.id} className={cn('shrink-0 rounded-full px-2.5 py-1 text-[11px] font-medium', statusStyle.badge)}>
+          <Badge key={monitor.id} variant="secondary" className={cn('shrink-0 px-2.5 py-1 text-[11px]', statusStyle.badge)}>
             {monitor.name}
-          </div>
+          </Badge>
         );
       })}
     </div>
@@ -742,9 +749,11 @@ const KumaWidget: React.FC<Props> = ({ width, height, config }) => {
                     <SelectValue placeholder="Select status filter" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectGroup>
                     <SelectItem value="all">All monitors</SelectItem>
                     <SelectItem value="issues">Issues only</SelectItem>
                     <SelectItem value="up">Healthy only</SelectItem>
+                    </SelectGroup>
                   </SelectContent>
                 </Select>
               </div>

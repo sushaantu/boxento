@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { User, LogOut, Mail } from 'lucide-react';
 import { AuthForm } from './AuthForm';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { isFirebaseInitialized } from '@/lib/firebase';
@@ -48,7 +48,7 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
   // Get user initials for avatar fallback
   const getUserInitials = (): string => {
     if (!currentUser) return '';
-    
+
     if (currentUser.displayName) {
       // Extract initials from display name
       return currentUser.displayName
@@ -58,12 +58,12 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
         .toUpperCase()
         .substring(0, 2);
     }
-    
+
     // If no display name, use first character of email
     if (currentUser.email) {
       return currentUser.email[0].toUpperCase();
     }
-    
+
     return 'U'; // Default fallback
   };
 
@@ -73,13 +73,13 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
-              className={`rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white transition-colors ${className} flex items-center gap-2`}
+              className={`rounded-full bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-white ${className} flex items-center gap-2`}
               size="sm"
             >
               <Avatar className="h-5 w-5">
-                <AvatarImage 
-                  src={currentUser.photoURL || undefined} 
-                  alt={currentUser.displayName || 'User avatar'} 
+                <AvatarImage
+                  src={currentUser.photoURL || undefined}
+                  alt={currentUser.displayName || 'User avatar'}
                 />
                 <AvatarFallback className="bg-blue-600 dark:bg-blue-700 text-white text-xs">
                   {getUserInitials()}
@@ -97,8 +97,8 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
               <span className="truncate">{currentUser.email}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-            <DropdownMenuItem 
-              variant="destructive" 
+            <DropdownMenuItem
+              variant="destructive"
               onClick={handleLogout}
               className="gap-2 text-red-600 dark:text-red-400 focus:bg-gray-100 dark:focus:bg-gray-700"
             >
@@ -112,7 +112,7 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
           variant="outline"
           size="sm"
           onClick={() => setOpen(true)}
-          className={`rounded-full transition-colors ${className} flex items-center gap-2`}
+          className={`rounded-full ${className} flex items-center gap-2`}
         >
           <User className="h-4 w-4" />
           {/* Hide text on xs screens, show on sm and larger */}
@@ -127,4 +127,4 @@ export function UserMenuButton({ className }: UserMenuButtonProps) {
       </Dialog>
     </>
   );
-} 
+}

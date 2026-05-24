@@ -809,7 +809,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-full object-cover"
+                  className="media-outline w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -841,7 +841,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-full object-cover"
+                  className="media-outline w-full h-full object-cover"
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                   }}
@@ -1140,7 +1140,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
           }
         }}
       >
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>RSS Feed Settings</DialogTitle>
           </DialogHeader>

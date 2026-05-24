@@ -178,7 +178,7 @@ export function DashboardSwitcher({
 
       {/* Create Dashboard Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create New Dashboard</DialogTitle>
           </DialogHeader>
@@ -236,7 +236,7 @@ export function DashboardSwitcher({
 
       {/* Dashboard Settings Dialog */}
       <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Dashboard Settings</DialogTitle>
           </DialogHeader>

@@ -1,5 +1,17 @@
 # What's New
 
+## May 24, 2026
+
+### 🎨 Design Improvements
+• Shadcn Refresh: Updated Boxento's shadcn UI primitives and aligned inputs, buttons, dialogs, tabs, and settings controls with the latest component patterns.
+• Widget Surfaces: Replaced hard widget borders and heavy hover treatment with subtle layered shadows, matching the app background and glass-style header.
+• Settings Dialogs: Standardized widget settings spacing, labels, controls, destructive actions, and footer behavior across the dashboard.
+• Media Polish: Added subtle image outlines across rich media, video, RSS, reader, Jellyfin, Riven, and iframe previews.
+
+### 🐛 Bug Fixes
+• Home Widgets: Settings controls now stay visible alongside refresh actions so widget headers behave consistently.
+• Dashboard Header: Removed the bottom border and restored the app-background glass treatment.
+
 ## May 22, 2026
 
 ### 🐛 Bug Fixes

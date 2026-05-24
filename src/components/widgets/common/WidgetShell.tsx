@@ -85,6 +85,7 @@ export const WidgetShell = React.forwardRef<HTMLDivElement, WidgetShellProps>(
                     size="icon"
                     className={cn(
                       'settings-button text-muted-foreground',
+                      headerActions && 'settings-button-visible',
                       compactHeader ? 'size-7' : 'size-8'
                     )}
                     onClick={(event) => {

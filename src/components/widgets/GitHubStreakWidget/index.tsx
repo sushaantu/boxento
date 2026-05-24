@@ -17,7 +17,7 @@ import { Switch } from '../../ui/switch';
 import {
   AlertCircle,
   Flame,
-  Github,
+  GitBranch,
   Shield,
   Trophy,
   Calendar,
@@ -422,7 +422,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
     <div className="flex-1 flex flex-col items-center justify-center gap-2 text-muted-foreground">
       {!localConfig.username ? (
         <>
-          <Github className="h-8 w-8" />
+          <GitBranch className="h-8 w-8" />
           <p className="text-sm">Configure your GitHub username</p>
         </>
       ) : (
@@ -904,7 +904,7 @@ const GitHubStreakWidget: React.FC<GitHubStreakWidgetProps> = ({ width, height, 
 
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'GitHub Streak'} Settings</DialogTitle>
           </DialogHeader>

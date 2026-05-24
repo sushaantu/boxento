@@ -684,7 +684,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
           }}
         >
           {(appDialogMode === 'add' || appDialogMode === 'edit') && appEditingLink ? (
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="settings-dialog-content sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>{appDialogMode === 'add' ? 'Add Link' : 'Edit Link'}</DialogTitle>
               </DialogHeader>
@@ -749,7 +749,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
               </form>
             </DialogContent>
           ) : appDialogMode === 'details' && selectedLink ? (
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="settings-dialog-content sm:max-w-lg">
               <DialogHeader>
                 <DialogTitle>Link Details</DialogTitle>
               </DialogHeader>
@@ -1147,7 +1147,7 @@ const QuickLinksWidget: React.FC<QuickLinksWidgetProps> = ({ width, height, conf
             }
           }}
         >
-          <DialogContent className="sm:max-w-lg">
+          <DialogContent className="settings-dialog-content sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit Link</DialogTitle>
             </DialogHeader>

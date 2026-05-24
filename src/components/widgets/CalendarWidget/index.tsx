@@ -9,6 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from "../../ui/select"
 import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../../widgets/common/WidgetSettingsDialog'
 import { WidgetShell } from '../../widgets/common/WidgetShell'
@@ -2075,8 +2076,10 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
               <SelectValue placeholder="Select first day of week" />
             </SelectTrigger>
             <SelectContent>
+              <SelectGroup>
               <SelectItem value="sunday">Sunday</SelectItem>
               <SelectItem value="monday">Monday</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>

@@ -1043,7 +1043,7 @@ const PaisaWidget: React.FC<PaisaWidgetProps> = ({ width, height, config }) => {
   function renderSettingsDialog() {
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'Paisa'} Settings</DialogTitle>
           </DialogHeader>

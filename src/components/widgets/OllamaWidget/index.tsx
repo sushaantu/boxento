@@ -16,6 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '../../ui/select';
 import WidgetHeader from '../common/WidgetHeader';
 import { OllamaWidgetConfig, OllamaWidgetProps, ChatMessage, OllamaModel } from './types';
@@ -500,11 +501,13 @@ const OllamaWidget: React.FC<OllamaWidgetProps> = ({ width, height, config }) =>
               <SelectValue placeholder="Select model" />
             </SelectTrigger>
             <SelectContent>
+              <SelectGroup>
               {models.map(model => (
                 <SelectItem key={model.name} value={model.name}>
                   {model.name}
                 </SelectItem>
               ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
           <div className={`h-2 w-2 rounded-full ${statusDotColor}`} />
@@ -578,11 +581,13 @@ const OllamaWidget: React.FC<OllamaWidgetProps> = ({ width, height, config }) =>
                 <SelectValue placeholder="Select model" />
               </SelectTrigger>
               <SelectContent>
+                <SelectGroup>
                 {models.map(model => (
                   <SelectItem key={model.name} value={model.name}>
                     {model.name}
                   </SelectItem>
                 ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           </div>
@@ -744,7 +749,7 @@ const OllamaWidget: React.FC<OllamaWidgetProps> = ({ width, height, config }) =>
   function renderSettingsDialog() {
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'Ollama'} Settings</DialogTitle>
           </DialogHeader>
@@ -788,11 +793,13 @@ const OllamaWidget: React.FC<OllamaWidgetProps> = ({ width, height, config }) =>
                   <SelectValue placeholder="Select a model" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectGroup>
                   {models.map(model => (
                     <SelectItem key={model.name} value={model.name}>
                       {model.name}
                     </SelectItem>
                   ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>

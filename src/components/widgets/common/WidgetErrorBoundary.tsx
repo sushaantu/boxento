@@ -1,6 +1,8 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
 interface WidgetErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: (error: Error) => React.ReactNode;
@@ -46,13 +48,16 @@ class WidgetErrorBoundary extends React.Component<WidgetErrorBoundaryProps, Widg
       }
 
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-red-50 dark:bg-red-900 dark:bg-opacity-20 text-red-800 dark:text-red-200 rounded-lg">
-          <AlertTriangle className="mb-2" size={24} aria-hidden="true" />
-          <h3 className="text-sm font-medium mb-1">Widget Error</h3>
-          <p className="text-xs text-center">
+        <Alert
+          variant="destructive"
+          className="flex h-full w-full flex-col items-center justify-center gap-1 rounded-lg border-destructive/30 p-4 text-center"
+        >
+          <AlertTriangle className="mb-1 size-6" aria-hidden="true" />
+          <AlertTitle className="text-sm">Widget Error</AlertTitle>
+          <AlertDescription className="text-xs">
             {this.state.error?.message || "An error occurred while rendering this widget"}
-          </p>
-        </div>
+          </AlertDescription>
+        </Alert>
       );
     }
     

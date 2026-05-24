@@ -199,7 +199,7 @@ export function SharedDashboardView() {
           <div className="flex items-center space-x-1 sm:space-x-2">
             <Button
               onClick={toggleTheme}
-              className="rounded-full h-9 w-9 p-0 flex items-center justify-center transition-colors"
+              className="rounded-full h-9 w-9 p-0 flex items-center justify-center"
               size="sm"
               aria-label="Toggle theme"
               variant="outline"

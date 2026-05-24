@@ -2,6 +2,8 @@ import React, { Suspense, useCallback, useMemo } from 'react';
 import { AlertTriangle, Loader2, RefreshCcw, Trash2 } from 'lucide-react';
 
 import { getWidgetComponent } from '@/components/widgets';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import WidgetErrorBoundary from '@/components/widgets/common/WidgetErrorBoundary';
 import {
   areDashboardWidgetFramePropsEqual,
@@ -40,48 +42,51 @@ const DashboardWidgetErrorFallback: React.FC<DashboardWidgetErrorFallbackProps> 
   onDelete,
   showReload = false,
 }) => (
-  <div
-    className="widget-drag-handle flex h-full w-full flex-col items-center justify-center rounded-lg bg-red-50 p-4 text-red-800 dark:bg-red-900 dark:bg-opacity-20 dark:text-red-200"
+  <Alert
+    variant="destructive"
+    className="widget-drag-handle flex h-full w-full flex-col items-center justify-center gap-1 rounded-lg border-destructive/30 p-4 text-center"
     data-testid="widget-error-fallback"
   >
-    <AlertTriangle className="mb-2" size={24} aria-hidden="true" />
-    <h3 className="mb-1 text-sm font-medium">Widget Error</h3>
-    <p className="text-center text-xs">
-      <span className="break-all">
-        {message}
-      </span>
-    </p>
+    <AlertTriangle className="mb-1 size-6" aria-hidden="true" />
+    <AlertTitle className="text-sm">Widget Error</AlertTitle>
+    <AlertDescription className="flex flex-col items-center gap-3 text-xs">
+      <span className="break-all">{message}</span>
 
-    <div className="mt-3 flex flex-wrap justify-center gap-2">
-      {showReload ? (
-        <button
-          type="button"
-          className="text-xs underline"
-          onClick={(event) => {
-            event.stopPropagation();
-            window.location.reload();
-          }}
-        >
-          <RefreshCcw className="size-4" aria-hidden="true" />
-          Reload
-        </button>
-      ) : null}
+      <div className="flex flex-wrap justify-center gap-2">
+        {showReload ? (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-destructive"
+            onClick={(event) => {
+              event.stopPropagation();
+              window.location.reload();
+            }}
+          >
+            <RefreshCcw data-icon="inline-start" aria-hidden="true" />
+            Reload
+          </Button>
+        ) : null}
 
-      {!isReadOnly ? (
-        <button
-          type="button"
-          className="text-xs underline"
-          onClick={(event) => {
-            event.stopPropagation();
-            onDelete();
-          }}
-        >
-          <Trash2 className="size-4" aria-hidden="true" />
-          Remove widget
-        </button>
-      ) : null}
-    </div>
-  </div>
+        {!isReadOnly ? (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-destructive"
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+          >
+            <Trash2 data-icon="inline-start" aria-hidden="true" />
+            Remove widget
+          </Button>
+        ) : null}
+      </div>
+    </AlertDescription>
+  </Alert>
 );
 
 const DashboardWidgetFrameComponent: React.FC<DashboardWidgetFrameProps> = ({

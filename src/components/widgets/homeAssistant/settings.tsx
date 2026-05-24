@@ -9,6 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '@/components/ui/select';
 import {
   WidgetSettingsDialog,
@@ -132,10 +133,12 @@ export function HomeAssistantSettingsDialog<TConfig extends HomeAssistantBaseCon
                 <SelectValue placeholder="All rooms" />
               </SelectTrigger>
               <SelectContent>
+                <SelectGroup>
                 <SelectItem value="all">All rooms</SelectItem>
                 {areas.map((area) => (
                   <SelectItem key={area.area_id} value={area.area_id}>{area.name}</SelectItem>
                 ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
           ) : (

@@ -18,6 +18,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '@/components/ui/select';
 import {
   Tabs,
@@ -640,10 +641,12 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectGroup>
                         <SelectItem value="L">Low (~7%)</SelectItem>
                         <SelectItem value="M">Medium (~15%)</SelectItem>
                         <SelectItem value="Q">Quartile (~25%)</SelectItem>
                         <SelectItem value="H">High (~30%)</SelectItem>
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </div>
@@ -670,7 +673,7 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
         if (!open) cancelSettings();
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{localConfig.title || 'QR Code'} Settings</DialogTitle>
         </DialogHeader>
@@ -732,10 +735,12 @@ const QRCodeWidget: React.FC<QRCodeWidgetProps> = ({ width, height, config }) =>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectGroup>
                   <SelectItem value="L">Low (~7% recovery)</SelectItem>
                   <SelectItem value="M">Medium (~15% recovery)</SelectItem>
                   <SelectItem value="Q">Quartile (~25% recovery)</SelectItem>
                   <SelectItem value="H">High (~30% recovery)</SelectItem>
+                  </SelectGroup>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">

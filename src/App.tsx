@@ -1776,7 +1776,7 @@ function App() {
             <Button
               onClick={toggleWidgetSelector}
               aria-label="Add widget"
-              className="rounded-full h-9 transition-colors"
+              className="rounded-full h-9"
               size="sm"
               variant="outline"
             >
@@ -1786,7 +1786,7 @@ function App() {
 
             <Button
               onClick={toggleTheme}
-              className="rounded-full h-9 w-9 p-0 flex items-center justify-center transition-colors"
+              className="rounded-full h-9 w-9 p-0 flex items-center justify-center"
               size="sm"
               aria-label="Toggle theme"
               variant="outline"

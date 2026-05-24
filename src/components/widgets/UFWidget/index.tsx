@@ -632,7 +632,7 @@ const UFWidget: React.FC<UFWidgetProps> = ({ width, height, config }) => {
       {/* Settings Modal */}
       {!readOnly && (
         <Dialog open={showSettings} onOpenChange={handleSettingsOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="settings-dialog-content sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{localConfig.title || 'UF (Chile)'} Settings</DialogTitle>
             </DialogHeader>

@@ -13,7 +13,7 @@ import {
   BookOpen,
   Video,
   Rss,
-  Github,
+  GitBranch,
   Plane,
   Globe,
   Home,
@@ -64,7 +64,7 @@ const WidgetSelector = ({
       case 'BookOpen': return <BookOpen className="size-4" />;
       case 'Video': return <Video className="size-4" />;
       case 'Rss': return <Rss className="size-4" />;
-      case 'Github': return <Github className="size-4" />;
+      case 'Github': return <GitBranch className="size-4" />;
       case 'Plane': return <Plane className="size-4" />;
       case 'Globe': return <Globe className="size-4" />;
       case 'Home': return <Home className="size-4" />;
@@ -139,7 +139,7 @@ const WidgetSelector = ({
             variant="ghost"
             size="icon"
             onClick={onClose} 
-            className="rounded-full transition-colors duration-200"
+            className="rounded-full duration-200"
             aria-label="Close widget selector"
           >
             <X size={20} className="dark:text-white" />

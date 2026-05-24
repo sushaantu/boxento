@@ -45,9 +45,16 @@ export function WidgetSettingsDialog({
   bodyClassName,
   footer,
 }: WidgetSettingsDialogProps) {
+  const contentDescriptionProps = description
+    ? {}
+    : { 'aria-describedby': undefined };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn('sm:max-w-md', contentClassName)}>
+      <DialogContent
+        {...contentDescriptionProps}
+        className={cn('settings-dialog-content sm:max-w-md', contentClassName)}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? (
@@ -57,7 +64,7 @@ export function WidgetSettingsDialog({
 
         <div
           className={cn(
-            'max-h-[min(60vh,500px)] overflow-y-auto py-1',
+            'settings-dialog-body max-h-[min(60vh,500px)] overflow-y-auto px-1 py-1.5',
             bodyClassName
           )}
         >
@@ -82,21 +89,22 @@ export function WidgetSettingsDialogFooter({
   savePendingLabel = 'Saving...',
 }: WidgetSettingsDialogFooterProps) {
   return (
-    <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="settings-dialog-actions flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         {onDelete ? (
-          <Button type="button" variant="destructive" onClick={onDelete}>
+          <Button type="button" variant="destructive" className="min-h-10" onClick={onDelete}>
             {deleteLabel}
           </Button>
         ) : null}
       </div>
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row">
-        <Button type="button" variant="outline" onClick={onCancel}>
+        <Button type="button" variant="outline" className="min-h-10" onClick={onCancel}>
           {cancelLabel}
         </Button>
         <Button
           type="button"
+          className="min-h-10"
           onClick={onSave}
           disabled={saveDisabled || savePending}
         >

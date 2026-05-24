@@ -327,7 +327,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
               <img
                 src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
                 alt={getTitle(item)}
-                className="w-full h-full object-cover"
+                className="media-outline w-full h-full object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
@@ -370,7 +370,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
             <img
               src={`https://image.tmdb.org/t/p/w92${item.poster_path}`}
               alt={getTitle(item)}
-              className="w-full h-full object-cover"
+              className="media-outline w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
@@ -756,7 +756,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
                       <img
                         src={`https://image.tmdb.org/t/p/w185${searchResults[0].poster_path}`}
                         alt={getTitle(searchResults[0])}
-                        className="w-full h-full object-cover"
+                        className="media-outline w-full h-full object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -1031,7 +1031,7 @@ const RivenWidget: React.FC<RivenWidgetProps> = ({ width, height, config }) => {
   function renderSettingsDialog() {
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'Riven'} Settings</DialogTitle>
           </DialogHeader>

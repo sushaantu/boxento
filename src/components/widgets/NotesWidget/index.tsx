@@ -8,6 +8,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup
 } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
@@ -405,10 +406,12 @@ const NotesWidget: React.FC<NotesWidgetProps> = ({ width = 2, height = 2, config
               <SelectValue placeholder="Select a font family" />
             </SelectTrigger>
             <SelectContent>
+              <SelectGroup>
               <SelectItem value="system-ui, -apple-system, sans-serif">System UI</SelectItem>
               <SelectItem value="'Helvetica Neue', Helvetica, Arial, sans-serif">Helvetica</SelectItem>
               <SelectItem value="Georgia, serif">Georgia</SelectItem>
               <SelectItem value="'Courier New', monospace">Monospace</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>

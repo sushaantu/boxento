@@ -745,7 +745,7 @@ const YearProgressWidget: React.FC<YearProgressProps> = React.memo(({ width, hei
         setShowSettings(open);
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Year Progress Settings</DialogTitle>
         </DialogHeader>

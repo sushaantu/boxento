@@ -967,7 +967,7 @@ const TodoistWidget: React.FC<TodoistWidgetProps> = ({ width, height, config }) 
   function renderSettingsDialog() {
     return (
       <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{localConfig.title || 'Todoist'} Settings</DialogTitle>
           </DialogHeader>

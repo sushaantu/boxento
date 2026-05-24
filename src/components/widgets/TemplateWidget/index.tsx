@@ -463,7 +463,7 @@ const TemplateWidget: React.FC<TemplateWidgetProps> = ({ width, height, config }
   const renderSettings = () => {
     return (
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="settings-dialog-content sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Template Widget Settings</DialogTitle>
           </DialogHeader>

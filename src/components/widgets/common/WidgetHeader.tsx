@@ -58,7 +58,7 @@ const WidgetHeader = ({
             onSettingsClick();
           }}
         >
-          <Settings size={compact ? 12 : 14} />
+          <Settings aria-hidden="true" />
         </Button>
       )}
     </div>

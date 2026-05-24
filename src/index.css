@@ -1,10 +1,13 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/inter";
 
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 
+/*
  * =================================
  * 1. THEME & COLORS
  * =================================
@@ -17,7 +20,15 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
+  --widget-surface-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  --widget-surface-shadow-hover:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 1px 2px -1px rgba(0, 0, 0, 0.08),
+    0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  --background: oklch(0.991 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -36,42 +47,64 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 /* Dark mode theme colors */
 .dark {
+  --widget-surface-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 1px 2px -1px rgba(0, 0, 0, 0.24),
+    0 2px 4px 0 rgba(0, 0, 0, 0.18);
+  --widget-surface-shadow-hover: var(--widget-surface-shadow);
   /* Apple HIG Dark Mode colors */
-  --background: oklch(0.11 0 0); /* Darker background (closer to true black) */
+  --background: oklch(0.145 0 0); /* Darker background (closer to true black) */
   --foreground: oklch(0.985 0 0); /* Light text for readability */
-  --card: oklch(0.145 0 0); /* Slightly lighter than background for elevation */
+  --card: oklch(0.205 0 0); /* Slightly lighter than background for elevation */
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.16 0 0); /* Slightly lighter for popovers */
+  --popover: oklch(0.205 0 0); /* Slightly lighter for popovers */
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0); /* Bright white for primary elements */
-  --primary-foreground: oklch(0.11 0 0);
-  --secondary: oklch(0.2 0 0); /* Subtle elevation for secondary elements */
+  --primary: oklch(0.922 0 0); /* Bright white for primary elements */
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0); /* Subtle elevation for secondary elements */
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.2 0 0);
-  --muted-foreground: oklch(0.75 0 0); /* Slightly dimmed text for less emphasis */
-  --accent: oklch(0.2 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0); /* Slightly dimmed text for less emphasis */
+  --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.65 0.25 25.723); /* More vibrant red for destructive actions */
+  --destructive: oklch(0.704 0.191 22.216); /* More vibrant red for destructive actions */
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.2 0 0); /* Subtle borders */
-  --input: oklch(0.18 0 0); /* Slightly elevated input backgrounds */
-  --ring: oklch(0.439 0 0);
-  
+  --border: oklch(1 0 0 / 10%); /* Subtle borders */
+  --input: oklch(1 0 0 / 15%); /* Slightly elevated input backgrounds */
+  --ring: oklch(0.556 0 0);
+
   /* Chart colors - maintain vibrant but less harsh colors */
-  --chart-1: oklch(0.55 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 }
 
 /* Theme color mapping */
@@ -112,16 +145,20 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --font-heading: var(--font-sans);
+  --font-sans: 'Inter Variable', sans-serif;
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* 
+/*
  * =================================
  * 2. GLOBAL BASE STYLES
  * =================================
  */
 
-
-/* 
+/*
  * =================================
  * 3. WIDGET CONTAINER STYLES
  * =================================
@@ -133,7 +170,10 @@
   @apply p-2 md:p-3 overflow-hidden h-full w-full flex flex-col relative break-words;
   background-color: var(--card);
   color: var(--card-foreground);
-  border: 1px solid var(--border);
+  border: 0;
+  box-shadow: var(--widget-surface-shadow);
+  font-variant-numeric: tabular-nums;
+  transition: box-shadow 0.2s ease-out;
   /* Prevent text selection during interaction */
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -143,6 +183,12 @@
   user-select: none;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .widget-container:hover {
+    box-shadow: var(--widget-surface-shadow-hover);
+  }
+}
+
 /* Widget Interaction Styles */
 .widget-drag-handle {
   @apply cursor-move touch-none select-none;
@@ -150,6 +196,91 @@
 
 .widget-container > div:not(.widget-drag-handle) {
   @apply cursor-default pointer-events-auto;
+}
+
+.media-outline,
+.rich-media-outline img {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.dark .media-outline,
+.dark .rich-media-outline img {
+  outline-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-dialog-content {
+  --settings-content-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 1px 2px -1px rgba(0, 0, 0, 0.06),
+    0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .settings-dialog-content {
+  --settings-content-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 1px 2px -1px rgba(0, 0, 0, 0.24),
+    0 2px 4px 0 rgba(0, 0, 0, 0.18);
+}
+
+.settings-dialog-body {
+  min-height: 0;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.settings-dialog-content > [data-slot='dialog-header'] {
+  padding-right: 3rem;
+}
+
+.settings-dialog-content :where([data-slot='dialog-title'], [data-slot='field-legend'], label) {
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.settings-dialog-content :where([data-slot='dialog-description'], [data-slot='field-description'], p, li) {
+  text-wrap: pretty;
+}
+
+.settings-dialog-content :where(.space-y-4, .space-y-5, [class*='overflow-y-auto']) {
+  min-height: 0;
+}
+
+.settings-dialog-content :where([class*='overflow-y-auto']) {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.settings-dialog-content :where(.rounded-md.border, .rounded-lg.border, .rounded-xl.border, .rounded-2xl.border) {
+  border-color: transparent;
+  box-shadow: var(--settings-content-shadow);
+}
+
+.settings-dialog-content :where([data-slot='slider']) {
+  min-height: 2.5rem;
+  padding-block: 0.5rem;
+}
+
+.settings-dialog-content :where(input, textarea, [data-slot='button'], [data-slot='input-group'], [data-slot='tabs-trigger'], [data-slot='select-trigger'], [data-slot='dialog-close'], [data-slot='dialog-footer'] button) {
+  min-height: 2.5rem;
+}
+
+.settings-dialog-content :where([data-slot='button'][data-size='none'], [data-slot='button'][data-size^='icon'], [data-slot='dialog-close']) {
+  min-width: 2.5rem;
+}
+
+.settings-dialog-content :where([data-slot='field'][data-orientation='horizontal'], [data-slot='radio-group'] > div) {
+  min-height: 2.5rem;
+}
+
+.settings-dialog-content :where(img) {
+  outline: 1px solid rgba(0, 0, 0, 0.1);
+  outline-offset: -1px;
+}
+
+.dark .settings-dialog-content :where(img) {
+  outline-color: rgba(255, 255, 255, 0.1);
 }
 
 /* Widget Interactive Elements */
@@ -173,6 +304,10 @@
   @apply opacity-100;
 }
 
+.widget-container .settings-button-visible {
+  @apply opacity-100;
+}
+
 .settings-button,
 .settings-button * {
   @apply pointer-events-auto;
@@ -183,7 +318,7 @@
   @apply pointer-events-auto relative z-50;
 }
 
-/* 
+/*
  * =================================
  * 4. GRID LAYOUT INTERACTION STYLES
  * =================================
@@ -202,6 +337,20 @@
 
 .react-grid-item.widget-wrapper {
   @apply h-full w-full;
+  background-color: var(--card);
+  color: var(--card-foreground);
+  box-shadow: var(--widget-surface-shadow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .react-grid-item.widget-wrapper:not(.react-draggable-dragging):not(.resizing):hover {
+    box-shadow: var(--widget-surface-shadow-hover);
+  }
+}
+
+.widget-wrapper .widget-container {
+  box-shadow: none;
+  transition: none;
 }
 
 .react-grid-item.widget-wrapper.app-widget {
@@ -294,7 +443,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   filter: saturate(0.96);
 }
 
-/* 
+/*
  * =================================
  * PLACEHOLDER STYLES
  * =================================
@@ -322,16 +471,16 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   /* Remove the outline that was too visible */
   outline: none;
   /* Refined transitions */
-  transition: 
+  transition:
     opacity 0.2s cubic-bezier(0.25, 0.1, 0.25, 1),
     background 0.3s cubic-bezier(0.25, 0.1, 0.25, 1),
     box-shadow 0.3s cubic-bezier(0.25, 0.1, 0.25, 1) !important;
   /* Very low opacity - barely visible */
   opacity: 0.25 !important;
-  
+
   /* Dark mode - extremely subtle */
   @apply dark:border-white/5;
-  
+
   /* Dark mode gradient - much more subtle */
   @apply dark:bg-none;
   background-image: linear-gradient(to bottom, rgba(60, 60, 67, 0.2), rgba(50, 50, 57, 0.2)) !important;
@@ -343,7 +492,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 .dark .react-draggable-dragging.react-grid-placeholder,
 .dark .react-grid-item.dropping {
   /* Very subtle shadows for dark mode */
-  box-shadow: 
+  box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.05),
     0 2px 5px rgba(0, 0, 0, 0.03) !important;
   /* No more visible outline */
@@ -358,7 +507,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   /* Slightly increased opacity when active - but still subtle */
   opacity: 0.4 !important;
   /* Enhanced but still subtle shadow */
-  box-shadow: 
+  box-shadow:
     0 2px 6px rgba(0, 0, 0, 0.04),
     0 4px 12px rgba(0, 0, 0, 0.02) !important;
   /* Slightly more visible border when active */
@@ -422,12 +571,6 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   }
 }
 
-/* Adding a subtle hover effect to grid items */
-.react-grid-item:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-  @apply dark:shadow-lg dark:shadow-black/20;
-}
-
 /* Widget Header Styles */
 .mobile-layout .widget-header,
 .mobile-widget .widget-header {
@@ -444,7 +587,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   @apply dark:bg-slate-800 dark:shadow-lg dark:shadow-black/20;
 }
 
-/* 
+/*
  * =================================
  * 5. HEADER STYLES
  * =================================
@@ -471,9 +614,9 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 }
 
 .header-button {
-  @apply flex items-center gap-2 px-4 py-2.5 rounded-lg 
-         bg-blue-500 dark:bg-blue-600 text-white 
-         text-sm font-medium transition-all duration-200
+  @apply flex items-center gap-2 px-4 py-2.5 rounded-lg
+         bg-blue-500 dark:bg-blue-600 text-white
+         text-sm font-medium transition-[background-color,box-shadow,color,transform] duration-200
          shadow-sm hover:shadow-md hover:bg-blue-600 dark:hover:bg-blue-700
          focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
 }
@@ -488,12 +631,12 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 
 .theme-toggle-button {
   @apply p-2.5 rounded-full bg-white dark:bg-gray-800 shadow-sm
-         hover:shadow-md transition-all duration-200
+         hover:shadow-md transition-[background-color,box-shadow,color,transform] duration-200
          text-gray-700 dark:text-yellow-400
          focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2 dark:focus:ring-offset-gray-900;
 }
 
-/* 
+/*
  * =================================
  * 7. DASHBOARD STYLES
  * =================================
@@ -522,7 +665,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 
 .add-widget-button {
   @apply fixed bottom-6 right-6 bg-blue-500 text-white rounded-full p-4
-         shadow-md shadow-blue-500/20 dark:shadow-blue-500/40 transition-all duration-200
+         shadow-md shadow-blue-500/20 dark:shadow-blue-500/40 transition-[background-color,box-shadow,color,transform] duration-200
          hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/30 dark:hover:shadow-blue-500/50
          hover:-translate-y-0.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-2;
 }
@@ -535,7 +678,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   @apply transform rotate-90;
 }
 
-/* 
+/*
  * =================================
  * 8. RESPONSIVE LAYOUT STYLES
  * =================================
@@ -617,7 +760,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   min-height: 100px;
 }
 
-/* 
+/*
  * =================================
  * 9. MEDIA QUERIES
  * =================================
@@ -648,7 +791,7 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
     height: auto;
     display: block;
   }
-  
+
   /* Grid items */
   .react-grid-item {
     position: relative;
@@ -657,27 +800,27 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
     height: auto;
     min-height: 250px;
   }
-  
+
   /* Widget containers */
   .widget-container {
     height: 250px;
     overflow: auto;
     min-height: 0;
   }
-  
+
   /* Widget headers */
   .widget-container .widget-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
     margin: 0 0 8px 0;
     padding: 0 0 6px 0;
   }
-  
+
   /* View containers */
   .mobile-view-container {
     display: block;
     width: 100%;
   }
-  
+
   .desktop-view-container {
     display: none;
     width: 0;
@@ -689,13 +832,13 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   .widget-container {
     @apply p-3;
   }
-  
+
   /* View containers */
   .mobile-view-container {
     display: none;
     width: 0;
   }
-  
+
   .desktop-view-container {
     display: block;
     width: 100%;
@@ -707,20 +850,20 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
   .widget-container {
     @apply p-4;
   }
-  
+
   /* View containers */
   .mobile-view-container {
     display: none;
     width: 0;
   }
-  
+
   .desktop-view-container {
     display: block;
     width: 100%;
   }
 }
 
-/* 
+/*
  * =================================
  * 10. THEME VARIABLE CLASSES
  * =================================
@@ -734,9 +877,9 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 
 /* App header styling */
 .app-header {
-  background-color: var(--sidebar);
-  color: var(--sidebar-foreground);
-  border-bottom: 1px solid var(--sidebar-border);
+  background-color: var(--background);
+  color: var(--foreground);
+  border-bottom: 0;
   padding: 0;
 }
 
@@ -816,4 +959,20 @@ body.react-grid-layout--resizing .react-grid-item:not(.resizing) {
 .context-menu-highlight:hover::after,
 .context-menu-highlight:focus::after {
   opacity: 1;
+}
+
+/*
+ ---break---
+ */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans antialiased;
+  }
 }

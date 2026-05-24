@@ -7,6 +7,7 @@ import {
   DialogFooter
 } from '../../ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { Switch } from '../../ui/switch';
@@ -389,18 +390,18 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
     const ribbonServices = services.slice(0, Math.min(services.length, Math.max(2, width + 1)));
     return (
       <div className="flex h-full items-center gap-2 overflow-x-auto px-1 text-xs">
-        <span className="shrink-0 rounded-full bg-muted px-2 py-1 font-medium text-foreground">
+        <Badge variant="secondary" className="shrink-0 bg-muted px-2 py-1 text-foreground">
           {services.length} services
-        </span>
+        </Badge>
         {localConfig.showStatus && (
           <>
-            <span className="shrink-0 rounded-full bg-green-500/10 px-2 py-1 text-green-700 dark:text-green-300">
+            <Badge variant="secondary" className="shrink-0 bg-green-500/10 px-2 py-1 text-green-700 dark:text-green-300">
               {onlineCount} up
-            </span>
+            </Badge>
             {offlineCount > 0 && (
-              <span className="shrink-0 rounded-full bg-red-500/10 px-2 py-1 text-red-700 dark:text-red-300">
+              <Badge variant="secondary" className="shrink-0 bg-red-500/10 px-2 py-1 text-red-700 dark:text-red-300">
                 {offlineCount} down
-              </span>
+              </Badge>
             )}
           </>
         )}
@@ -519,23 +520,23 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
     return (
       <div className="flex h-full flex-col gap-3 overflow-hidden">
         <div className="flex flex-wrap items-center gap-2 px-1 text-[11px] text-muted-foreground">
-          <span className="rounded-full bg-muted px-2.5 py-1 font-medium text-foreground">
+          <Badge variant="secondary" className="bg-muted px-2.5 py-1 text-foreground">
             {services.length} services
-          </span>
+          </Badge>
           {localConfig.showStatus && (
             <>
-              <span className="rounded-full bg-green-500/10 px-2.5 py-1 text-green-700 dark:text-green-300">
+              <Badge variant="secondary" className="bg-green-500/10 px-2.5 py-1 text-green-700 dark:text-green-300">
                 {onlineCount} online
-              </span>
+              </Badge>
               {offlineCount > 0 && (
-                <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-red-700 dark:text-red-300">
+                <Badge variant="secondary" className="bg-red-500/10 px-2.5 py-1 text-red-700 dark:text-red-300">
                   {offlineCount} offline
-                </span>
+                </Badge>
               )}
               {checkingCount > 0 && (
-                <span className="rounded-full bg-yellow-500/10 px-2.5 py-1 text-yellow-700 dark:text-yellow-300">
+                <Badge variant="secondary" className="bg-yellow-500/10 px-2.5 py-1 text-yellow-700 dark:text-yellow-300">
                   {checkingCount} checking
-                </span>
+                </Badge>
               )}
             </>
           )}
@@ -1160,7 +1161,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
 
   const renderSettings = () => (
     <Dialog open={showSettings} onOpenChange={handleSettingsOpenChange}>
-      <DialogContent className="flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden p-0 sm:max-w-[980px]">
+      <DialogContent className="settings-dialog-content flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden p-0 sm:max-w-[980px]">
         <DialogHeader className="gap-2 px-6 pt-6">
           <DialogTitle>{localConfig.title || 'Services'} Settings</DialogTitle>
         </DialogHeader>
@@ -1262,7 +1263,7 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
 
   const renderAddServiceDialog = () => (
     <Dialog open={showAddService} onOpenChange={setShowAddService}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="settings-dialog-content sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add Service</DialogTitle>
         </DialogHeader>
