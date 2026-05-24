@@ -121,14 +121,20 @@ const WidgetSelector = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('all');
 
-  const categories = useMemo<CategoryOption[]>(() => ([
-    { id: 'all', name: 'All Widgets', count: widgetRegistry.length },
-    ...Object.entries(widgetCategories).map(([category, widgets]) => ({
+  const categories = useMemo<CategoryOption[]>(() => {
+    const categoryOptions = Object.entries(widgetCategories).map(([category, widgets]) => ({
       id: createCategoryId(category),
       name: category,
       count: widgets.length,
-    })),
-  ]), [widgetCategories, widgetRegistry.length]);
+    }));
+
+    categoryOptions.sort((a, b) => a.name.localeCompare(b.name));
+
+    return [
+      { id: 'all', name: 'All Widgets', count: widgetRegistry.length },
+      ...categoryOptions,
+    ];
+  }, [widgetCategories, widgetRegistry.length]);
 
   const widgetsByCategoryId = useMemo(() => {
     const entries = Object.entries(widgetCategories).map(([category, widgets]) => [
