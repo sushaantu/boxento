@@ -819,11 +819,15 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
   const handleAddService = useCallback(() => {
     if (!newService.name || !newService.url) return;
 
+    const description = newService.description?.trim();
+    const icon = newService.icon?.trim();
+
     const service: Service = {
       id: `service-${Date.now()}`,
       name: newService.name.trim(),
       url: newService.url.trim(),
-      icon: 'Globe',
+      icon: icon || 'Globe',
+      description: description || undefined,
       category: newService.category?.trim() || undefined
     };
 
@@ -845,7 +849,10 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
   const renderServiceSettingsRow = useCallback((service: Service) => {
     const Icon = getIcon(service.icon);
     const serviceHost = getServiceHost(service.url);
-    const meta = service.category || service.description || serviceHost;
+    const meta = [service.category, service.description]
+      .map(item => item?.trim())
+      .filter((item): item is string => Boolean(item))
+      .join(' · ') || serviceHost;
 
     return (
       <div
@@ -1046,6 +1053,39 @@ const ServicesWidget: React.FC<ServicesWidgetProps> = ({ width, height, config }
           }
         />
       </div>
+
+      <details className="rounded-md border border-border/70 px-3 py-2">
+        <summary className="cursor-pointer text-sm font-medium text-foreground">
+          Optional details
+        </summary>
+        <div className="mt-3 space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="service-desc">Description</Label>
+            <Input
+              id="service-desc"
+              type="text"
+              placeholder="Dashboard"
+              value={newService.description || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewService(prev => ({ ...prev, description: e.target.value }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="service-icon">Icon</Label>
+            <Input
+              id="service-icon"
+              type="text"
+              placeholder="Globe, LayoutGrid, Play, Bot"
+              value={newService.icon || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewService(prev => ({ ...prev, icon: e.target.value }))
+              }
+            />
+          </div>
+        </div>
+      </details>
     </WidgetSettingsDialog>
   );
 

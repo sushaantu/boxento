@@ -1115,3 +1115,37 @@ test('keeps world clock audit layouts within bounds from 1x1 through 4x4', async
     await expect.poll(async () => readOverflowingLeafNodes(page, widgetId)).toEqual([]);
   }
 });
+
+test('renders every configured timezone in shallow wide world clock layouts', async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 900 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'world-clocks-wide-many',
+        type: 'world-clocks',
+        config: {
+          timezones: [
+            { id: 1, name: 'Mexico City, Mexico', timezone: 'America/Mexico_City' },
+            { id: 2, name: 'San Francisco, USA', timezone: 'America/Los_Angeles' },
+            { id: 3, name: 'New York, USA', timezone: 'America/New_York' },
+            { id: 4, name: 'London, UK', timezone: 'Europe/London' },
+            { id: 5, name: 'Tokyo, Japan', timezone: 'Asia/Tokyo' },
+          ],
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'world-clocks-wide-many', x: 0, y: 0, w: 3, h: 2, minW: 1, minH: 1 },
+      ],
+    },
+  });
+
+  const widget = page.locator('.react-grid-item[data-widget-id="world-clocks-wide-many"]');
+  await expect(widget).toBeVisible();
+  await expect(widget).toContainText('Mexico City');
+  await expect(widget).toContainText('San Francisco');
+  await expect(widget).toContainText('New York');
+  await expect(widget).toContainText('London');
+  await expect(widget).toContainText('Tokyo');
+});

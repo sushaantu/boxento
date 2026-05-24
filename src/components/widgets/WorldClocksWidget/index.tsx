@@ -20,6 +20,22 @@ import {
   CardTitle,
 } from '../../ui/card'
 
+const timezoneOffsetFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+const getTimezoneOffsetFormatter = (timezone: string): Intl.DateTimeFormat => {
+  const cached = timezoneOffsetFormatterCache.get(timezone);
+  if (cached) {
+    return cached;
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    timeZoneName: 'shortOffset',
+  });
+  timezoneOffsetFormatterCache.set(timezone, formatter);
+  return formatter;
+};
+
 /**
  * World Clocks Widget Component
  *
@@ -204,6 +220,22 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
 
   const getCityLabel = (name: string): string => name.split(',')[0].trim();
 
+  const getRegionLabel = (name: string): string => name.split(',').slice(1).join(',').trim();
+
+  const getTinyCityLabel = (name: string): string => {
+    const city = getCityLabel(name);
+    if (city.length <= 6) {
+      return city;
+    }
+
+    const region = getRegionLabel(name);
+    if (/city$/i.test(city) && region && region.length <= 8) {
+      return region;
+    }
+
+    return getCityCode(name);
+  };
+
   const getCityCode = (name: string): string => {
     const city = getCityLabel(name);
     const words = city.split(/\s+/).filter(Boolean);
@@ -217,10 +249,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
 
   const getTimezoneOffsetLabel = (timezone: string): string => {
     try {
-      const offsetPart = new Intl.DateTimeFormat('en-US', {
-        timeZone: timezone,
-        timeZoneName: 'shortOffset',
-      })
+      const offsetPart = getTimezoneOffsetFormatter(timezone)
         .formatToParts(currentTime)
         .find(part => part.type === 'timeZoneName')?.value;
 
@@ -660,7 +689,7 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
           {renderClock(mainTimezone.timezone, 40, isDarkMode)}
         </div>
         <div className="max-w-full truncate text-[10px] font-semibold leading-[1.15] text-foreground">
-          {getCityLabel(mainTimezone.name)}
+          {getTinyCityLabel(mainTimezone.name)}
         </div>
       </div>
     );
@@ -1009,18 +1038,14 @@ const WorldClocksWidget: React.FC<WorldClocksWidgetProps> = ({ width, height, co
   const renderWideView = (): React.ReactElement => {
     const isShallow = height <= 2;
     const isDarkMode = document.documentElement.classList.contains('dark');
-    const columns = Math.min(
-      timezones.length,
-      width >= 6 ? 6 : width >= 4 ? 4 : 3
-    );
-    const visibleTimezones = timezones.slice(0, columns);
+    const columns = Math.min(timezones.length, width >= 6 ? 6 : width >= 4 ? 4 : 3);
 
     return (
       <div
-        className={`grid h-full min-h-0 items-center overflow-hidden ${isShallow ? 'gap-3 px-3 py-1' : 'gap-3 px-3 py-2'}`}
+        className={`grid h-full min-h-0 auto-rows-min content-start overflow-y-auto overflow-x-hidden ${isShallow ? 'gap-x-3 gap-y-2 px-3 py-1' : 'gap-3 px-3 py-2'}`}
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
       >
-        {visibleTimezones.map(tz => {
+        {timezones.map(tz => {
           const display = getTimezoneDisplay(tz);
 
           return (
