@@ -15,7 +15,8 @@
     "test:e2e:reuse": "PLAYWRIGHT_USE_EXISTING_SERVER=1 node scripts/run-playwright.mjs",
     "perf:dashboard": "node scripts/benchmark-dashboard-performance.mjs",
     "preview": "bunx --bun vite preview",
-    "deploy": "bun run build && firebase deploy --only hosting"
+    "build:functions": "npm --prefix functions run build",
+    "deploy": "bun run build && npm --prefix functions ci && npm --prefix functions run build && npx --yes firebase-tools deploy --only hosting,functions"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",

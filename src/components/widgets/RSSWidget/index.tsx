@@ -1,14 +1,8 @@
 import React, { startTransition, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { useVisibilityRefresh } from '../../../lib/useVisibilityRefresh';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '../../ui/dialog';
-import WidgetHeader from '../common/WidgetHeader';
+import { WidgetSettingsDialog, WidgetSettingsDialogFooter } from '../common/WidgetSettingsDialog';
+import { WidgetShell } from '../common/WidgetShell';
 import { RSSWidgetConfig, RSSFeedItem, RSSDisplayMode, RSSFeed } from './types';
 import type { RSSWidgetProps } from './types';
 import { Input } from '../../ui/input';
@@ -25,7 +19,7 @@ import {
 import { Switch } from '../../ui/switch';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../ui/tabs';
 import sanitizeHtml from 'sanitize-html';
-import { Rss, AlertCircle, Upload, ChevronDown } from 'lucide-react';
+import { Rss, AlertCircle, Upload, ChevronDown, Settings2 } from 'lucide-react';
 import { Skeleton } from '../../ui/skeleton';
 import {
   getInlineReaderContent,
@@ -48,6 +42,80 @@ enum WidgetSizeCategory {
   TALL_MEDIUM = 'tallMedium', // 3x4
   LARGE = 'large'          // 4x4
 }
+
+const getProxyErrorMessage = async (response: Response): Promise<string> => {
+  try {
+    const payload = await response.json() as { message?: string; error?: string };
+    return payload.message || payload.error || response.statusText || `HTTP ${response.status}`;
+  } catch {
+    return response.statusText || `HTTP ${response.status}`;
+  }
+};
+
+const getXmlText = (item: Element, selector: string): string => (
+  item.querySelector(selector)?.textContent?.trim() || ''
+);
+
+const getAtomLink = (entry: Element): string => (
+  entry.querySelector('link[rel="alternate"]')?.getAttribute('href') ||
+  entry.querySelector('link[href]')?.getAttribute('href') ||
+  getXmlText(entry, 'link') ||
+  '#'
+);
+
+const extractImageFromItem = (item: Element): string => {
+  const mediaContent = item.querySelector('media\\:content, media\\:thumbnail, content, thumbnail');
+  const enclosure = item.querySelector('enclosure[type^="image"]');
+  const content = getXmlText(item, 'content\\:encoded, encoded, content, summary, description');
+
+  if (mediaContent && mediaContent.getAttribute('url')) {
+    return mediaContent.getAttribute('url') || '';
+  }
+  if (enclosure && enclosure.getAttribute('url')) {
+    return enclosure.getAttribute('url') || '';
+  }
+
+  const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return imgMatch ? imgMatch[1] : '';
+};
+
+const parseFeedItems = (xmlDoc: Document): RSSFeedItem[] => {
+  if (xmlDoc.querySelector('parsererror')) {
+    throw new Error('The feed returned invalid XML');
+  }
+
+  const rssItems = Array.from(xmlDoc.querySelectorAll('item')).map(item => ({
+    title: getXmlText(item, 'title') || 'No Title',
+    link: getXmlText(item, 'link') || '#',
+    description: getXmlText(item, 'description'),
+    content: getXmlText(item, 'content\\:encoded, encoded'),
+    pubDate: getXmlText(item, 'pubDate'),
+    author: getXmlText(item, 'author, dc\\:creator'),
+    image: extractImageFromItem(item),
+    commentsLink: getXmlText(item, 'comments')
+  }));
+
+  if (rssItems.length > 0) {
+    return rssItems;
+  }
+
+  const atomItems = Array.from(xmlDoc.querySelectorAll('entry')).map(entry => ({
+    title: getXmlText(entry, 'title') || 'No Title',
+    link: getAtomLink(entry),
+    description: getXmlText(entry, 'summary'),
+    content: getXmlText(entry, 'content'),
+    pubDate: getXmlText(entry, 'published, updated'),
+    author: getXmlText(entry, 'author name, author, dc\\:creator'),
+    image: extractImageFromItem(entry),
+    commentsLink: ''
+  }));
+
+  if (atomItems.length > 0) {
+    return atomItems;
+  }
+
+  throw new Error('The feed did not include any readable articles');
+};
 
 /**
  * RSS Widget Component
@@ -108,30 +176,19 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   const widgetRef = useRef<HTMLDivElement | null>(null);
   const readerContentByLinkRef = useRef<Record<string, RSSReaderContentState>>({});
 
-
-  // Move fetchSingleFeed before fetchAllFeeds
   const fetchSingleFeed = React.useCallback(async (feed: RSSFeed): Promise<RSSFeedItem[]> => {
     // Use our own CORS proxy (server-side) instead of third-party allorigins.win
     const response = await fetch(`/api/rss?url=${encodeURIComponent(feed.url)}`);
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch RSS feed: ${response.statusText}`);
+      throw new Error(await getProxyErrorMessage(response));
     }
 
     const data = await response.text();
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(data, 'text/xml');
 
-    return Array.from(xmlDoc.querySelectorAll('item')).map(item => ({
-      title: item.querySelector('title')?.textContent || 'No Title',
-      link: item.querySelector('link')?.textContent || '#',
-      description: item.querySelector('description')?.textContent || '',
-      content: item.querySelector('content\\:encoded, encoded')?.textContent || '',
-      pubDate: item.querySelector('pubDate')?.textContent || '',
-      author: item.querySelector('author, dc\\:creator')?.textContent || '',
-      image: extractImageFromItem(item),
-      commentsLink: item.querySelector('comments')?.textContent || ''
-    }));
+    return parseFeedItems(xmlDoc);
   }, []);
 
   /**
@@ -174,6 +231,10 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
           duration: 4000,
         });
       } else if (failedFeeds.length > 0 && allItems.length === 0) {
+        const failedFeedLabel = failedFeeds.length === 1
+          ? failedFeeds[0]
+          : `${failedFeeds.length} configured feeds`;
+        setError(`Could not load ${failedFeedLabel}.`);
         toast.error('Failed to load RSS feeds', {
           description: 'Check your feed URLs or try again later.',
           duration: 5000,
@@ -188,7 +249,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
       });
 
       startTransition(() => {
-        setFeedItems(sortedItems);
+        setFeedItems(sortedItems.slice(0, currentConfig.maxItems || sortedItems.length));
       });
       setIsLoading(false);
     } catch (error) {
@@ -201,25 +262,6 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
       setIsLoading(false);
     }
   }, [localConfig, fetchSingleFeed]);
-
-  /**
-   * Extract image from RSS item
-   */
-  const extractImageFromItem = (item: Element): string => {
-    const mediaContent = item.querySelector('media\\:content, content');
-    const enclosure = item.querySelector('enclosure[type^="image"]');
-    const content = item.querySelector('content\\:encoded, encoded')?.textContent || '';
-
-    if (mediaContent && mediaContent.getAttribute('url')) {
-      return mediaContent.getAttribute('url') || '';
-    }
-    if (enclosure && enclosure.getAttribute('url')) {
-      return enclosure.getAttribute('url') || '';
-    }
-
-    const imgMatch = content.match(/<img[^>]+src="([^">]+)"/i);
-    return imgMatch ? imgMatch[1] : '';
-  };
 
   // Update feeds when config changes
   useEffect(() => {
@@ -340,12 +382,19 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
   }, [feedItems, appFeedFilter]);
 
   useEffect(() => {
-    if (selectedArticleIndex === null) return;
+    if (!isApp) return;
 
-    if (selectedArticleIndex >= filteredFeedItems.length) {
-      setSelectedArticleIndex(filteredFeedItems.length > 0 ? 0 : null);
+    if (filteredFeedItems.length === 0) {
+      if (selectedArticleIndex !== null) {
+        setSelectedArticleIndex(null);
+      }
+      return;
     }
-  }, [filteredFeedItems.length, selectedArticleIndex]);
+
+    if (selectedArticleIndex === null || selectedArticleIndex >= filteredFeedItems.length) {
+      setSelectedArticleIndex(0);
+    }
+  }, [filteredFeedItems.length, isApp, selectedArticleIndex]);
 
   /**
    * Get unique feed titles for the filter dropdown
@@ -478,7 +527,11 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-0.5 text-center">
-        <Rss size={18} className="text-muted-foreground" strokeWidth={1.5} />
+        {error && !isLoading ? (
+          <AlertCircle size={18} className="text-destructive" strokeWidth={1.5} />
+        ) : (
+          <Rss size={18} className="text-muted-foreground" strokeWidth={1.5} />
+        )}
         {hasFeeds && !isLoading && (
           <div className="text-[1.5rem] font-bold leading-none text-foreground">
             {count}
@@ -498,6 +551,20 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     const count = feedItems.length;
     const chipCount = Math.max(2, width - 1);
     const latestItems = feedItems.slice(0, chipCount);
+
+    if (error && !isLoading) {
+      return (
+        <div className="flex h-full items-center gap-2 px-2">
+          <AlertCircle size={14} className="shrink-0 text-destructive" />
+          <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+            RSS feeds unavailable
+          </span>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={handleRetryClick}>
+            Retry
+          </Button>
+        </div>
+      );
+    }
 
     return (
       <div className="flex h-full items-center gap-2 overflow-x-auto px-1">
@@ -638,16 +705,16 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     }
 
     return (
-      <div className="flex h-full flex-col">
+      <div className="flex h-full min-h-0 flex-col bg-background">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-4 py-2 widget-drag-handle cursor-move">
-          <div className="flex items-center gap-3">
-            <Rss size={16} className="text-muted-foreground" />
-            <span className="text-sm font-semibold text-foreground">
+        <div className="widget-drag-handle flex shrink-0 cursor-move items-center justify-between gap-3 bg-muted/30 px-4 py-2">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <Rss size={16} className="shrink-0 text-muted-foreground" />
+            <span className="truncate text-sm font-semibold text-foreground">
               {localConfig.title || 'RSS Reader'}
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             {/* Feed filter dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -685,7 +752,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
               </DropdownMenuContent>
             </DropdownMenu>
             {/* Article count */}
-            <span className="text-xs text-muted-foreground">
+            <span className="hidden text-xs text-muted-foreground sm:inline">
               {filteredFeedItems.length} article{filteredFeedItems.length !== 1 ? 's' : ''}
             </span>
             {/* Settings button */}
@@ -697,69 +764,68 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
                 onClick={() => setShowSettings(true)}
                 title="Settings"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
-                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                  <circle cx="12" cy="12" r="3"/>
-                </svg>
+                <Settings2 size={14} className="text-muted-foreground" />
               </Button>
             )}
           </div>
         </div>
 
         {/* Main content area */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex min-h-0 flex-1 overflow-hidden">
           {/* Left sidebar: Article list */}
-          <div className="w-1/3 border-r border-border overflow-y-auto">
-	            {filteredFeedItems.map((item, index) => (
+          <div className="min-w-[240px] max-w-[360px] basis-[36%] overflow-y-auto border-r border-border bg-muted/15">
+            {filteredFeedItems.map((item, index) => (
               <Button
                 key={`${item.link}-${index}`}
                 type="button"
                 variant="ghost"
                 onClick={() => setSelectedArticleIndex(index)}
-                className={`h-auto w-full justify-start rounded-none border-b border-border px-3 py-2.5 text-left transition-colors ${
+                className={`h-auto w-full justify-start rounded-none border-b border-border px-3 py-3 text-left transition-colors ${
                   selectedArticleIndex === index
-                    ? 'bg-accent border-l-2 border-l-border'
-                    : 'hover:bg-accent'
+                    ? 'border-l-2 border-l-primary bg-accent'
+                    : 'border-l-2 border-l-transparent hover:bg-accent/70'
                 }`}
               >
-                <div className="text-sm font-medium text-foreground line-clamp-2 leading-snug">
-                  {item.title}
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  {item.feedTitle && (
-                    <span className="text-[11px] text-muted-foreground truncate max-w-[60%]">
-                      {item.feedTitle}
-                    </span>
-                  )}
-                  {item.pubDate && (
-                    <span className="text-[10px] text-muted-foreground shrink-0">
-                      {formatTimeAgo(item.pubDate)}
-                    </span>
-                  )}
+                <div className="min-w-0">
+                  <div className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
+                    {item.title}
+                  </div>
+                  <div className="mt-1.5 flex min-w-0 items-center gap-2">
+                    {item.feedTitle && (
+                      <span className="min-w-0 max-w-[70%] truncate text-[11px] font-medium text-muted-foreground">
+                        {item.feedTitle}
+                      </span>
+                    )}
+                    {item.pubDate && (
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
+                        {formatTimeAgo(item.pubDate)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Button>
             ))}
           </div>
 
-	          {/* Right pane: Article reader */}
-	          <div className="flex-1 overflow-y-auto">
-	            <RSSReaderDetailPane
-	              article={selectedArticle}
-	              articleCount={filteredFeedItems.length}
-	              formattedDate={selectedArticle?.pubDate ? formatDate(selectedArticle.pubDate) : ''}
-	              readerByline={readerByline}
-	              readerImage={readerImage}
-	              readerSourceLabel={readerSourceLabel}
-	              extractedArticle={extractedArticle}
-	              inlineReaderContent={selectedInlineReaderContent}
-	              readerState={selectedReaderContentState}
-	              sanitizedReaderHtml={selectedSanitizedReaderHtml}
-	            />
-	          </div>
-	        </div>
-	      </div>
-	    );
-	  };
+          {/* Right pane: Article reader */}
+          <div className="min-w-0 flex-1 overflow-y-auto">
+            <RSSReaderDetailPane
+              article={selectedArticle}
+              articleCount={filteredFeedItems.length}
+              formattedDate={selectedArticle?.pubDate ? formatDate(selectedArticle.pubDate) : ''}
+              readerByline={readerByline}
+              readerImage={readerImage}
+              readerSourceLabel={readerSourceLabel}
+              extractedArticle={extractedArticle}
+              inlineReaderContent={selectedInlineReaderContent}
+              readerState={selectedReaderContentState}
+              sanitizedReaderHtml={selectedSanitizedReaderHtml}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   /**
    * Render feed item
@@ -773,7 +839,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
           href={item.link}
           target={openInNewTab ? "_blank" : "_self"}
           rel="noopener noreferrer"
-          className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-sm"
+          className="text-sm font-medium leading-snug text-foreground underline-offset-4 hover:underline"
         >
           {item.title}
         </a>
@@ -793,7 +859,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
         )}
 
         {showDescription && item.description && (
-          <p className="text-xs text-foreground mt-2 line-clamp-3">
+          <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-muted-foreground">
             {truncateText(item.description, mode === RSSDisplayMode.COMPACT ? 100 : 200)}
           </p>
         )}
@@ -824,9 +890,9 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
       case RSSDisplayMode.COMPACT:
         return (
-          <div key={`${item.link}-${index}`} className="py-2 flex">
-            <div className="mr-2 text-muted-foreground">•</div>
-            <div className="flex-grow min-w-0">
+          <div key={`${item.link}-${index}`} className="flex border-b border-border py-2 last:border-0">
+            <div className="mr-2 mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/40" />
+            <div className="min-w-0 flex-grow">
               {commonContent}
             </div>
           </div>
@@ -835,9 +901,9 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
       case RSSDisplayMode.LIST:
       default:
         return (
-          <div key={`${item.link}-${index}`} className="py-3 flex border-b border-border last:border-0">
+          <div key={`${item.link}-${index}`} className="flex border-b border-border py-3 last:border-0">
             {showImages && item.image && (
-              <div className="w-16 h-16 mr-3 flex-shrink-0 overflow-hidden rounded">
+              <div className="mr-3 h-16 w-16 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                 <img
                   src={item.image}
                   alt={item.title}
@@ -894,27 +960,28 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
    */
   const renderErrorState = (): React.ReactElement => {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center p-4">
-        <AlertCircle size={24} className="text-red-500 mb-3" strokeWidth={1.5} />
-        <p className="text-sm text-red-500 dark:text-red-400 mb-3">
+      <div className="flex h-full flex-col items-center justify-center p-4 text-center">
+        <AlertCircle size={24} className="mb-3 text-destructive" strokeWidth={1.5} />
+        <p className="mb-3 text-sm text-destructive">
           {error}
         </p>
-        <Button
-          size="sm"
-          onClick={handleRetryClick}
-          className="mr-2"
-        >
-          Try Again
-        </Button>
-        {!readOnly && (
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <Button
             size="sm"
-            variant="outline"
-            onClick={() => setShowSettings(true)}
+            onClick={handleRetryClick}
           >
-            Settings
+            Try Again
           </Button>
-        )}
+          {!readOnly && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowSettings(true)}
+            >
+              Settings
+            </Button>
+          )}
+        </div>
       </div>
     );
   };
@@ -1039,7 +1106,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
       });
 
       if (!response.ok) {
-        return { valid: false, error: `Failed to fetch (${response.status})` };
+        return { valid: false, error: await getProxyErrorMessage(response) };
       }
 
       const text = await response.text();
@@ -1118,33 +1185,48 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
     }
   };
 
+  const resetSettingsDraft = () => {
+    if (config) {
+      setLocalConfig({
+        ...defaultConfig,
+        ...config,
+        feeds: config?.feeds || defaultConfig.feeds
+      });
+    }
+    setValidationErrors({});
+    setShowSettings(false);
+  };
+
   /**
    * Settings dialog
    */
   const renderSettings = () => {
     return (
-      <Dialog
+      <WidgetSettingsDialog
         open={showSettings}
         onOpenChange={(open: boolean) => {
           if (!open) {
-            // Reset to original config when closing without save
-            if (config) {
-              setLocalConfig({
-                ...defaultConfig,
-                ...config,
-                feeds: config?.feeds || defaultConfig.feeds
-              });
-            }
-            setValidationErrors({});
-            setShowSettings(false);
+            resetSettingsDraft();
+            return;
           }
+          setShowSettings(true);
         }}
+        title="RSS Feed Settings"
+        contentClassName="sm:max-w-2xl"
+        bodyClassName="px-1 py-1.5"
+        footer={(
+          <WidgetSettingsDialogFooter
+            onDelete={config?.onDelete ? () => config.onDelete?.() : undefined}
+            onCancel={resetSettingsDraft}
+            onSave={() => {
+              void saveSettings();
+            }}
+            saveDisabled={!isValidUrl || isValidating}
+            savePending={isValidating}
+            savePendingLabel="Validating..."
+          />
+        )}
       >
-        <DialogContent className="settings-dialog-content sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>RSS Feed Settings</DialogTitle>
-          </DialogHeader>
-
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="content">Content</TabsTrigger>
@@ -1153,7 +1235,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
             </TabsList>
 
             <TabsContent value="content">
-              <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
+              <div className="py-4">
                 <div className="space-y-4 px-1">
                   {/* Widget Title */}
                   <div className="space-y-2">
@@ -1301,7 +1383,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
             </TabsContent>
 
             <TabsContent value="display">
-              <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
+              <div className="py-4">
                 <div className="space-y-4 px-1">
                   {/* Display Mode */}
                   <div className="space-y-2">
@@ -1392,7 +1474,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
             </TabsContent>
 
             <TabsContent value="examples">
-              <div className="max-h-[min(60vh,500px)] overflow-y-auto py-4">
+              <div className="py-4">
                 <div className="space-y-4 px-1">
                   <div className="text-sm text-muted-foreground">
                     Select from feeds that demonstrate both inline full-text reading and link-only reader extraction:
@@ -1453,64 +1535,7 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
               </div>
             </TabsContent>
           </Tabs>
-
-          <DialogFooter>
-            <div className="flex justify-between w-full">
-              {config?.onDelete && (
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    if (config.onDelete) {
-                      config.onDelete();
-                    }
-                  }}
-                  aria-label="Delete this widget"
-                >
-                  Delete
-                </Button>
-              )}
-
-              <div className="flex items-center gap-2 ml-auto">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    // Reset to original config on cancel
-                    if (config) {
-                      setLocalConfig({
-                        ...defaultConfig,
-                        ...config,
-                        feeds: config?.feeds || defaultConfig.feeds
-                      });
-                    }
-                    setValidationErrors({});
-                    setShowSettings(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="default"
-                  onClick={() => saveSettings()}
-                  disabled={!isValidUrl || isValidating}
-                >
-                  {isValidating ? (
-                    <>
-                      <span className="animate-spin mr-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                        </svg>
-                      </span>
-                      Validating...
-                    </>
-                  ) : (
-                    'Save'
-                  )}
-                </Button>
-              </div>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      </WidgetSettingsDialog>
     );
   };
 
@@ -1571,25 +1596,20 @@ export const RSSWidget: React.FC<RSSWidgetProps> = ({ config, width, height }) =
 
   // Main render
   return (
-    <div
+    <WidgetShell
       ref={widgetRef}
-      className={`widget-container h-full flex flex-col relative ${isTiny ? 'widget-drag-handle' : ''}`}
+      title={localConfig.title || 'RSS Feed'}
+      isTiny={isTiny}
+      hideHeader={isApp}
+      compactHeader={isShort || isCompact}
+      onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
+      contentClassName={isTiny ? 'p-1' : isApp ? '' : ''}
     >
-      {!isTiny && !isApp && (
-        <WidgetHeader
-          title={localConfig.title || 'RSS Feed'}
-          onSettingsClick={readOnly ? undefined : () => setShowSettings(true)}
-          compact={isShort}
-        />
-      )}
-
-      <div className={`flex-1 overflow-hidden ${isTiny ? 'p-1' : isApp ? '' : ''}`}>
-        {renderContent()}
-      </div>
+      {renderContent()}
 
       {/* Settings dialog */}
       {renderSettings()}
-    </div>
+    </WidgetShell>
   );
 };
 

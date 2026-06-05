@@ -59,7 +59,7 @@ export function RSSReaderDetailPane({
   }
 
   return (
-    <div className="p-6">
+    <div className="px-6 py-5">
       <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">
         {article.title}
       </h1>
@@ -105,13 +105,13 @@ export function RSSReaderDetailPane({
           </Button>
         )}
         {readerSourceLabel && (
-          <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-700 dark:border-orange-900/40 dark:bg-orange-900/20 dark:text-orange-300">
+          <span className="rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
             {readerSourceLabel}
           </span>
         )}
       </div>
       {readerImage && (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-border/70 bg-muted/20">
+        <div className="mt-6 overflow-hidden rounded-md border border-border bg-muted/20">
           <img
             src={readerImage}
             alt={article.title}
@@ -119,7 +119,7 @@ export function RSSReaderDetailPane({
           />
         </div>
       )}
-      <div className="mt-6 rounded-2xl border border-border/70 bg-background/90 p-6 shadow-sm">
+      <div className="mt-6 border-t border-border pt-6">
         {readerState?.status === 'loading' ? (
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -136,7 +136,7 @@ export function RSSReaderDetailPane({
         ) : sanitizedReaderHtml ? (
           <div className="mx-auto max-w-3xl">
             {!inlineReaderContent && extractedArticle?.excerpt && (
-              <p className="mb-6 border-l-2 border-orange-300 pl-4 text-base leading-7 text-muted-foreground">
+              <p className="mb-6 border-l-2 border-border pl-4 text-base leading-7 text-muted-foreground">
                 {extractedArticle.excerpt}
               </p>
             )}
@@ -148,7 +148,7 @@ export function RSSReaderDetailPane({
             />
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-border bg-muted/30 p-5">
+          <div className="rounded-md border border-dashed border-border bg-muted/30 p-5">
             <div className="flex items-start gap-3">
               <AlertCircle size={18} className="mt-0.5 text-orange-500" />
               <div>

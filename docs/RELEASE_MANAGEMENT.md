@@ -2,7 +2,7 @@
 
 Boxento releases are tag-driven. A `vMAJOR.MINOR.PATCH` tag is the source of truth for public GitHub Releases and Docker images.
 
-Hosted deployment to `boxento.app` is intentionally excluded from the automated release workflow until Firebase deploy credentials are configured safely in GitHub Actions.
+Hosted deployment to `boxento.app` runs from the same release workflow when the `FIREBASE_SERVICE_ACCOUNT_BOXENTO_APP` GitHub secret is configured. If that secret is missing, the workflow still publishes the GitHub Release and Docker images, and the workflow summary states that Firebase deployment was skipped.
 
 ## What Runs Where
 
@@ -24,10 +24,13 @@ Merges to `main` publish development Docker images:
 Pushing a tag like `v1.1.0` runs the release workflow:
 
 - installs dependencies
+- installs Firebase Functions dependencies
 - runs lint
 - runs unit tests
 - runs browser smoke tests
 - builds the app
+- builds Firebase Functions
+- deploys Firebase Hosting and Functions to `boxento-app` when `FIREBASE_SERVICE_ACCOUNT_BOXENTO_APP` is configured
 - publishes multi-architecture Docker images
 - creates or updates the GitHub Release
 - marks the GitHub Release as latest
@@ -44,8 +47,9 @@ Docker tags published from `v1.1.0`:
 
 1. Merge all intended release PRs into `main`.
 2. Update `CHANGELOG.md` in a PR when the release needs hand-written notes.
-3. Confirm `main` checks are green.
-4. Create and push an annotated tag:
+3. Confirm the repository secret `FIREBASE_SERVICE_ACCOUNT_BOXENTO_APP` is present when the release should deploy `boxento.app`.
+4. Confirm `main` checks are green.
+5. Create and push an annotated tag:
 
 ```bash
 git switch main
@@ -54,14 +58,43 @@ git tag -a v1.1.0 -m "Boxento v1.1.0"
 git push origin v1.1.0
 ```
 
-5. Watch the `Release` workflow.
-6. Confirm the GitHub Release is marked latest.
-7. Confirm Docker users can pull:
+6. Watch the `Release` workflow.
+7. Confirm the workflow summary says Firebase deployment published to `boxento-app`.
+8. Confirm the GitHub Release is marked latest.
+9. Confirm Docker users can pull:
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
+
+10. Confirm the hosted app and RSS proxy:
+
+```bash
+curl -I https://boxento.app
+curl -L 'https://boxento.app/api/rss?url=https%3A%2F%2Fwww.letelegramme.fr%2Frss.xml'
+```
+
+## Firebase Deploy Credentials
+
+Create a service account for Firebase deployment in the `boxento-app` Google Cloud project, grant only the roles needed to deploy Hosting and Cloud Functions, and store the JSON key in the repository secret named `FIREBASE_SERVICE_ACCOUNT_BOXENTO_APP`.
+
+Recommended role coverage:
+
+- Firebase Hosting Admin
+- Cloud Functions Admin
+- Cloud Build Editor
+- Service Account User for the runtime service account used by deployed functions
+
+Do not commit the JSON key. Rotate the key if it is exposed, then update the GitHub secret.
+
+For local deploys, authenticate with Firebase CLI and run:
+
+```bash
+bun run deploy
+```
+
+That command builds the Vite app, installs and builds Firebase Functions dependencies, and deploys Hosting plus Functions.
 
 ## Version Guidance
 

@@ -16,11 +16,14 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  FIREBASE_PROJECT_ID: boxento-app
 
 jobs:
   release:
     name: Publish release
     runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BOXENTO_APP }}
 
     steps:
       - name: Checkout repository
@@ -71,6 +74,9 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Install functions dependencies
+        run: npm ci --prefix functions
+
       - name: Run lint
         run: bun run lint
 
@@ -85,6 +91,23 @@ jobs:
 
       - name: Build app
         run: bun run build
+
+      - name: Build functions
+        run: npm --prefix functions run build
+
+      - name: Authenticate to Google Cloud
+        if: env.FIREBASE_SERVICE_ACCOUNT_JSON != ''
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ env.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
+      - name: Install Firebase CLI
+        if: env.FIREBASE_SERVICE_ACCOUNT_JSON != ''
+        run: npm install --global firebase-tools
+
+      - name: Deploy Firebase hosting and functions
+        if: env.FIREBASE_SERVICE_ACCOUNT_JSON != ''
+        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only hosting,functions --non-interactive
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -189,5 +212,9 @@ jobs:
             echo
             echo "- GitHub Release published"
             echo "- Docker tags published: ${{ steps.meta.outputs.tags }}"
-            echo "- Hosted boxento.app deployment is intentionally not part of this workflow"
+            if [[ -n "${FIREBASE_SERVICE_ACCOUNT_JSON}" ]]; then
+              echo "- Hosted boxento.app deployment published to Firebase project ${FIREBASE_PROJECT_ID}"
+            else
+              echo "- Hosted boxento.app deployment skipped because FIREBASE_SERVICE_ACCOUNT_BOXENTO_APP is not configured"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

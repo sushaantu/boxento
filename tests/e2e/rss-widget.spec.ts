@@ -4,6 +4,7 @@ import { seedDashboard } from './helpers/dashboardSeed';
 
 const CLOUDFARE_FEED_URL = 'https://blog.cloudflare.com/rss/';
 const HACKER_NEWS_FEED_URL = 'https://news.ycombinator.com/rss';
+const FAILING_FEED_URL = 'https://www.letelegramme.fr/rss.xml';
 const CLOUDFARE_ARTICLE_URL = 'https://blog.cloudflare.com/launch-notes';
 const HACKER_NEWS_ARTICLE_URL = 'https://example.com/story';
 const HACKER_NEWS_COMMENTS_URL = 'https://news.ycombinator.com/item?id=123';
@@ -102,6 +103,27 @@ const installRssMocks = async (page: Page, extractionMode: ExtractionMode): Prom
   });
 };
 
+const installRssFailureMocks = async (page: Page): Promise<void> => {
+  await page.route('**/api/rss**', async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const feedUrl = requestUrl.searchParams.get('url');
+
+    if (feedUrl === FAILING_FEED_URL) {
+      await route.fulfill({
+        status: 502,
+        contentType: 'application/json; charset=utf-8',
+        body: JSON.stringify({
+          error: 'Failed to fetch RSS feed',
+          message: 'The feed server returned 403 Forbidden after the known-reader request.',
+        }),
+      });
+      return;
+    }
+
+    await route.abort();
+  });
+};
+
 const seedRssDashboard = async (page: Page): Promise<void> => {
   await page.setViewportSize({ width: 1600, height: 1000 });
   await seedDashboard(page, {
@@ -114,6 +136,36 @@ const seedRssDashboard = async (page: Page): Promise<void> => {
           feeds: [
             { title: 'Cloudflare Blog', url: CLOUDFARE_FEED_URL, enabled: true },
             { title: 'Hacker News', url: HACKER_NEWS_FEED_URL, enabled: true },
+          ],
+          maxItems: 10,
+          showImages: true,
+          showDate: true,
+          showAuthor: true,
+          showDescription: true,
+          displayMode: 'list',
+          openInNewTab: true,
+        },
+      },
+    ],
+    layouts: {
+      lg: [
+        { i: 'rss-1', x: 0, y: 0, w: 6, h: 6, minW: 2, minH: 2 },
+      ],
+    },
+  });
+};
+
+const seedRssFailureDashboard = async (page: Page): Promise<void> => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await seedDashboard(page, {
+    widgets: [
+      {
+        id: 'rss-1',
+        type: 'rss',
+        config: {
+          title: 'RSS Reader',
+          feeds: [
+            { title: 'Le Telegramme', url: FAILING_FEED_URL, enabled: true },
           ],
           maxItems: 10,
           showImages: true,
@@ -177,5 +229,18 @@ test.describe('RSS widget reader', () => {
     const fallbackPanel = widget.locator('.border-dashed');
     await expect(fallbackPanel.getByRole('link', { name: 'Read in browser' })).toHaveAttribute('href', HACKER_NEWS_ARTICLE_URL);
     await expect(fallbackPanel.getByRole('link', { name: 'View discussion' })).toHaveAttribute('href', HACKER_NEWS_COMMENTS_URL);
+  });
+
+  test('shows a retryable error when every configured feed fails', async ({ page }) => {
+    await installRssFailureMocks(page);
+    await seedRssFailureDashboard(page);
+
+    const widget = rssWidget(page);
+
+    await expect(widget).toBeVisible();
+    await expect(widget).toContainText('Could not load Le Telegramme.');
+    await expect(widget).not.toContainText('No RSS feed configured.');
+    await expect(widget.getByRole('button', { name: 'Try Again' })).toBeVisible();
+    await expect(widget.getByRole('button', { name: 'Settings' })).toBeVisible();
   });
 });

@@ -189,6 +189,209 @@ const extractReadableArticle = async (articleUrl: URL): Promise<ReaderExtractRes
   }
 };
 
+type RssFetchAttempt = {
+  name: string;
+  headers: Record<string, string>;
+};
+
+type Rss2JsonPayload = {
+  status?: string;
+  message?: string;
+  feed?: {
+    title?: string;
+    link?: string;
+    description?: string;
+  };
+  items?: Array<{
+    title?: string;
+    pubDate?: string;
+    link?: string;
+    guid?: string;
+    author?: string;
+    thumbnail?: string;
+    description?: string;
+    content?: string;
+    enclosure?: {
+      link?: string;
+      type?: string;
+    };
+  }>;
+};
+
+const RSS_FETCH_ATTEMPTS: RssFetchAttempt[] = [
+  {
+    name: "boxento-rss",
+    headers: {
+      "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+      "User-Agent": "Boxento RSS Reader/1.0 (+https://boxento.app)"
+    }
+  },
+  {
+    name: "browser-like",
+    headers: {
+      "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9, */*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9,fr;q=0.8",
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    name: "known-reader",
+    headers: {
+      "Accept": "application/rss+xml, application/atom+xml, application/xml, text/xml, */*",
+      "User-Agent": "NetNewsWire/6.1.7 (Mac OS X)"
+    }
+  }
+];
+
+const RSS_RETRY_STATUSES = new Set([401, 403, 406, 408, 429, 500, 502, 503, 504]);
+
+const looksLikeFeedPayload = (data: string): boolean => (
+  /<\s*(rss|feed|channel|rdf:RDF)\b/i.test(data)
+);
+
+const escapeXml = (value: unknown): string => (
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
+);
+
+const wrapCdata = (value: unknown): string => (
+  `<![CDATA[${String(value ?? "").replace(/]]>/g, "]]]]><![CDATA[>")}]]>`
+);
+
+const formatRssDate = (value: string | undefined): string => {
+  if (!value) {
+    return "";
+  }
+
+  const parsedDate = new Date(value);
+  return Number.isNaN(parsedDate.getTime()) ? value : parsedDate.toUTCString();
+};
+
+const rss2JsonPayloadToXml = (feedUrl: URL, payload: Rss2JsonPayload): string => {
+  const feed = payload.feed || {};
+  const items = payload.items || [];
+
+  const itemXml = items.map((item) => {
+    const content = item.content || item.description || "";
+    const enclosureUrl = item.enclosure?.link || item.thumbnail || "";
+    const enclosureType = item.enclosure?.type || (enclosureUrl ? "image/jpeg" : "");
+
+    return [
+      "    <item>",
+      `      <title>${wrapCdata(item.title || "No Title")}</title>`,
+      `      <link>${escapeXml(item.link || item.guid || "#")}</link>`,
+      `      <guid>${escapeXml(item.guid || item.link || "")}</guid>`,
+      item.pubDate ? `      <pubDate>${escapeXml(formatRssDate(item.pubDate))}</pubDate>` : "",
+      item.author ? `      <dc:creator>${wrapCdata(item.author)}</dc:creator>` : "",
+      item.description ? `      <description>${wrapCdata(item.description)}</description>` : "",
+      content ? `      <content:encoded>${wrapCdata(content)}</content:encoded>` : "",
+      enclosureUrl ? `      <enclosure url="${escapeXml(enclosureUrl)}" type="${escapeXml(enclosureType)}" />` : "",
+      "    </item>"
+    ].filter(Boolean).join("\n");
+  }).join("\n");
+
+  return [
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+    "<rss version=\"2.0\" xmlns:content=\"http://purl.org/rss/1.0/modules/content/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">",
+    "  <channel>",
+    `    <title>${wrapCdata(feed.title || feedUrl.hostname)}</title>`,
+    `    <link>${escapeXml(feed.link || feedUrl.origin)}</link>`,
+    `    <description>${wrapCdata(feed.description || "")}</description>`,
+    itemXml,
+    "  </channel>",
+    "</rss>"
+  ].join("\n");
+};
+
+const fetchRssFeedViaRss2Json = async (feedUrl: URL): Promise<string> => {
+  const fallbackUrl = new URL("https://api.rss2json.com/v1/api.json");
+  fallbackUrl.searchParams.set("rss_url", feedUrl.toString());
+
+  const response = await fetch(fallbackUrl.toString(), {
+    headers: {
+      "Accept": "application/json",
+      "User-Agent": "Boxento RSS Reader/1.0 (+https://boxento.app)"
+    },
+    redirect: "follow",
+    signal: AbortSignal.timeout(10000)
+  });
+
+  if (!response.ok) {
+    throw new Error(`rss2json returned ${response.status}`);
+  }
+
+  const payload = await response.json() as Rss2JsonPayload;
+  if (payload.status !== "ok" || !payload.items?.length) {
+    throw new Error(payload.message || "rss2json did not return feed items");
+  }
+
+  return rss2JsonPayloadToXml(feedUrl, payload);
+};
+
+const fetchRssFeed = async (feedUrl: URL): Promise<string> => {
+  let lastStatus: number | null = null;
+  let lastStatusText = "";
+  let lastAttempt = "";
+  let lastError: unknown = null;
+
+  for (const attempt of RSS_FETCH_ATTEMPTS) {
+    lastAttempt = attempt.name;
+
+    try {
+      const response = await fetch(feedUrl.toString(), {
+        headers: {
+          ...attempt.headers,
+          ...(attempt.name === "browser-like" ? { "Referer": feedUrl.origin + "/" } : {})
+        },
+        redirect: "follow",
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (response.ok) {
+        const data = await response.text();
+        if (looksLikeFeedPayload(data)) {
+          return data;
+        }
+
+        lastStatus = response.status;
+        lastStatusText = "Non-feed response";
+        continue;
+      }
+
+      lastStatus = response.status;
+      lastStatusText = response.statusText;
+
+      if (!RSS_RETRY_STATUSES.has(response.status)) {
+        break;
+      }
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (lastStatus !== null) {
+    const detail = lastStatusText ? ` ${lastStatusText}` : "";
+    try {
+      return await fetchRssFeedViaRss2Json(feedUrl);
+    } catch (fallbackError) {
+      const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : "fallback failed";
+      throw new Error(`The feed server returned ${lastStatus}${detail} after the ${lastAttempt} request. Fallback also failed: ${fallbackMessage}`);
+    }
+  }
+
+  try {
+    return await fetchRssFeedViaRss2Json(feedUrl);
+  } catch (fallbackError) {
+    const directMessage = lastError instanceof Error ? lastError.message : "Could not reach RSS feed";
+    const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : "fallback failed";
+    throw new Error(`${directMessage}. Fallback also failed: ${fallbackMessage}`);
+  }
+};
+
 // Proxy for mindicador.cl API (Chilean economic indicators)
 export const mindicadorProxy = onRequest(
   {
@@ -433,19 +636,7 @@ export const rssProxy = onRequest(
         return;
       }
 
-      const response = await fetch(feedUrl.toString(), {
-        headers: {
-          "Accept": "application/rss+xml, application/xml, text/xml, application/atom+xml",
-          "User-Agent": "Boxento RSS Reader/1.0"
-        },
-        signal: AbortSignal.timeout(10000)
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch RSS feed: ${response.status}`);
-      }
-
-      const data = await response.text();
+      const data = await fetchRssFeed(feedUrl);
 
       // Set appropriate headers
       res.set("Content-Type", "application/xml; charset=utf-8");
@@ -453,7 +644,7 @@ export const rssProxy = onRequest(
       res.send(data);
     } catch (error) {
       console.error("Error fetching RSS feed:", error);
-      res.status(500).json({
+      res.status(502).json({
         error: "Failed to fetch RSS feed",
         message: error instanceof Error ? error.message : "Unknown error"
       });
