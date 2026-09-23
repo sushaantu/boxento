@@ -1,49 +1,23 @@
 import type { FC } from 'react';
 
 /**
- * A dofollow directory badge shown in the site footer.
- * Links stay crawlable: no nofollow, sponsored, or ugc.
+ * Dofollow directory badges for free listings.
+ *
+ * SaaSLineup markup matches the official submit-page snippet
+ * (https://saaslineup.com/submit/?tier=free), with the Boxento slug:
+ * `<a href="https://saaslineup.com/product/boxento?ref=badge" rel="dofollow">`
+ * and `alt="Featured on SaaSLineup"` at 160×44.
+ * The andrew@thesaasdir.com email was not in the connected mailboxes.
+ *
+ * FranceSaaS public référencement pages require the badge and a dofollow
+ * link, but they do not publish a copy-paste embed. Listed products install
+ * this snippet: shared badge SVG, profile URL, and the French title
+ * "Profil du SaaS {name} sur FranceSaaS.fr".
  */
-export interface DirectoryBadge {
-  href: string;
-  imageSrc: string;
-  alt: string;
-  title: string;
-  width: number;
-  height: number;
-  /** Extra rel tokens such as the SaaSLineup `dofollow` marker. */
-  rel?: string;
-}
-
-/**
- * Official badge URLs.
- * SaaSLineup: product badge from their submit snippet, with the Boxento slug.
- * FranceSaaS: shared badge SVG plus the product-profile link used by listed
- * products (Qwease, Courtadmin). The French title matches those installs.
- */
-export const DIRECTORY_BADGES: readonly DirectoryBadge[] = [
-  {
-    href: 'https://saaslineup.com/product/boxento?ref=badge',
-    imageSrc: 'https://saaslineup.com/badge/boxento.svg',
-    alt: 'Boxento on SaaSLineup',
-    title: 'Boxento on SaaSLineup',
-    width: 182,
-    height: 46,
-    rel: 'dofollow',
-  },
-  {
-    href: 'https://francesaas.fr/saas/boxento',
-    imageSrc: 'https://francesaas.fr/badge-francesaas.svg',
-    alt: 'Badge FranceSaaS',
-    title: 'Profil du SaaS Boxento sur FranceSaaS.fr',
-    width: 170,
-    height: 54,
-  },
-];
-
-const linkRel = (extraRel?: string): string => (
-  ['noopener', extraRel].filter(Boolean).join(' ')
-);
+export const SAASLINEUP_BADGE_HREF = 'https://saaslineup.com/product/boxento?ref=badge';
+export const SAASLINEUP_BADGE_SRC = 'https://saaslineup.com/badge/boxento.svg';
+export const FRANCESAAS_BADGE_HREF = 'https://francesaas.fr/saas/boxento';
+export const FRANCESAAS_BADGE_SRC = 'https://francesaas.fr/badge-francesaas.svg';
 
 /**
  * Quiet dofollow partner badges required by free directory listings.
@@ -54,26 +28,29 @@ export const DirectoryBadges: FC = () => {
       className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2"
       aria-label="Directory listings"
     >
-      {DIRECTORY_BADGES.map((badge) => (
-        <a
-          key={badge.href}
-          href={badge.href}
-          target="_blank"
-          rel={linkRel(badge.rel)}
-          title={badge.title}
-          className="inline-flex shrink-0 opacity-90 transition-opacity hover:opacity-100"
-        >
-          <img
-            src={badge.imageSrc}
-            alt={badge.alt}
-            width={badge.width}
-            height={badge.height}
-            loading="lazy"
-            decoding="async"
-            className="h-8 w-auto max-w-full"
-          />
-        </a>
-      ))}
+      <a href={SAASLINEUP_BADGE_HREF} rel="dofollow">
+        <img
+          src={SAASLINEUP_BADGE_SRC}
+          alt="Featured on SaaSLineup"
+          width={160}
+          height={44}
+        />
+      </a>
+      <a
+        href={FRANCESAAS_BADGE_HREF}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Profil du SaaS Boxento sur FranceSaaS.fr"
+      >
+        <img
+          src={FRANCESAAS_BADGE_SRC}
+          alt="Badge FranceSaaS"
+          width={200}
+          height={44}
+          loading="lazy"
+          decoding="async"
+        />
+      </a>
     </div>
   );
 };
