@@ -5,7 +5,8 @@ import type { FC } from 'react';
  *
  * SaaSLineup markup matches the official submit-page snippet
  * (https://saaslineup.com/submit/?tier=free), with the Boxento slug:
- * `<a href="https://saaslineup.com/product/boxento?ref=badge" rel="dofollow">`
+ * `<a href="https://saaslineup.com/product/boxento/?ref=badge" rel="dofollow">`
+ * The product URL keeps the trailing slash. Without it, SaaSLineup 301s.
  * and `alt="Featured on SaaSLineup"` at 160×44.
  * The andrew@thesaasdir.com email was not in the connected mailboxes.
  *
@@ -14,7 +15,7 @@ import type { FC } from 'react';
  * this snippet: shared badge SVG, profile URL, and the French title
  * "Profil du SaaS {name} sur FranceSaaS.fr".
  */
-export const SAASLINEUP_BADGE_HREF = 'https://saaslineup.com/product/boxento?ref=badge';
+export const SAASLINEUP_BADGE_HREF = 'https://saaslineup.com/product/boxento/?ref=badge';
 export const SAASLINEUP_BADGE_SRC = 'https://saaslineup.com/badge/boxento.svg';
 export const FRANCESAAS_BADGE_HREF = 'https://francesaas.fr/saas/boxento';
 export const FRANCESAAS_BADGE_SRC = 'https://francesaas.fr/badge-francesaas.svg';

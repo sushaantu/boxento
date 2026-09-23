@@ -15,6 +15,7 @@ describe('directory partner badges', () => {
   it('renders the official SaaSLineup snippet and the FranceSaaS profile badge', () => {
     const html = renderToStaticMarkup(React.createElement(DirectoryBadges));
 
+    expect(SAASLINEUP_BADGE_HREF).toBe('https://saaslineup.com/product/boxento/?ref=badge');
     expect(html).toContain(
       `<a href="${SAASLINEUP_BADGE_HREF}" rel="dofollow"><img src="${SAASLINEUP_BADGE_SRC}" alt="Featured on SaaSLineup" width="160" height="44"/></a>`
     );
