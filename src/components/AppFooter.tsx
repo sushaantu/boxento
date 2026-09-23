@@ -1,3 +1,5 @@
+import { DirectoryBadges } from '@/components/DirectoryBadges';
+
 declare const __BUILD_HASH__: string;
 declare const __BUILD_TIME__: number;
 
@@ -162,6 +164,8 @@ export const AppFooter = () => {
             </div>
           </div>
         </div>
+
+        <DirectoryBadges />
       </div>
     </footer>
   );
