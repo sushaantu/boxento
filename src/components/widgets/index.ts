@@ -4,6 +4,7 @@ import { WidgetConfig, WidgetProps } from '@/types';
 // Lazy load widget components - each widget will be in its own chunk
 const CalendarWidget = React.lazy(() => import('./CalendarWidget/index'));
 const WeatherWidget = React.lazy(() => import('./WeatherWidget/index'));
+const TennisWidget = React.lazy(() => import('./TennisWidget/index'));
 const WorldClocksWidget = React.lazy(() => import('./WorldClocksWidget/index'));
 const QuickLinksWidget = React.lazy(() => import('./QuickLinksWidget/index'));
 const NotesWidget = React.lazy(() => import('./NotesWidget/index'));
@@ -43,6 +44,7 @@ const HomeDeviceHealthWidget = React.lazy(() => import('./HomeDeviceHealthWidget
 // Export widget types
 export * from './CalendarWidget/types';
 export * from './WeatherWidget/types';
+export * from './TennisWidget/types';
 export * from './WorldClocksWidget/types';
 export * from './QuickLinksWidget/types';
 export * from './NotesWidget/types';
@@ -93,6 +95,7 @@ const TINY_READY_WIDGET_TYPES = new Set([
   'world-clocks',
   'year-progress',
   'weather',
+  'tennis',
   'calendar',
   'todo',
   'notes',
@@ -128,6 +131,17 @@ const TINY_READY_WIDGET_TYPES = new Set([
 
 // Widget registry with enhanced metadata
 const BASE_WIDGET_REGISTRY: EnhancedWidgetConfig[] = [
+  {
+    type: 'tennis',
+    name: 'Tennis',
+    icon: 'CircleDot',
+    minWidth: 2,
+    minHeight: 2,
+    defaultWidth: 3,
+    defaultHeight: 3,
+    category: 'Information',
+    description: 'Follow tennis score snapshots across current matches'
+  },
   {
     type: 'calendar',
     name: 'Calendar',
@@ -566,6 +580,7 @@ type LazyWidgetComponent = React.LazyExoticComponent<React.ComponentType<WidgetP
  * Each widget is loaded on-demand when first rendered.
  */
 const WIDGET_COMPONENTS: Record<string, LazyWidgetComponent> = {
+  'tennis': TennisWidget,
   'calendar': CalendarWidget,
   'weather': WeatherWidget,
   'world-clocks': WorldClocksWidget,
