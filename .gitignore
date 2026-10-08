@@ -30,6 +30,7 @@ firebase-debug.*.log*
 /.nyc_output
 /playwright-report
 /test-results
+/output/playwright
 
 # Caches
 .eslintcache
