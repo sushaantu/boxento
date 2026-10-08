@@ -379,7 +379,7 @@ const fetchRssFeed = async (feedUrl: URL): Promise<string> => {
       return await fetchRssFeedViaRss2Json(feedUrl);
     } catch (fallbackError) {
       const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : "fallback failed";
-      throw new Error(`The feed server returned ${lastStatus}${detail} after the ${lastAttempt} request. Fallback also failed: ${fallbackMessage}`);
+      throw new Error(`The feed server returned ${lastStatus}${detail} after the ${lastAttempt} request. Fallback also failed: ${fallbackMessage}`, { cause: fallbackError });
     }
   }
 
@@ -388,7 +388,7 @@ const fetchRssFeed = async (feedUrl: URL): Promise<string> => {
   } catch (fallbackError) {
     const directMessage = lastError instanceof Error ? lastError.message : "Could not reach RSS feed";
     const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : "fallback failed";
-    throw new Error(`${directMessage}. Fallback also failed: ${fallbackMessage}`);
+    throw new Error(`${directMessage}. Fallback also failed: ${fallbackMessage}`, { cause: fallbackError });
   }
 };
 

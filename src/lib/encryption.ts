@@ -93,7 +93,7 @@ const deriveKey = async (password: string, salt: Uint8Array): Promise<CryptoKey>
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: salt.buffer.slice(salt.byteOffset, salt.byteOffset + salt.byteLength),
+      salt: new Uint8Array(salt),
       iterations: ITERATIONS,
       hash: 'SHA-256'
     },
@@ -201,7 +201,7 @@ export const encryptionUtils = {
     } catch (e) {
       // Re-throw to allow proper error handling upstream
       // Silent failures can cause data loss
-      throw new Error(`Encryption failed: ${e instanceof Error ? e.message : String(e)}`);
+      throw new Error(`Encryption failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
     }
   },
 
@@ -254,7 +254,7 @@ export const encryptionUtils = {
     } catch (e) {
       // Re-throw to allow proper error handling upstream
       // Silent failures can mask data corruption or key mismatches
-      throw new Error(`Decryption failed: ${e instanceof Error ? e.message : String(e)}`);
+      throw new Error(`Decryption failed: ${e instanceof Error ? e.message : String(e)}`, { cause: e });
     }
   },
 

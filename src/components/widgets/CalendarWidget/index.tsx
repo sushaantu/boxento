@@ -408,7 +408,7 @@ const CalendarWidget: React.FC<CalendarWidgetProps> = ({ width = 2, height = 2, 
           const isAllDay = !event.start.dateTime;
           
           // Format time string
-          let timeString = '';
+          let timeString: string;
           if (isAllDay) {
             timeString = 'All day';
           } else {
