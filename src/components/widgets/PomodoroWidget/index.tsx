@@ -122,7 +122,7 @@ const PomodoroWidget: React.FC<PomodoroWidgetProps> = ({ width, height, config }
   const handleTimerComplete = () => {
     let nextMode: TimerMode;
     let nextDuration: number;
-    let nextCycles = cyclesCompleted;
+    let nextCycles: number;
 
     // Play notification sound
     const audio = new Audio('/sounds/bell.mp3');
